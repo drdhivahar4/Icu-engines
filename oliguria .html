@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra Advanced Oliguria / AKI ICU Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2200px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:20px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+white-space:pre-line;
+line-height:1.8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ultra Advanced Oliguria / AKI ICU Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. Renal Parameters</h2>
+
+<label>Creatinine (mg/dL)</label>
+<input type="number" step="0.1" id="creatinine">
+
+<label>Creatinine Trend</label>
+
+<select id="crtrend">
+
+<option value="unknown">
+Unknown / Single Value Only
+</option>
+
+<option value="stable">
+Stable
+</option>
+
+<option value="improving">
+Improving
+</option>
+
+<option value="worsening">
+Worsening
+</option>
+
+<option value="rapidrise">
+Rapid Rise (>0.3 mg/dL in 48h)
+</option>
+
+</select>
+
+<label>Urine Output (mL/day)</label>
+<input type="number" id="urine">
+
+<label>Urine Output Trend</label>
+
+<select id="uotrend">
+
+<option value="stable">
+Stable
+</option>
+
+<option value="improving">
+Improving
+</option>
+
+<option value="falling">
+Falling
+</option>
+
+<option value="anuria">
+Anuria
+</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>2. Hemodynamics</h2>
+
+<label>MAP</label>
+<input type="number" id="map">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+<label>Vasopressor Requirement</label>
+
+<select id="vaso">
+
+<option value="none">None</option>
+<option value="low">Low Dose</option>
+<option value="high">High Dose</option>
+
+</select>
+
+<label>Fluid Responsive?</label>
+
+<select id="fluidresponsive">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>3. Fluid Status</h2>
+
+<label>Cumulative Fluid Balance (L)</label>
+<input type="number" step="0.1" id="balance">
+
+<label>Fluid Overload / Edema?</label>
+
+<select id="overload">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Pulmonary Edema?</label>
+
+<select id="pulmonaryedema">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Bladder Pressure / IAP</label>
+<input type="number" id="iap">
+
+</div>
+
+<div class="card">
+
+<h2>4. Etiology Context</h2>
+
+<label>Sepsis Present?</label>
+
+<select id="sepsis">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Shock Present?</label>
+
+<select id="shock">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Cirrhosis / HRS Risk?</label>
+
+<select id="hrs">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Nephrotoxin Exposure?</label>
+
+<select id="nephrotoxin">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Diuretic Exposure?</label>
+
+<select id="diuretic">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>5. Response Assessment</h2>
+
+<label>Albumin Challenge Response?</label>
+
+<select id="albuminresponse">
+
+<option value="notdone">Not Done</option>
+<option value="improved">Improved</option>
+<option value="noresponse">No Response</option>
+
+</select>
+
+<label>Fluid Bolus Response?</label>
+
+<select id="fluidresponse">
+
+<option value="notdone">Not Done</option>
+<option value="improved">Improved</option>
+<option value="noresponse">No Response</option>
+
+</select>
+
+<label>Diuretic Response?</label>
+
+<select id="diureticresponse">
+
+<option value="notapplicable">Not Applicable</option>
+<option value="good">Good Response</option>
+<option value="poor">Poor Response</option>
+
+</select>
+
+<label>CRRT Running?</label>
+
+<select id="crrt">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+</div>
+
+<button onclick="analyzeOliguria()">
+Generate Complete Oliguria ICU Plan
+</button>
+
+<div class="result">
+
+<h2>Complete Oliguria / AKI Management Plan</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzeOliguria(){
+
+try{
+
+let creatinine=parseFloat(document.getElementById('creatinine').value)||0;
+
+let crtrend=document.getElementById('crtrend').value;
+
+let urine=parseFloat(document.getElementById('urine').value)||0;
+
+let uotrend=document.getElementById('uotrend').value;
+
+let map=parseFloat(document.getElementById('map').value)||0;
+
+let lactate=parseFloat(document.getElementById('lactate').value)||0;
+
+let vaso=document.getElementById('vaso').value;
+
+let fluidresponsive=document.getElementById('fluidresponsive').value;
+
+let balance=parseFloat(document.getElementById('balance').value)||0;
+
+let overload=document.getElementById('overload').value;
+
+let pulmonaryedema=document.getElementById('pulmonaryedema').value;
+
+let iap=parseFloat(document.getElementById('iap').value)||0;
+
+let sepsis=document.getElementById('sepsis').value;
+
+let shock=document.getElementById('shock').value;
+
+let hrs=document.getElementById('hrs').value;
+
+let nephrotoxin=document.getElementById('nephrotoxin').value;
+
+let diuretic=document.getElementById('diuretic').value;
+
+let albuminresponse=document.getElementById('albuminresponse').value;
+
+let fluidresponse=document.getElementById('fluidresponse').value;
+
+let diureticresponse=document.getElementById('diureticresponse').value;
+
+let crrt=document.getElementById('crrt').value;
+
+let output='';
+
+output += '==============================\n';
+output += 'RENAL / OLIGURIA TRAJECTORY ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Current creatinine: ';
+output += creatinine + '\n';
+
+if(crtrend==='unknown'){
+output += 'Only single creatinine value available\n';
+}
+
+if(crtrend==='stable'){
+output += 'Stable renal trajectory\n';
+}
+
+if(crtrend==='improving'){
+output += 'Improving renal trajectory\n';
+}
+
+if(crtrend==='worsening'){
+output += 'Worsening renal trajectory\n';
+output += 'Progressive AKI concern\n';
+}
+
+if(crtrend==='rapidrise'){
+output += 'Rapid creatinine rise detected\n';
+output += 'Dynamic AKI phenotype present\n';
+output += 'High concern for evolving AKI/HRS/sepsis-associated AKI\n';
+}
+
+output += '\n';
+
+output += 'Urine output: ';
+output += urine + ' mL/day\n';
+
+if(urine<400){
+output += 'Severe oliguria present\n';
+}
+
+if(urine<100){
+output += 'Near-anuric physiology\n';
+}
+
+output += '\n';
+
+output += 'Urine output trend: ';
+output += uotrend + '\n';
+
+if(uotrend==='stable'){
+output += 'Stable urine output trajectory\n';
+}
+
+if(uotrend==='improving'){
+output += 'Improving urine output\n';
+}
+
+if(uotrend==='falling'){
+output += 'Progressive oliguria detected\n';
+output += 'Reassess perfusion and fluid status urgently\n';
+}
+
+if(uotrend==='anuria'){
+output += 'ANURIA PRESENT\n';
+output += '- Exclude obstruction immediately\n';
+output += '- Evaluate severe hypoperfusion/HRS/ATN\n';
+output += '- Assess urgent RRT indications\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'HEMODYNAMIC ENGINE\n';
+output += '==============================\n\n';
+
+output += 'MAP: ';
+output += map + '\n';
+
+output += 'Lactate: ';
+output += lactate + '\n';
+
+if(map<65){
+output += 'Renal hypoperfusion risk present\n';
+}
+
+if(shock==='yes'){
+output += 'Shock-associated AKI physiology possible\n';
+}
+
+if(vaso==='low'){
+output += 'Low-dose vasopressor support ongoing\n';
+}
+
+if(vaso==='high'){
+output += 'High vasopressor requirement\n';
+}
+
+if(fluidresponsive==='yes'){
+output += 'Fluid responsiveness present\n';
+}
+
+if(fluidresponsive==='no'){
+output += 'Further aggressive fluids may not help\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'FLUID STATUS ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Cumulative balance: ';
+output += balance + ' L\n';
+
+if(balance>3){
+output += 'Significant positive fluid balance\n';
+}
+
+if(balance>5){
+output += 'Marked fluid accumulation\n';
+}
+
+if(overload==='yes'){
+output += 'Fluid overload phenotype present\n';
+}
+
+if(pulmonaryedema==='yes'){
+output += 'Pulmonary edema present\n';
+}
+
+if(iap>=12){
+output += 'Intra-abdominal hypertension present\n';
+}
+
+if(iap>=20){
+output += 'Possible abdominal compartment syndrome physiology\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ETIOLOGY / CONTEXT ENGINE\n';
+output += '==============================\n\n';
+
+if(sepsis==='yes'){
+output += 'Sepsis-associated AKI possible\n';
+}
+
+if(hrs==='yes'){
+output += 'HRS physiology risk present\n';
+}
+
+if(nephrotoxin==='yes'){
+output += 'Nephrotoxin exposure identified\n';
+output += '- Stop nephrotoxins if possible\n';
+}
+
+if(diuretic==='yes'){
+output += 'Recent diuretic exposure noted\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'RESPONSE ASSESSMENT ENGINE\n';
+output += '==============================\n\n';
+
+if(albuminresponse==='improved'){
+output += 'Improvement after albumin challenge\n';
+}
+
+if(albuminresponse==='noresponse'){
+output += 'No response to albumin challenge\n';
+output += 'Consider HRS/intrinsic AKI physiology\n';
+}
+
+if(fluidresponse==='improved'){
+output += 'Fluid-responsive phenotype\n';
+}
+
+if(fluidresponse==='noresponse'){
+output += 'Non-fluid responsive physiology\n';
+}
+
+if(diureticresponse==='good'){
+output += 'Diuretic-responsive congestion phenotype\n';
+}
+
+if(diureticresponse==='poor'){
+output += 'Poor diuretic responsiveness\n';
+}
+
+if(crrt==='yes'){
+output += 'CRRT support ongoing\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'MANAGEMENT ENGINE\n';
+output += '==============================\n\n';
+
+if(
+fluidresponsive==='yes' &&
+overload==='no' &&
+map<65
+){
+
+output += 'Controlled fluid resuscitation reasonable\n';
+
+}
+
+if(
+overload==='yes' ||
+pulmonaryedema==='yes'
+){
+
+output += 'Avoid aggressive fluid administration\n';
+output += 'Deresuscitation strategy may be needed\n';
+
+}
+
+if(
+hrs==='yes' &&
+albuminresponse==='noresponse'
+){
+
+output += 'HRS-directed vasoconstrictor therapy consideration\n';
+
+}
+
+if(
+sepsis==='yes'
+){
+
+output += 'Early infection source control important\n';
+
+}
+
+if(
+nephrotoxin==='yes'
+){
+
+output += 'Discontinue nephrotoxins urgently\n';
+
+}
+
+if(
+iap>=20
+){
+
+output += 'ACS management may improve renal perfusion\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'RRT / ESCALATION ENGINE\n';
+output += '==============================\n\n';
+
+if(
+uotrend==='anuria' ||
+lactate>4 ||
+pulmonaryedema==='yes'
+){
+
+output += 'Evaluate urgent RRT indications\n';
+
+}
+
+if(crrt==='yes'){
+output += 'Continue CRRT reassessment\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'MONITORING ENGINE\n';
+output += '==============================\n\n';
+
+output += '- Hourly urine output\n';
+output += '- Daily creatinine trend\n';
+output += '- MAP and lactate reassessment\n';
+output += '- Fluid balance monitoring\n';
+output += '- Pulmonary edema surveillance\n';
+output += '- Electrolyte monitoring\n';
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: ' + err;
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
