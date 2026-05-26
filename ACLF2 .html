@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra Advanced ACLF / ADCLD ICU Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2400px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:20px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+white-space:pre-line;
+line-height:1.8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ultra Advanced ACLF / ADCLD ICU Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. ACLF Classification</h2>
+
+<label>Known Cirrhosis?</label>
+<select id="cirrhosis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Acute Decompensation Present?</label>
+<select id="decomp">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Bilirubin</label>
+<input type="number" id="bilirubin">
+
+<label>INR</label>
+<input type="number" step="0.1" id="inr">
+
+<label>Creatinine</label>
+<input type="number" step="0.1" id="creatinine">
+
+<label>HE Grade</label>
+<select id="he">
+<option value="0">None</option>
+<option value="1">Grade I</option>
+<option value="2">Grade II</option>
+<option value="3">Grade III</option>
+<option value="4">Grade IV</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>2. Hemodynamics / Shock</h2>
+
+<label>MAP</label>
+<input type="number" id="map">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+<label>Vasopressor Requirement</label>
+<select id="vaso">
+<option value="none">None</option>
+<option value="low">Low dose</option>
+<option value="high">High dose</option>
+</select>
+
+<label>Fluid Responsive?</label>
+<select id="fluidresponsive">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+<option value="unknown">Unknown</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>3. AKI / Renal</h2>
+
+<label>Urine Output (mL/hour)</label>
+<input type="number" id="urine">
+
+<label>Foley Catheter Block Excluded?</label>
+<select id="foley">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Albumin Challenge Done?</label>
+<select id="albumin">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Fluid Overload?</label>
+<select id="overload">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>CRRT Running?</label>
+<select id="crrt">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>4. GI Bleed</h2>
+
+<label>GI Bleeding?</label>
+<select id="gibleed">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Variceal Bleed Suspected?</label>
+<select id="variceal">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Hemoglobin</label>
+<input type="number" step="0.1" id="hb">
+
+<label>Platelets</label>
+<input type="number" id="platelets">
+
+<label>Fibrinogen</label>
+<input type="number" id="fibrinogen">
+
+</div>
+
+<div class="card">
+
+<h2>5. Infection / Sepsis</h2>
+
+<label>Sepsis Present?</label>
+<select id="sepsis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Likely Source</label>
+<select id="source">
+<option value="SBP">SBP</option>
+<option value="Pneumonia">Pneumonia</option>
+<option value="UTI">UTI</option>
+<option value="Bloodstream">Bloodstream</option>
+<option value="Biliary">Biliary</option>
+<option value="Unknown">Unknown</option>
+</select>
+
+<label>Procalcitonin</label>
+<input type="number" step="0.1" id="pct">
+
+</div>
+
+<div class="card">
+
+<h2>6. Altered Sensorium</h2>
+
+<label>Ammonia</label>
+<input type="number" id="ammonia">
+
+<label>Hypoglycemia Present?</label>
+<select id="hypo">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Alternative Causes Evaluated?</label>
+<select id="ams">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>ONSD Elevated?</label>
+<select id="onsd">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>7. Ascites / Electrolytes</h2>
+
+<label>Ascites Present?</label>
+<select id="ascites">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Refractory Ascites?</label>
+<select id="refractory">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Sodium</label>
+<input type="number" id="sodium">
+
+<label>Potassium</label>
+<input type="number" step="0.1" id="potassium">
+
+</div>
+
+</div>
+
+<button onclick="analyzeACLF()">
+Generate Complete ACLF ICU Plan
+</button>
+
+<div class="result">
+
+<h2>Complete ACLF ICU Management Plan</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzeACLF(){
+
+try{
+
+let cirrhosis=document.getElementById('cirrhosis').value;
+let decomp=document.getElementById('decomp').value;
+let bilirubin=parseFloat(document.getElementById('bilirubin').value)||0;
+let inr=parseFloat(document.getElementById('inr').value)||0;
+let creatinine=parseFloat(document.getElementById('creatinine').value)||0;
+let he=parseInt(document.getElementById('he').value)||0;
+
+let map=parseFloat(document.getElementById('map').value)||0;
+let lactate=parseFloat(document.getElementById('lactate').value)||0;
+let vaso=document.getElementById('vaso').value;
+let fluidresponsive=document.getElementById('fluidresponsive').value;
+
+let urine=parseFloat(document.getElementById('urine').value)||0;
+let foley=document.getElementById('foley').value;
+let albumin=document.getElementById('albumin').value;
+let overload=document.getElementById('overload').value;
+let crrt=document.getElementById('crrt').value;
+
+let gibleed=document.getElementById('gibleed').value;
+let variceal=document.getElementById('variceal').value;
+let hb=parseFloat(document.getElementById('hb').value)||0;
+let platelets=parseFloat(document.getElementById('platelets').value)||0;
+let fibrinogen=parseFloat(document.getElementById('fibrinogen').value)||0;
+
+let sepsis=document.getElementById('sepsis').value;
+let source=document.getElementById('source').value;
+let pct=parseFloat(document.getElementById('pct').value)||0;
+
+let ammonia=parseFloat(document.getElementById('ammonia').value)||0;
+let hypo=document.getElementById('hypo').value;
+let ams=document.getElementById('ams').value;
+let onsd=document.getElementById('onsd').value;
+
+let ascites=document.getElementById('ascites').value;
+let refractory=document.getElementById('refractory').value;
+let sodium=parseFloat(document.getElementById('sodium').value)||0;
+let potassium=parseFloat(document.getElementById('potassium').value)||0;
+
+let output='';
+
+output += '==============================\n';
+output += 'ADCLD / ACLF CLASSIFICATION\n';
+output += '==============================\n\n';
+
+let organFailures=0;
+
+if(bilirubin>=12) organFailures++;
+if(creatinine>=2 || crrt==='yes') organFailures++;
+if(he>=3) organFailures++;
+if(inr>=2.5) organFailures++;
+if(vaso==='high') organFailures++;
+
+if(cirrhosis==='yes' && decomp==='yes' && organFailures===0){
+output += 'ADCLD phenotype\n';
+}
+
+if(organFailures===1){
+output += 'ACLF Grade 1\n';
+output += 'Estimated 28-day mortality: ~20–30%\n';
+}
+
+if(organFailures===2){
+output += 'ACLF Grade 2\n';
+output += 'Estimated 28-day mortality: ~30–40%\n';
+}
+
+if(organFailures>=3){
+output += 'ACLF Grade 3\n';
+output += 'Estimated 28-day mortality: ~70–80%\n';
+}
+
+if(organFailures>=2){
+output += '- Early transplant center discussion advised\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'GI BLEED ENGINE\n';
+output += '==============================\n\n';
+
+if(gibleed==='yes'){
+
+output += 'GI bleeding present\n';
+output += '- Large bore IV access\n';
+output += '- Restrictive transfusion strategy\n';
+output += '- Airway protection assessment\n';
+
+if(hb<7){
+output += '- PRBC transfusion reasonable\n';
+}
+
+if(variceal==='yes'){
+output += '- Octreotide infusion\n';
+output += '- Ceftriaxone prophylaxis\n';
+output += '- Urgent endoscopy\n';
+}
+
+else{
+output += '- IV PPI infusion\n';
+}
+
+if(platelets<50000){
+output += '- Platelet correction consideration\n';
+}
+
+if(fibrinogen<150){
+output += '- Cryoprecipitate consideration\n';
+}
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'SEPSIS ENGINE\n';
+output += '==============================\n\n';
+
+if(sepsis==='yes'){
+
+output += 'SEPSIS PRESENT\n';
+output += '- Early antibiotics\n';
+output += '- Source control\n';
+output += '- Blood cultures\n';
+output += '- Dynamic reassessment\n';
+
+if(source==='SBP'){
+output += '- Diagnostic paracentesis\n';
+output += '- Albumin support\n';
+}
+
+if(map<65){
+output += '- Septic shock physiology present\n';
+output += '- Early norepinephrine preferred\n';
+}
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ALTERED SENSORIUM / NEUROCRITICAL ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Differential Diagnosis Considerations:\n';
+output += '- Hepatic encephalopathy\n';
+output += '- Sepsis-associated encephalopathy\n';
+output += '- Hypoglycemia\n';
+output += '- Hyponatremia\n';
+output += '- Stroke/intracranial pathology\n';
+output += '- Wernicke encephalopathy\n';
+output += '- Medication toxicity\n';
+output += '- Delirium\n\n';
+
+if(ams==='no'){
+output += '- Alternative causes not fully evaluated\n';
+}
+
+output += 'HE Grade: ';
+output += he + '\n';
+
+output += 'Ammonia: ';
+output += ammonia + '\n';
+
+if(he>=3){
+output += '- Advanced encephalopathy phenotype\n';
+output += '- Airway protection may be required\n';
+}
+
+output += '\nHE MANAGEMENT:\n';
+output += '- Lactulose titrated to 3–4 bowel movements/day\n';
+output += '- Avoid constipation\n';
+output += '- Correct hypokalemia\n';
+output += '- Avoid oversedation\n';
+
+if(hypo==='yes'){
+output += '- Immediate glucose correction required\n';
+}
+
+if(onsd==='yes'){
+output += '- Increased ICP-risk phenotype\n';
+output += '- Head elevation\n';
+output += '- Hypertonic saline consideration\n';
+}
+
+output += '\nTHIAMINE / WERNICKE PROPHYLAXIS:\n';
+output += '- High suspicion for thiamine deficiency in cirrhosis/ACLF\n';
+output += '- Empiric IV thiamine reasonable\n';
+
+if(he>=2 || hypo==='yes' || ams==='no'){
+output += '- HIGH-DOSE IV THIAMINE ADVISED\n';
+output += '- Example: Thiamine 500 mg IV TID\n';
+}
+
+output += '- Give thiamine before glucose when feasible\n';
+
+output += '\n';
+
+output += '==============================\n';
+output += 'AKI / HRS ENGINE\n';
+output += '==============================\n\n';
+
+if(foley==='no'){
+output += '- Exclude Foley obstruction immediately\n';
+}
+
+if(creatinine>=1.5){
+output += 'AKI phenotype present\n';
+}
+
+if(creatinine>=2 && albumin==='yes' && sepsis==='no'){
+output += '- Possible HRS-AKI phenotype\n';
+output += '- Albumin + vasoconstrictor strategy\n';
+}
+
+if(urine<20){
+output += '- Severe oliguria present\n';
+}
+
+if(overload==='yes'){
+output += '- Deresuscitation strategy may be needed\n';
+}
+
+if(creatinine>3 || urine<20 || overload==='yes'){
+output += '- CRRT consideration\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'FLUID MANAGEMENT ENGINE\n';
+output += '==============================\n\n';
+
+if(fluidresponsive==='yes' && overload==='no'){
+output += '- Controlled fluid resuscitation reasonable\n';
+}
+
+if(fluidresponsive==='no'){
+output += '- Further aggressive fluids unlikely beneficial\n';
+output += '- Early vasopressor strategy preferred\n';
+}
+
+output += '- Balanced crystalloids preferred\n';
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ASCITES / ELECTROLYTE ENGINE\n';
+output += '==============================\n\n';
+
+if(ascites==='yes'){
+output += '- Sodium restriction\n';
+output += '- Diagnostic paracentesis if indicated\n';
+output += '- Spironolactone/furosemide strategy\n';
+}
+
+if(refractory==='yes'){
+output += '- Refractory ascites phenotype\n';
+output += '- Repeated LVP/TIPS consideration\n';
+}
+
+if(sodium<125){
+output += '- Severe hyponatremia present\n';
+output += '- Avoid sodium correction >8 mEq/L per 24 hr\n';
+}
+
+if(potassium<3){
+output += '- Hypokalemia may worsen encephalopathy\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'SUPPORTIVE ICU MANAGEMENT\n';
+output += '==============================\n\n';
+
+output += '- Early enteral nutrition preferred\n';
+output += '- Delirium prevention measures\n';
+output += '- DVT prophylaxis assessment\n';
+output += '- Stress ulcer prophylaxis if indicated\n';
+output += '- Frequent reassessment of transplant candidacy\n';
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: ' + err;
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
