@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra Advanced Oliguria / AKI ICU Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2400px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:20px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+white-space:pre-line;
+line-height:1.8;
+border-radius:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ultra Advanced Oliguria / AKI ICU Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. Renal Parameters</h2>
+
+<label>Patient Weight (kg)</label>
+<input type="number" step="0.1" id="weight">
+
+<label>Creatinine (mg/dL)</label>
+<input type="number" step="0.1" id="creatinine">
+
+<label>Creatinine Trend</label>
+
+<select id="crtrend">
+
+<option value="unknown">
+Unknown / Single Value Only
+</option>
+
+<option value="stable">Stable</option>
+
+<option value="improving">Improving</option>
+
+<option value="worsening">Worsening</option>
+
+<option value="rapidrise">
+Rapid Rise (>0.3 mg/dL in 48h)
+</option>
+
+</select>
+
+<label>Urine Output (mL/hour)</label>
+<input type="number" id="urine">
+
+<label>Duration of Oliguria (hours)</label>
+<input type="number" id="oliguriaduration">
+
+<label>Urine Output Trend</label>
+
+<select id="uotrend">
+
+<option value="stable">Stable</option>
+
+<option value="improving">Improving</option>
+
+<option value="falling">Falling</option>
+
+<option value="anuria">Anuria</option>
+
+</select>
+
+<label>Foley Catheter Present?</label>
+
+<select id="foleypresent">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Foley Checked / Flushed?</label>
+
+<select id="foleychecked">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Foley Functioning Properly?</label>
+
+<select id="foleyworking">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Hydronephrosis on Ultrasound?</label>
+
+<select id="hydro">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>2. Hemodynamics</h2>
+
+<label>MAP</label>
+<input type="number" id="map">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+<label>Vasopressor Requirement</label>
+
+<select id="vaso">
+
+<option value="none">None</option>
+
+<option value="low">Low Dose</option>
+
+<option value="high">High Dose</option>
+
+</select>
+
+<label>Fluid Responsive?</label>
+
+<select id="fluidresponsive">
+
+<option value="unknown">
+Unknown / Not Yet Assessed
+</option>
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>3. Fluid Status</h2>
+
+<label>Cumulative Fluid Balance (L)</label>
+<input type="number" step="0.1" id="balance">
+
+<label>Fluid Overload / Edema?</label>
+
+<select id="overload">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Pulmonary Edema?</label>
+
+<select id="pulmonaryedema">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Bladder Pressure / IAP</label>
+<input type="number" id="iap">
+
+</div>
+
+<div class="card">
+
+<h2>4. Etiology Context</h2>
+
+<label>Sepsis Present?</label>
+
+<select id="sepsis">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Shock Present?</label>
+
+<select id="shock">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Cirrhosis / HRS Risk?</label>
+
+<select id="hrs">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Nephrotoxin Exposure?</label>
+
+<select id="nephrotoxin">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Diuretic Exposure?</label>
+
+<select id="diuretic">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>5. Response Assessment</h2>
+
+<label>Albumin Challenge Response?</label>
+
+<select id="albuminresponse">
+
+<option value="notdone">Not Done</option>
+
+<option value="improved">Improved</option>
+
+<option value="noresponse">No Response</option>
+
+</select>
+
+<label>Fluid Bolus Response?</label>
+
+<select id="fluidresponse">
+
+<option value="notdone">Not Done</option>
+
+<option value="improved">Improved</option>
+
+<option value="noresponse">No Response</option>
+
+</select>
+
+<label>Diuretic Response?</label>
+
+<select id="diureticresponse">
+
+<option value="notapplicable">
+Not Applicable
+</option>
+
+<option value="good">Good Response</option>
+
+<option value="poor">Poor Response</option>
+
+</select>
+
+<label>Furosemide Stress Test Done?</label>
+
+<select id="fstdone">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+<label>Urine Output After FST (mL in 2h)</label>
+<input type="number" id="fstuo">
+
+<label>CRRT Running?</label>
+
+<select id="crrt">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>6. Dialysis Decision</h2>
+
+<label>Potassium</label>
+<input type="number" step="0.1" id="potassium">
+
+<label>pH</label>
+<input type="number" step="0.01" id="ph">
+
+<label>Bicarbonate</label>
+<input type="number" id="hco3">
+
+<label>Uremic Symptoms?</label>
+
+<select id="uremia">
+
+<option value="yes">Yes</option>
+
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+</div>
+
+<button onclick="analyzeOliguria()">
+Generate Complete Oliguria ICU Plan
+</button>
+
+<div class="result">
+
+<h2>Complete Oliguria / AKI Management Plan</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzeOliguria(){
+
+try{
+
+let weight=parseFloat(
+document.getElementById('weight').value
+)||70;
+
+let creatinine=parseFloat(
+document.getElementById('creatinine').value
+)||0;
+
+let crtrend=document.getElementById('crtrend').value;
+
+let urine=parseFloat(
+document.getElementById('urine').value
+)||0;
+
+let oliguriaduration=parseFloat(
+document.getElementById('oliguriaduration').value
+)||0;
+
+let uotrend=document.getElementById('uotrend').value;
+
+let foleypresent=document.getElementById('foleypresent').value;
+
+let foleychecked=document.getElementById('foleychecked').value;
+
+let foleyworking=document.getElementById('foleyworking').value;
+
+let hydro=document.getElementById('hydro').value;
+
+let map=parseFloat(
+document.getElementById('map').value
+)||0;
+
+let lactate=parseFloat(
+document.getElementById('lactate').value
+)||0;
+
+let vaso=document.getElementById('vaso').value;
+
+let fluidresponsive=document.getElementById('fluidresponsive').value;
+
+let balance=parseFloat(
+document.getElementById('balance').value
+)||0;
+
+let overload=document.getElementById('overload').value;
+
+let pulmonaryedema=document.getElementById('pulmonaryedema').value;
+
+let iap=parseFloat(
+document.getElementById('iap').value
+)||0;
+
+let sepsis=document.getElementById('sepsis').value;
+
+let shock=document.getElementById('shock').value;
+
+let hrs=document.getElementById('hrs').value;
+
+let nephrotoxin=document.getElementById('nephrotoxin').value;
+
+let diuretic=document.getElementById('diuretic').value;
+
+let albuminresponse=document.getElementById('albuminresponse').value;
+
+let fluidresponse=document.getElementById('fluidresponse').value;
+
+let diureticresponse=document.getElementById('diureticresponse').value;
+
+let fstdone=document.getElementById('fstdone').value;
+
+let fstuo=parseFloat(
+document.getElementById('fstuo').value
+)||0;
+
+let crrt=document.getElementById('crrt').value;
+
+let potassium=parseFloat(
+document.getElementById('potassium').value
+)||0;
+
+let ph=parseFloat(
+document.getElementById('ph').value
+)||7.4;
+
+let hco3=parseFloat(
+document.getElementById('hco3').value
+)||24;
+
+let uremia=document.getElementById('uremia').value;
+
+let output='';
+
+output += '==============================\n';
+output += 'RENAL / OLIGURIA ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Weight: ';
+output += weight + ' kg\n';
+
+output += 'Creatinine: ';
+output += creatinine + ' mg/dL\n';
+
+output += 'Creatinine trend: ';
+output += crtrend + '\n\n';
+
+let urinePerKg=0;
+
+if(weight>0){
+
+urinePerKg=urine/weight;
+
+}
+
+output += 'Urine output: ';
+output += urine + ' mL/hr\n';
+
+output += 'Urine output per kg: ';
+output += urinePerKg.toFixed(2);
+output += ' mL/kg/hr\n';
+
+if(urinePerKg<0.5){
+
+output += '- KDIGO oliguria threshold crossed\n';
+
+}
+
+if(urinePerKg<0.3){
+
+output += '- Severe oliguria present\n';
+
+}
+
+if(urinePerKg<0.1){
+
+output += '- Near-anuric physiology\n';
+
+}
+
+output += 'Duration of oliguria: ';
+output += oliguriaduration + ' hours\n';
+
+if(oliguriaduration>=6){
+
+output += '- Persistent oliguria\n';
+
+}
+
+if(oliguriaduration>=12){
+
+output += '- Sustained high-risk oliguria phenotype\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'FOLEY / POST-RENAL ENGINE\n';
+output += '==============================\n\n';
+
+if(foleypresent==='no'){
+
+output += '- No Foley catheter present\n';
+
+}
+
+if(
+foleypresent==='yes' &&
+foleychecked==='no'
+){
+
+output += '- Foley not checked/flushed\n';
+output += '- Exclude obstruction urgently\n';
+
+}
+
+if(
+foleypresent==='yes' &&
+foleyworking==='no'
+){
+
+output += '- Foley malfunction/block possible\n';
+output += '- Flush/change Foley\n';
+
+}
+
+if(
+foleypresent==='yes' &&
+foleychecked==='yes' &&
+foleyworking==='yes'
+){
+
+output += '- Foley functioning appropriately\n';
+
+}
+
+if(hydro==='yes'){
+
+output += '- Hydronephrosis present\n';
+output += '- Post-renal AKI possible\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ADVANCED MANAGEMENT STRATEGY ENGINE\n';
+output += '==============================\n\n';
+
+output += '--- FLUID MANAGEMENT STRATEGY ---\n\n';
+
+if(
+fluidresponsive==='yes' &&
+overload==='no'
+){
+
+output += 'RESUSCITATION PHASE ACTIVE\n';
+output += '- Controlled reassessment-guided crystalloids\n';
+output += '- Avoid excessive fluid loading\n\n';
+
+}
+
+if(fluidresponsive==='unknown'){
+
+output += 'Fluid responsiveness uncertain\n';
+output += '- Consider passive leg raise / bedside echo\n\n';
+
+}
+
+if(
+fluidresponsive==='no' &&
+overload==='no'
+){
+
+output += 'MAINTENANCE / PERFUSION STRATEGY\n';
+output += '- Avoid liberal fluids\n';
+output += '- Maintain euvolemia\n\n';
+
+}
+
+if(
+overload==='yes' ||
+pulmonaryedema==='yes'
+){
+
+output += 'DERESUSCITATION STRATEGY\n';
+output += '- Stop unnecessary fluids\n';
+output += '- Negative balance strategy reasonable\n';
+output += '- Diuretic-guided removal if responsive\n\n';
+
+}
+
+if(balance>5){
+
+output += 'Marked fluid accumulation present\n';
+
+}
+
+output += '--- VASOPRESSOR STRATEGY ---\n\n';
+
+if(map<65){
+
+output += '- Renal perfusion pressure inadequate\n';
+
+}
+
+if(
+map<65 &&
+fluidresponsive==='no'
+){
+
+output += '- Vasopressor escalation may help more than fluids\n';
+
+}
+
+if(vaso==='low'){
+
+output += '- Low-dose vasopressor ongoing\n';
+
+}
+
+if(vaso==='high'){
+
+output += '- Severe shock physiology\n';
+output += '- CRRT preferred if dialysis required\n';
+
+}
+
+if(hrs==='yes'){
+
+output += '- HRS vasoconstrictor strategy may help\n';
+
+}
+
+output += '\n';
+
+let urgentRRT=false;
+
+if(potassium>=6){
+
+urgentRRT=true;
+
+}
+
+if(ph<7.15){
+
+urgentRRT=true;
+
+}
+
+if(
+pulmonaryedema==='yes' &&
+overload==='yes'
+){
+
+urgentRRT=true;
+
+}
+
+if(uremia==='yes'){
+
+urgentRRT=true;
+
+}
+
+output += '--- FUROSEMIDE STRESS TEST ENGINE ---\n\n';
+
+let fstSuitable=true;
+
+if(fluidresponsive==='yes'){
+
+fstSuitable=false;
+
+output += '- FST not ideal currently\n';
+output += '- Correct hypovolemia first\n\n';
+
+}
+
+if(map<65){
+
+fstSuitable=false;
+
+output += '- FST should be deferred until hemodynamically stable\n\n';
+
+}
+
+if(
+foleypresent==='yes' &&
+foleyworking==='no'
+){
+
+fstSuitable=false;
+
+output += '- FST invalid until Foley issue corrected\n\n';
+
+}
+
+if(hydro==='yes'){
+
+fstSuitable=false;
+
+output += '- Obstructive AKI possible\n';
+output += '- Relieve obstruction first\n\n';
+
+}
+
+if(urgentRRT===true){
+
+fstSuitable=false;
+
+output += '- Immediate dialysis indication present\n';
+output += '- FST not appropriate\n\n';
+
+}
+
+if(fstSuitable===true){
+
+let fstDose=1;
+
+if(diuretic==='yes'){
+
+fstDose=1.5;
+
+}
+
+let totalDose=(weight*fstDose).toFixed(0);
+
+output += 'FST CAN BE CONSIDERED\n';
+output += '- Suggested IV furosemide dose: ';
+output += totalDose + ' mg\n';
+output += '- Monitor urine output for 2 hours\n';
+output += '- >200 mL suggests better tubular reserve\n';
+output += '- <200 mL suggests high-risk AKI\n\n';
+
+}
+
+if(fstdone==='yes'){
+
+if(fstuo>=200){
+
+output += '- GOOD FST RESPONSE\n';
+
+}
+else{
+
+output += '- POOR FST RESPONSE\n';
+output += '- High risk progression to severe AKI\n';
+
+}
+
+}
+
+output += '\n';
+
+output += '--- RRT / DIALYSIS STRATEGY ---\n\n';
+
+if(urgentRRT){
+
+output += 'URGENT DIALYSIS / CRRT EVALUATION ADVISED\n';
+
+if(
+shock==='yes' ||
+vaso==='high'
+){
+
+output += '- CRRT preferred\n';
+
+}
+else{
+
+output += '- Intermittent HD feasible\n';
+
+}
+
+}
+else{
+
+output += 'No absolute urgent dialysis trigger currently detected\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'MONITORING ENGINE\n';
+output += '==============================\n\n';
+
+output += '- Hourly urine output\n';
+output += '- Daily creatinine trend\n';
+output += '- MAP reassessment\n';
+output += '- Electrolyte monitoring\n';
+output += '- Fluid balance reassessment\n';
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: ' + err;
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
