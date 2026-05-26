@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra Advanced ICU Fluid Management Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2500px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:22px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+line-height:1.8;
+white-space:pre-line;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ultra Advanced ICU Fluid Management Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. Basics</h2>
+
+<label>Weight (kg)</label>
+<input type="number" id="weight">
+
+<label>Shock Present?</label>
+<select id="shock">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Sepsis Present?</label>
+<select id="sepsis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Mechanical Ventilation?</label>
+<select id="vent">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>ARDS Present?</label>
+<select id="ards">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Fever Present?</label>
+<select id="fever">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>2. Hemodynamics</h2>
+
+<label>MAP</label>
+<input type="number" id="map">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+<label>Heart Rate</label>
+<input type="number" id="hr">
+
+<label>Fluid Responsiveness</label>
+
+<select id="fluidresponsive">
+
+<option value="unknown">
+Unknown / Not Yet Assessed
+</option>
+
+<option value="yes">
+Responsive
+</option>
+
+<option value="no">
+Nonresponsive
+</option>
+
+</select>
+
+<label>Vasopressor Requirement</label>
+
+<select id="vaso">
+
+<option value="none">None</option>
+<option value="low">Low Dose</option>
+<option value="high">High Dose</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>3. Renal / AKI</h2>
+
+<label>Creatinine</label>
+<input type="number" step="0.1" id="creatinine">
+
+<label>Creatinine Trend</label>
+
+<select id="crtrend">
+
+<option value="unknown">
+Unknown / Single Value Only
+</option>
+
+<option value="stable">Stable</option>
+<option value="improving">Improving</option>
+<option value="worsening">Worsening</option>
+
+<option value="rapidrise">
+Rapid Rise (>0.3 mg/dL in 48h)
+</option>
+
+</select>
+
+<label>Urine Output (mL/day)</label>
+<input type="number" id="urine">
+
+<label>Urine Output Trend</label>
+
+<select id="uotrend">
+
+<option value="stable">Stable</option>
+<option value="improving">Improving</option>
+<option value="falling">Falling</option>
+<option value="anuria">Anuria</option>
+
+</select>
+
+<label>Potassium</label>
+<input type="number" step="0.1" id="potassium">
+
+<label>pH</label>
+<input type="number" step="0.01" id="ph">
+
+<label>Bicarbonate</label>
+<input type="number" id="hco3">
+
+<label>Uremic Symptoms?</label>
+
+<select id="uremia">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>4. Congestion / Overload</h2>
+
+<label>Cumulative Fluid Balance (L)</label>
+<input type="number" step="0.1" id="balance">
+
+<label>Peripheral Edema?</label>
+
+<select id="edema">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Pulmonary Edema?</label>
+
+<select id="pulmonaryedema">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>PaO2/FiO2 Ratio</label>
+<input type="number" id="pfratio">
+
+<label>Bladder Pressure / IAP</label>
+<input type="number" id="iap">
+
+</div>
+
+<div class="card">
+
+<h2>5. Clinical Phenotypes</h2>
+
+<label>Recent Major Abdominal Surgery?</label>
+
+<select id="abdsurgery">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Acute Pancreatitis?</label>
+
+<select id="pancreatitis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>LV Dysfunction?</label>
+
+<select id="lv">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>RV Dysfunction / Pulmonary HTN?</label>
+
+<select id="rv">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Cirrhosis / HRS Risk?</label>
+
+<select id="hrs">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>CKD Present?</label>
+
+<select id="ckd">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>6. Response Assessment</h2>
+
+<label>Albumin Challenge Response?</label>
+
+<select id="albuminresponse">
+
+<option value="notdone">Not Done</option>
+<option value="improved">Improved</option>
+<option value="noresponse">No Response</option>
+
+</select>
+
+<label>Furosemide Stress Test Performed?</label>
+
+<select id="fstdone">
+<option value="no">No</option>
+<option value="yes">Yes</option>
+</select>
+
+<label>Urine Output After FST (mL in 2h)</label>
+<input type="number" id="fstuo">
+
+<label>CRRT Running?</label>
+
+<select id="crrt">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>GI / External Ongoing Losses (mL/day)</label>
+<input type="number" id="losses">
+
+</div>
+
+</div>
+
+<button onclick="analyzeFluid()">
+Generate Complete Fluid Plan
+</button>
+
+<div class="result">
+
+<h2>Complete ICU Fluid Strategy</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzeFluid(){
+
+try{
+
+let weight=parseFloat(document.getElementById('weight').value)||70;
+
+let shock=document.getElementById('shock').value;
+
+let sepsis=document.getElementById('sepsis').value;
+
+let vent=document.getElementById('vent').value;
+
+let ards=document.getElementById('ards').value;
+
+let fever=document.getElementById('fever').value;
+
+let map=parseFloat(document.getElementById('map').value)||0;
+
+let lactate=parseFloat(document.getElementById('lactate').value)||0;
+
+let hr=parseFloat(document.getElementById('hr').value)||0;
+
+let fluidresponsive=document.getElementById('fluidresponsive').value;
+
+let vaso=document.getElementById('vaso').value;
+
+let creatinine=parseFloat(document.getElementById('creatinine').value)||0;
+
+let crtrend=document.getElementById('crtrend').value;
+
+let urine=parseFloat(document.getElementById('urine').value)||0;
+
+let uotrend=document.getElementById('uotrend').value;
+
+let potassium=parseFloat(document.getElementById('potassium').value)||0;
+
+let ph=parseFloat(document.getElementById('ph').value)||7.4;
+
+let hco3=parseFloat(document.getElementById('hco3').value)||24;
+
+let uremia=document.getElementById('uremia').value;
+
+let balance=parseFloat(document.getElementById('balance').value)||0;
+
+let edema=document.getElementById('edema').value;
+
+let pulmonaryedema=document.getElementById('pulmonaryedema').value;
+
+let pfratio=parseFloat(document.getElementById('pfratio').value)||0;
+
+let iap=parseFloat(document.getElementById('iap').value)||0;
+
+let abdsurgery=document.getElementById('abdsurgery').value;
+
+let pancreatitis=document.getElementById('pancreatitis').value;
+
+let lv=document.getElementById('lv').value;
+
+let rv=document.getElementById('rv').value;
+
+let hrs=document.getElementById('hrs').value;
+
+let ckd=document.getElementById('ckd').value;
+
+let albuminresponse=document.getElementById('albuminresponse').value;
+
+let fstdone=document.getElementById('fstdone').value;
+
+let fstuo=parseFloat(document.getElementById('fstuo').value)||0;
+
+let crrt=document.getElementById('crrt').value;
+
+let losses=parseFloat(document.getElementById('losses').value)||0;
+
+let output='';
+
+let phenotypes=[];
+
+if(fluidresponsive==='yes' && balance<3 && pulmonaryedema==='no'){
+phenotypes.push('Fluid Responsive Hypovolemia');
+}
+
+if(fluidresponsive==='unknown' && shock==='yes'){
+phenotypes.push('Undifferentiated Shock Physiology');
+}
+
+if(sepsis==='yes' && fluidresponsive==='no'){
+phenotypes.push('Vasodilatory Septic Phenotype');
+}
+
+if(balance>5 || pulmonaryedema==='yes'){
+phenotypes.push('Congestive / Overload Phenotype');
+}
+
+if(shock==='yes' && pulmonaryedema==='yes'){
+phenotypes.push('Mixed Shock + Congestion');
+}
+
+if(abdsurgery==='yes'){
+phenotypes.push('Post-Abdominal Surgery');
+}
+
+if(pancreatitis==='yes'){
+phenotypes.push('Acute Pancreatitis');
+}
+
+if(lv==='yes'){
+phenotypes.push('LV Dysfunction');
+}
+
+if(rv==='yes'){
+phenotypes.push('RV Dysfunction');
+}
+
+if(hrs==='yes'){
+phenotypes.push('Cirrhotic Vasodilatory');
+}
+
+if(ckd==='yes'){
+phenotypes.push('CKD Fluid-Sensitive');
+}
+
+if(crtrend==='rapidrise' || uotrend==='falling'){
+phenotypes.push('Dynamic AKI');
+}
+
+let fluidstage='';
+
+if(fluidresponsive==='unknown' && shock==='yes'){
+fluidstage='INITIAL ASSESSMENT';
+}
+else if(shock==='yes' && map<65 && fluidresponsive==='yes'){
+fluidstage='RESCUE';
+}
+else if(fluidresponsive==='yes' && lactate>2){
+fluidstage='OPTIMIZATION';
+}
+else if(balance>5 || pulmonaryedema==='yes'){
+fluidstage='DERESUSCITATION';
+}
+else{
+fluidstage='STABILIZATION';
+}
+
+let maintenance=Math.round(weight*1);
+
+if(
+ards==='yes' ||
+pulmonaryedema==='yes' ||
+lv==='yes'
+){
+maintenance=Math.round(weight*0.5);
+}
+
+if(
+pancreatitis==='yes' &&
+fluidstage==='RESCUE'
+){
+maintenance=Math.round(weight*1.5);
+}
+
+if(fever==='yes'){
+maintenance+=15;
+}
+
+output+='==============================\n';
+output+='ACTIVE PHYSIOLOGIC PHENOTYPES\n';
+output+='==============================\n\n';
+
+for(let i=0;i<phenotypes.length;i++){
+output+='- '+phenotypes[i]+'\n';
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='FLUID STAGE ENGINE\n';
+output+='==============================\n\n';
+
+output+='Current stage: '+fluidstage+'\n\n';
+
+output+='==============================\n';
+output+='FINAL FLUID PRESCRIPTION\n';
+output+='==============================\n\n';
+
+let resusplan='No active resuscitation currently';
+
+let replacementplan='No major replacement requirement';
+
+let deresusplan='No active deresuscitation currently';
+
+let nettarget='Neutral balance target';
+
+if(fluidstage==='INITIAL ASSESSMENT'){
+
+resusplan=
+'Assess responsiveness first. Avoid blind repeated boluses. Consider early vasopressors if persistent hypotension.';
+
+}
+
+if(fluidstage==='RESCUE'){
+
+resusplan=
+'250–500 mL balanced crystalloid bolus with reassessment after each bolus.';
+
+nettarget=
+'Positive balance acceptable temporarily during rescue phase';
+
+}
+
+if(fluidstage==='OPTIMIZATION'){
+
+resusplan=
+'Small guided boluses only if responsive. Prefer vasopressors over repeated ineffective fluids.';
+
+nettarget=
+'Slightly positive to neutral balance';
+
+}
+
+if(fluidstage==='STABILIZATION'){
+
+resusplan=
+'No major bolus requirement currently.';
+
+nettarget=
+'Neutral daily balance preferred';
+
+}
+
+if(fluidstage==='DERESUSCITATION'){
+
+deresusplan=
+'Active fluid removal strategy. Consider diuretics or CRRT-assisted deresuscitation.';
+
+nettarget=
+'Target net negative 500–1000 mL/day initially';
+
+}
+
+if(losses>0){
+
+replacementplan=
+'Replace approximately 50–100% of ongoing losses depending on congestion/perfusion state.';
+
+}
+
+if(
+pulmonaryedema==='yes' ||
+balance>5
+){
+
+replacementplan +=
+' Avoid aggressive replacement due to overload risk.';
+
+}
+
+output += 'RESUSCITATION:\n';
+output += resusplan + '\n\n';
+
+output += 'MAINTENANCE:\n';
+
+output += maintenance;
+output += ' mL/hr balanced crystalloid maintenance\n';
+
+if(
+ards==='yes' ||
+pulmonaryedema==='yes'
+){
+
+output += '- Conservative maintenance strategy favored\n';
+
+}
+
+if(
+pancreatitis==='yes' &&
+fluidstage==='RESCUE'
+){
+
+output += '- Higher early maintenance requirement possible in pancreatitis\n';
+
+}
+
+output += '\n';
+
+output += 'REPLACEMENT:\n';
+output += replacementplan + '\n\n';
+
+output += 'DERESUSCITATION:\n';
+output += deresusplan + '\n\n';
+
+output += 'NET DAILY TARGET:\n';
+output += nettarget + '\n\n';
+
+output+='==============================\n';
+output+='FUROSEMIDE STRESS TEST\n';
+output+='==============================\n\n';
+
+if(fstdone==='yes'){
+
+if(fstuo>=200){
+
+output+='FST responsive phenotype\n';
+output+='- Lower immediate dialysis risk\n';
+
+}
+else{
+
+output+='Poor FST response\n';
+output+='- High-risk AKI phenotype\n';
+output+='- Earlier CRRT consideration reasonable\n';
+
+}
+
+}
+else{
+
+output+='FST not performed\n';
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='RRT / DIALYSIS ENGINE\n';
+output+='==============================\n\n';
+
+let urgentRRT=false;
+
+if(potassium>=6){
+urgentRRT=true;
+output+='- Severe hyperkalemia\n';
+}
+
+if(ph<7.15){
+urgentRRT=true;
+output+='- Severe metabolic acidosis\n';
+}
+
+if(
+pulmonaryedema==='yes' &&
+balance>5
+){
+urgentRRT=true;
+output+='- Refractory overload physiology\n';
+}
+
+if(uotrend==='anuria'){
+output+='- Persistent anuric AKI\n';
+}
+
+if(uremia==='yes'){
+urgentRRT=true;
+output+='- Symptomatic uremia\n';
+}
+
+if(
+fstdone==='yes' &&
+fstuo<200
+){
+output+='- Poor FST response\n';
+}
+
+if(urgentRRT){
+
+output+='\nURGENT RRT/CRRT EVALUATION ADVISED\n';
+
+if(
+shock==='yes' ||
+vaso==='high'
+){
+
+output+='- CRRT preferred\n';
+
+}
+else{
+
+output+='- Intermittent HD feasible\n';
+
+}
+
+}
+else{
+
+output+='\nNo absolute urgent dialysis trigger currently\n';
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='ICU SAFETY ALERTS\n';
+output+='==============================\n\n';
+
+if(pulmonaryedema==='yes'){
+output+='- Aggressive fluids may worsen oxygenation\n';
+}
+
+if(rv==='yes' && balance>5){
+output+='- RV overload may worsen hemodynamics\n';
+}
+
+if(iap>=20){
+output+='- Abdominal compartment syndrome risk\n';
+}
+
+if(crtrend==='rapidrise' && balance>5){
+output+='- Congestion-associated AKI possible\n';
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='REASSESSMENT ENGINE\n';
+output+='==============================\n\n';
+
+if(
+shock==='yes' ||
+vaso==='high' ||
+fluidstage==='RESCUE'
+){
+
+output+='- Reassess every 1 hour\n';
+
+}
+else if(fluidstage==='OPTIMIZATION'){
+
+output+='- Reassess every 2–4 hours\n';
+
+}
+else{
+
+output+='- Reassess every 6–12 hours\n';
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='MONITORING TARGETS\n';
+output+='==============================\n\n';
+
+output+='- MAP >65\n';
+output+='- Improving urine output\n';
+output+='- Lactate clearance\n';
+output+='- Avoid progressive overload\n';
+output+='- Monitor creatinine trajectory\n';
+output+='- Daily cumulative balance\n';
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: '+err;
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html><!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra Advanced ICU Fluid Management Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2500px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:22px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+line-height:1.8;
+white-space:pre-line;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ultra Advanced ICU Fluid Management Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. Basics</h2>
+
+<label>Weight (kg)</label>
+<input type="number" id="weight">
+
+<label>Shock Present?</label>
+<select id="shock">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Sepsis Present?</label>
+<select id="sepsis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Mechanical Ventilation?</label>
+<select id="vent">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>ARDS Present?</label>
+<select id="ards">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Fever Present?</label>
+<select id="fever">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>2. Hemodynamics</h2>
+
+<label>MAP</label>
+<input type="number" id="map">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+<label>Heart Rate</label>
+<input type="number" id="hr">
+
+<label>Fluid Responsiveness</label>
+
+<select id="fluidresponsive">
+
+<option value="unknown">
+Unknown / Not Yet Assessed
+</option>
+
+<option value="yes">
+Responsive
+</option>
+
+<option value="no">
+Nonresponsive
+</option>
+
+</select>
+
+<label>Vasopressor Requirement</label>
+
+<select id="vaso">
+
+<option value="none">None</option>
+<option value="low">Low Dose</option>
+<option value="high">High Dose</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>3. Renal / AKI</h2>
+
+<label>Creatinine</label>
+<input type="number" step="0.1" id="creatinine">
+
+<label>Creatinine Trend</label>
+
+<select id="crtrend">
+
+<option value="unknown">
+Unknown / Single Value Only
+</option>
+
+<option value="stable">Stable</option>
+<option value="improving">Improving</option>
+<option value="worsening">Worsening</option>
+
+<option value="rapidrise">
+Rapid Rise (>0.3 mg/dL in 48h)
+</option>
+
+</select>
+
+<label>Urine Output (mL/day)</label>
+<input type="number" id="urine">
+
+<label>Urine Output Trend</label>
+
+<select id="uotrend">
+
+<option value="stable">Stable</option>
+<option value="improving">Improving</option>
+<option value="falling">Falling</option>
+<option value="anuria">Anuria</option>
+
+</select>
+
+<label>Potassium</label>
+<input type="number" step="0.1" id="potassium">
+
+<label>pH</label>
+<input type="number" step="0.01" id="ph">
+
+<label>Bicarbonate</label>
+<input type="number" id="hco3">
+
+<label>Uremic Symptoms?</label>
+
+<select id="uremia">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>4. Congestion / Overload</h2>
+
+<label>Cumulative Fluid Balance (L)</label>
+<input type="number" step="0.1" id="balance">
+
+<label>Peripheral Edema?</label>
+
+<select id="edema">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Pulmonary Edema?</label>
+
+<select id="pulmonaryedema">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>PaO2/FiO2 Ratio</label>
+<input type="number" id="pfratio">
+
+<label>Bladder Pressure / IAP</label>
+<input type="number" id="iap">
+
+</div>
+
+<div class="card">
+
+<h2>5. Clinical Phenotypes</h2>
+
+<label>Recent Major Abdominal Surgery?</label>
+
+<select id="abdsurgery">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Acute Pancreatitis?</label>
+
+<select id="pancreatitis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>LV Dysfunction?</label>
+
+<select id="lv">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>RV Dysfunction / Pulmonary HTN?</label>
+
+<select id="rv">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Cirrhosis / HRS Risk?</label>
+
+<select id="hrs">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>CKD Present?</label>
+
+<select id="ckd">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>6. Response Assessment</h2>
+
+<label>Albumin Challenge Response?</label>
+
+<select id="albuminresponse">
+
+<option value="notdone">Not Done</option>
+<option value="improved">Improved</option>
+<option value="noresponse">No Response</option>
+
+</select>
+
+<label>Furosemide Stress Test Performed?</label>
+
+<select id="fstdone">
+<option value="no">No</option>
+<option value="yes">Yes</option>
+</select>
+
+<label>Urine Output After FST (mL in 2h)</label>
+<input type="number" id="fstuo">
+
+<label>CRRT Running?</label>
+
+<select id="crrt">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>GI / External Ongoing Losses (mL/day)</label>
+<input type="number" id="losses">
+
+</div>
+
+</div>
+
+<button onclick="analyzeFluid()">
+Generate Complete Fluid Plan
+</button>
+
+<div class="result">
+
+<h2>Complete ICU Fluid Strategy</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzeFluid(){
+
+try{
+
+let weight=parseFloat(document.getElementById('weight').value)||70;
+
+let shock=document.getElementById('shock').value;
+
+let sepsis=document.getElementById('sepsis').value;
+
+let vent=document.getElementById('vent').value;
+
+let ards=document.getElementById('ards').value;
+
+let fever=document.getElementById('fever').value;
+
+let map=parseFloat(document.getElementById('map').value)||0;
+
+let lactate=parseFloat(document.getElementById('lactate').value)||0;
+
+let hr=parseFloat(document.getElementById('hr').value)||0;
+
+let fluidresponsive=document.getElementById('fluidresponsive').value;
+
+let vaso=document.getElementById('vaso').value;
+
+let creatinine=parseFloat(document.getElementById('creatinine').value)||0;
+
+let crtrend=document.getElementById('crtrend').value;
+
+let urine=parseFloat(document.getElementById('urine').value)||0;
+
+let uotrend=document.getElementById('uotrend').value;
+
+let potassium=parseFloat(document.getElementById('potassium').value)||0;
+
+let ph=parseFloat(document.getElementById('ph').value)||7.4;
+
+let hco3=parseFloat(document.getElementById('hco3').value)||24;
+
+let uremia=document.getElementById('uremia').value;
+
+let balance=parseFloat(document.getElementById('balance').value)||0;
+
+let edema=document.getElementById('edema').value;
+
+let pulmonaryedema=document.getElementById('pulmonaryedema').value;
+
+let pfratio=parseFloat(document.getElementById('pfratio').value)||0;
+
+let iap=parseFloat(document.getElementById('iap').value)||0;
+
+let abdsurgery=document.getElementById('abdsurgery').value;
+
+let pancreatitis=document.getElementById('pancreatitis').value;
+
+let lv=document.getElementById('lv').value;
+
+let rv=document.getElementById('rv').value;
+
+let hrs=document.getElementById('hrs').value;
+
+let ckd=document.getElementById('ckd').value;
+
+let albuminresponse=document.getElementById('albuminresponse').value;
+
+let fstdone=document.getElementById('fstdone').value;
+
+let fstuo=parseFloat(document.getElementById('fstuo').value)||0;
+
+let crrt=document.getElementById('crrt').value;
+
+let losses=parseFloat(document.getElementById('losses').value)||0;
+
+let output='';
+
+let phenotypes=[];
+
+if(fluidresponsive==='yes' && balance<3 && pulmonaryedema==='no'){
+phenotypes.push('Fluid Responsive Hypovolemia');
+}
+
+if(fluidresponsive==='unknown' && shock==='yes'){
+phenotypes.push('Undifferentiated Shock Physiology');
+}
+
+if(sepsis==='yes' && fluidresponsive==='no'){
+phenotypes.push('Vasodilatory Septic Phenotype');
+}
+
+if(balance>5 || pulmonaryedema==='yes'){
+phenotypes.push('Congestive / Overload Phenotype');
+}
+
+if(shock==='yes' && pulmonaryedema==='yes'){
+phenotypes.push('Mixed Shock + Congestion');
+}
+
+if(abdsurgery==='yes'){
+phenotypes.push('Post-Abdominal Surgery');
+}
+
+if(pancreatitis==='yes'){
+phenotypes.push('Acute Pancreatitis');
+}
+
+if(lv==='yes'){
+phenotypes.push('LV Dysfunction');
+}
+
+if(rv==='yes'){
+phenotypes.push('RV Dysfunction');
+}
+
+if(hrs==='yes'){
+phenotypes.push('Cirrhotic Vasodilatory');
+}
+
+if(ckd==='yes'){
+phenotypes.push('CKD Fluid-Sensitive');
+}
+
+if(crtrend==='rapidrise' || uotrend==='falling'){
+phenotypes.push('Dynamic AKI');
+}
+
+let fluidstage='';
+
+if(fluidresponsive==='unknown' && shock==='yes'){
+fluidstage='INITIAL ASSESSMENT';
+}
+else if(shock==='yes' && map<65 && fluidresponsive==='yes'){
+fluidstage='RESCUE';
+}
+else if(fluidresponsive==='yes' && lactate>2){
+fluidstage='OPTIMIZATION';
+}
+else if(balance>5 || pulmonaryedema==='yes'){
+fluidstage='DERESUSCITATION';
+}
+else{
+fluidstage='STABILIZATION';
+}
+
+let maintenance=Math.round(weight*1);
+
+if(
+ards==='yes' ||
+pulmonaryedema==='yes' ||
+lv==='yes'
+){
+maintenance=Math.round(weight*0.5);
+}
+
+if(
+pancreatitis==='yes' &&
+fluidstage==='RESCUE'
+){
+maintenance=Math.round(weight*1.5);
+}
+
+if(fever==='yes'){
+maintenance+=15;
+}
+
+output+='==============================\n';
+output+='ACTIVE PHYSIOLOGIC PHENOTYPES\n';
+output+='==============================\n\n';
+
+for(let i=0;i<phenotypes.length;i++){
+output+='- '+phenotypes[i]+'\n';
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='FLUID STAGE ENGINE\n';
+output+='==============================\n\n';
+
+output+='Current stage: '+fluidstage+'\n\n';
+
+output+='==============================\n';
+output+='FINAL FLUID PRESCRIPTION\n';
+output+='==============================\n\n';
+
+let resusplan='No active resuscitation currently';
+
+let replacementplan='No major replacement requirement';
+
+let deresusplan='No active deresuscitation currently';
+
+let nettarget='Neutral balance target';
+
+if(fluidstage==='INITIAL ASSESSMENT'){
+
+resusplan=
+'Assess responsiveness first. Avoid blind repeated boluses. Consider early vasopressors if persistent hypotension.';
+
+}
+
+if(fluidstage==='RESCUE'){
+
+resusplan=
+'250–500 mL balanced crystalloid bolus with reassessment after each bolus.';
+
+nettarget=
+'Positive balance acceptable temporarily during rescue phase';
+
+}
+
+if(fluidstage==='OPTIMIZATION'){
+
+resusplan=
+'Small guided boluses only if responsive. Prefer vasopressors over repeated ineffective fluids.';
+
+nettarget=
+'Slightly positive to neutral balance';
+
+}
+
+if(fluidstage==='STABILIZATION'){
+
+resusplan=
+'No major bolus requirement currently.';
+
+nettarget=
+'Neutral daily balance preferred';
+
+}
+
+if(fluidstage==='DERESUSCITATION'){
+
+deresusplan=
+'Active fluid removal strategy. Consider diuretics or CRRT-assisted deresuscitation.';
+
+nettarget=
+'Target net negative 500–1000 mL/day initially';
+
+}
+
+if(losses>0){
+
+replacementplan=
+'Replace approximately 50–100% of ongoing losses depending on congestion/perfusion state.';
+
+}
+
+if(
+pulmonaryedema==='yes' ||
+balance>5
+){
+
+replacementplan +=
+' Avoid aggressive replacement due to overload risk.';
+
+}
+
+output += 'RESUSCITATION:\n';
+output += resusplan + '\n\n';
+
+output += 'MAINTENANCE:\n';
+
+output += maintenance;
+output += ' mL/hr balanced crystalloid maintenance\n';
+
+if(
+ards==='yes' ||
+pulmonaryedema==='yes'
+){
+
+output += '- Conservative maintenance strategy favored\n';
+
+}
+
+if(
+pancreatitis==='yes' &&
+fluidstage==='RESCUE'
+){
+
+output += '- Higher early maintenance requirement possible in pancreatitis\n';
+
+}
+
+output += '\n';
+
+output += 'REPLACEMENT:\n';
+output += replacementplan + '\n\n';
+
+output += 'DERESUSCITATION:\n';
+output += deresusplan + '\n\n';
+
+output += 'NET DAILY TARGET:\n';
+output += nettarget + '\n\n';
+
+output+='==============================\n';
+output+='FUROSEMIDE STRESS TEST\n';
+output+='==============================\n\n';
+
+if(fstdone==='yes'){
+
+if(fstuo>=200){
+
+output+='FST responsive phenotype\n';
+output+='- Lower immediate dialysis risk\n';
+
+}
+else{
+
+output+='Poor FST response\n';
+output+='- High-risk AKI phenotype\n';
+output+='- Earlier CRRT consideration reasonable\n';
+
+}
+
+}
+else{
+
+output+='FST not performed\n';
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='RRT / DIALYSIS ENGINE\n';
+output+='==============================\n\n';
+
+let urgentRRT=false;
+
+if(potassium>=6){
+urgentRRT=true;
+output+='- Severe hyperkalemia\n';
+}
+
+if(ph<7.15){
+urgentRRT=true;
+output+='- Severe metabolic acidosis\n';
+}
+
+if(
+pulmonaryedema==='yes' &&
+balance>5
+){
+urgentRRT=true;
+output+='- Refractory overload physiology\n';
+}
+
+if(uotrend==='anuria'){
+output+='- Persistent anuric AKI\n';
+}
+
+if(uremia==='yes'){
+urgentRRT=true;
+output+='- Symptomatic uremia\n';
+}
+
+if(
+fstdone==='yes' &&
+fstuo<200
+){
+output+='- Poor FST response\n';
+}
+
+if(urgentRRT){
+
+output+='\nURGENT RRT/CRRT EVALUATION ADVISED\n';
+
+if(
+shock==='yes' ||
+vaso==='high'
+){
+
+output+='- CRRT preferred\n';
+
+}
+else{
+
+output+='- Intermittent HD feasible\n';
+
+}
+
+}
+else{
+
+output+='\nNo absolute urgent dialysis trigger currently\n';
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='ICU SAFETY ALERTS\n';
+output+='==============================\n\n';
+
+if(pulmonaryedema==='yes'){
+output+='- Aggressive fluids may worsen oxygenation\n';
+}
+
+if(rv==='yes' && balance>5){
+output+='- RV overload may worsen hemodynamics\n';
+}
+
+if(iap>=20){
+output+='- Abdominal compartment syndrome risk\n';
+}
+
+if(crtrend==='rapidrise' && balance>5){
+output+='- Congestion-associated AKI possible\n';
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='REASSESSMENT ENGINE\n';
+output+='==============================\n\n';
+
+if(
+shock==='yes' ||
+vaso==='high' ||
+fluidstage==='RESCUE'
+){
+
+output+='- Reassess every 1 hour\n';
+
+}
+else if(fluidstage==='OPTIMIZATION'){
+
+output+='- Reassess every 2–4 hours\n';
+
+}
+else{
+
+output+='- Reassess every 6–12 hours\n';
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='MONITORING TARGETS\n';
+output+='==============================\n\n';
+
+output+='- MAP >65\n';
+output+='- Improving urine output\n';
+output+='- Lactate clearance\n';
+output+='- Avoid progressive overload\n';
+output+='- Monitor creatinine trajectory\n';
+output+='- Daily cumulative balance\n';
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: '+err;
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
