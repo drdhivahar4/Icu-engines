@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra Advanced ALF ICU Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2400px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:20px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+white-space:pre-line;
+line-height:1.8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ultra Advanced Acute Liver Failure ICU Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. Diagnostic Entry</h2>
+
+<label>Known Chronic Liver Disease?</label>
+<select id="cld">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>AST</label>
+<input type="number" id="ast">
+
+<label>ALT</label>
+<input type="number" id="alt">
+
+<label>INR</label>
+<input type="number" step="0.1" id="inr">
+
+<label>Encephalopathy Grade</label>
+<select id="he">
+<option value="0">None</option>
+<option value="1">Grade I</option>
+<option value="2">Grade II</option>
+<option value="3">Grade III</option>
+<option value="4">Grade IV</option>
+</select>
+
+<label>Etiology</label>
+
+<select id="etiology">
+
+<option value="Paracetamol">Paracetamol</option>
+<option value="HBV">HBV</option>
+<option value="HAV">HAV</option>
+<option value="HEV">HEV</option>
+<option value="HSV">HSV</option>
+<option value="Drug induced">Drug induced liver injury</option>
+<option value="Anti TB">Anti-TB drug related</option>
+<option value="Autoimmune">Autoimmune hepatitis</option>
+<option value="Wilson">Wilson disease</option>
+<option value="Pregnancy">Pregnancy related</option>
+<option value="Ischemic">Ischemic hepatitis</option>
+<option value="Budd Chiari">Budd Chiari syndrome</option>
+<option value="Unknown">Indeterminate</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>2. Neurology / ICP</h2>
+
+<label>Ammonia</label>
+<input type="number" id="ammonia">
+
+<label>ONSD Elevated?</label>
+<select id="onsd">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Pupillary Changes?</label>
+<select id="pupil">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Posturing?</label>
+<select id="posturing">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>3. Hemodynamics</h2>
+
+<label>MAP</label>
+<input type="number" id="map">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+<label>pH</label>
+<input type="number" step="0.01" id="ph">
+
+<label>Vasopressor Requirement</label>
+
+<select id="vaso">
+
+<option value="none">None</option>
+<option value="low">Low dose</option>
+<option value="high">High dose</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>4. Renal</h2>
+
+<label>Creatinine</label>
+<input type="number" step="0.1" id="creatinine">
+
+<label>Urine Output (mL/hour)</label>
+<input type="number" id="urine">
+
+<label>Fluid Overload?</label>
+
+<select id="overload">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>CRRT Running?</label>
+
+<select id="crrt">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>5. Infection / Glucose</h2>
+
+<label>Procalcitonin</label>
+<input type="number" step="0.1" id="pct">
+
+<label>Sepsis Present?</label>
+
+<select id="sepsis">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Current Glucose</label>
+<input type="number" id="glucose">
+
+</div>
+
+</div>
+
+<button onclick="analyzeALF()">
+Generate Complete ALF ICU Plan
+</button>
+
+<div class="result">
+
+<h2>Complete ALF ICU Plan</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzeALF(){
+
+try{
+
+let cld=document.getElementById('cld').value;
+
+let ast=parseFloat(document.getElementById('ast').value)||0;
+
+let alt=parseFloat(document.getElementById('alt').value)||0;
+
+let inr=parseFloat(document.getElementById('inr').value)||0;
+
+let he=parseInt(document.getElementById('he').value)||0;
+
+let etiology=document.getElementById('etiology').value;
+
+let ammonia=parseFloat(document.getElementById('ammonia').value)||0;
+
+let onsd=document.getElementById('onsd').value;
+
+let pupil=document.getElementById('pupil').value;
+
+let posturing=document.getElementById('posturing').value;
+
+let map=parseFloat(document.getElementById('map').value)||0;
+
+let lactate=parseFloat(document.getElementById('lactate').value)||0;
+
+let ph=parseFloat(document.getElementById('ph').value)||7.4;
+
+let vaso=document.getElementById('vaso').value;
+
+let creatinine=parseFloat(document.getElementById('creatinine').value)||0;
+
+let urine=parseFloat(document.getElementById('urine').value)||0;
+
+let overload=document.getElementById('overload').value;
+
+let crrt=document.getElementById('crrt').value;
+
+let pct=parseFloat(document.getElementById('pct').value)||0;
+
+let sepsis=document.getElementById('sepsis').value;
+
+let glucose=parseFloat(document.getElementById('glucose').value)||0;
+
+let output='';
+
+output += '==============================\n';
+output += 'DIAGNOSTIC ENTRY ENGINE\n';
+output += '==============================\n\n';
+
+if(ast>200 || alt>200){
+
+output += 'Acute hepatocellular injury pattern present\n';
+
+}
+
+if(
+cld==='no' &&
+inr>=1.5 &&
+he>=1
+){
+
+output += 'CONFIRMED ACUTE LIVER FAILURE\n';
+
+}
+else{
+
+output += 'Does not fully meet ALF criteria currently\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ETIOLOGY SPECIFIC MANAGEMENT\n';
+output += '==============================\n\n';
+
+if(etiology==='Paracetamol'){
+
+output += '- Continue NAC irrespective of delayed presentation\n';
+output += '- Monitor lactate and acidosis closely\n';
+
+}
+
+if(etiology==='HBV'){
+
+output += '- Start entecavir immediately\n';
+
+}
+
+if(etiology==='HSV'){
+
+output += '- Start IV acyclovir urgently\n';
+
+}
+
+if(etiology==='Autoimmune'){
+
+output += '- Steroid consideration after exclusion of uncontrolled sepsis\n';
+
+}
+
+if(etiology==='Wilson'){
+
+output += '- Urgent transplant priority\n';
+output += '- Plasma exchange bridge consideration\n';
+
+}
+
+if(etiology==='Pregnancy'){
+
+output += '- Urgent obstetric evaluation\n';
+output += '- Delivery consideration if pregnancy-related syndrome ongoing\n';
+
+}
+
+if(etiology==='Budd Chiari'){
+
+output += '- Evaluate anticoagulation/intervention suitability\n';
+
+}
+
+if(etiology==='Drug induced'){
+
+output += '- Stop offending agent immediately\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'NAC ENGINE\n';
+output += '==============================\n\n';
+
+output += 'IV NAC REGIMEN:\n';
+output += '- 150 mg/kg over 1 hour\n';
+output += '- 50 mg/kg over 4 hours\n';
+output += '- 100 mg/kg over 16 hours\n\n';
+
+output += 'Continue extended NAC if:\n';
+output += '- Persistent ALF\n';
+output += '- Worsening INR/lactate\n';
+output += '- Awaiting transplant\n\n';
+
+output += '==============================\n';
+output += 'ICP / CEREBRAL EDEMA ENGINE\n';
+output += '==============================\n\n';
+
+let icp='LOW';
+
+if(ammonia>100 || he>=3){
+
+icp='MODERATE';
+
+}
+
+if(
+ammonia>150 ||
+onsd==='yes' ||
+pupil==='yes' ||
+posturing==='yes'
+){
+
+icp='HIGH';
+
+}
+
+output += 'ICP Risk: ';
+output += icp + '\n\n';
+
+output += 'ICP PREVENTION:\n';
+output += '- Head elevation 30 degrees\n';
+output += '- Avoid fever\n';
+output += '- Avoid hypoxia\n';
+output += '- Avoid hypercapnia\n';
+output += '- Minimize stimulation\n';
+output += '- Sodium target 145–150 in severe ICP risk\n';
+output += '- Serial ONSD monitoring\n\n';
+
+output += 'ICP RESCUE:\n';
+output += '- Hypertonic saline consideration\n';
+output += '- Mannitol if appropriate\n';
+output += '- Deep sedation\n';
+output += '- CRRT for ammonia clearance\n\n';
+
+output += '- Lactulose only for constipation prevention\n';
+output += '- Rifaximin not routinely useful in ALF\n\n';
+
+output += '==============================\n';
+output += 'VENTILATOR ENGINE\n';
+output += '==============================\n\n';
+
+let intubation='NO';
+
+if(
+he>=3 ||
+pupil==='yes' ||
+posturing==='yes'
+){
+
+intubation='YES';
+
+}
+
+output += 'Need ventilator support: ';
+output += intubation + '\n\n';
+
+if(intubation==='YES'){
+
+output += 'Reasons:\n';
+output += '- Advanced encephalopathy\n';
+output += '- Airway protection risk\n';
+output += '- Neuroprotection strategy\n\n';
+
+}
+
+output += 'Ventilation strategy:\n';
+output += '- Low tidal volume ventilation\n';
+output += '- Avoid severe hypercapnia\n';
+output += '- Avoid hypoxia\n';
+output += '- Minimize coughing/agitation\n';
+output += '- Temporary mild hyperventilation only as rescue bridge\n\n';
+
+output += '==============================\n';
+output += 'SEDATION / ANALGESIA ENGINE\n';
+output += '==============================\n\n';
+
+let sedation='LIGHT';
+
+if(
+he>=3 ||
+onsd==='yes'
+){
+
+sedation='DEEP';
+
+}
+
+output += 'Sedation strategy: ';
+output += sedation + '\n\n';
+
+output += '- Propofol preferred for ICP control\n';
+output += '- Fentanyl preferred for analgesia\n';
+output += '- Avoid benzodiazepine accumulation if possible\n\n';
+
+if(sedation==='DEEP'){
+
+output += '- Deep sedation reasonable for ICP mitigation\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'FLUID MANAGEMENT ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Preferred fluid: Balanced crystalloids\n';
+output += '- Avoid excess chloride\n';
+output += '- Avoid excessive positive balance\n';
+output += '- Target MAP >65 mmHg\n\n';
+
+if(map<65){
+
+output += '- Shock physiology present\n';
+output += '- Small reassessment-guided boluses preferred\n';
+output += '- Early vasopressors preferred over fluid stacking\n\n';
+
+}
+
+if(overload==='yes'){
+
+output += '- Conservative fluid strategy needed\n';
+output += '- Fluid removal strategy may be needed\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'GLUCOSE ENGINE\n';
+output += '==============================\n\n';
+
+let hypo='MODERATE';
+
+if(
+glucose<70 ||
+he>=3
+){
+
+hypo='HIGH';
+
+}
+
+output += 'Hypoglycemia risk: ';
+output += hypo + '\n\n';
+
+output += 'Monitoring:\n';
+output += '- Hourly glucose checks initially\n';
+output += '- More frequent checks if unstable\n\n';
+
+output += 'Prevention:\n';
+output += '- Avoid prolonged fasting\n';
+output += '- Early enteral nutrition preferred\n';
+output += '- Continuous dextrose infusion if recurrent hypoglycemia\n\n';
+
+output += 'Management:\n';
+output += '- Immediate IV dextrose for hypoglycemia\n';
+output += '- Repeat glucose reassessment\n';
+output += '- Persistent hypoglycemia suggests severe hepatic dysfunction\n\n';
+
+output += 'Target glucose: 140–180 mg/dL\n\n';
+
+output += '==============================\n';
+output += 'SEPSIS ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Infection susceptibility: HIGH\n\n';
+
+output += 'Monitoring:\n';
+output += '- Daily infection reassessment\n';
+output += '- Line/device surveillance\n';
+output += '- Chest infection surveillance\n';
+output += '- Serial inflammatory marker reassessment\n\n';
+
+output += 'Prevention:\n';
+output += '- Strict asepsis\n';
+output += '- Remove unnecessary lines/devices early\n';
+output += '- Minimize ventilator duration if possible\n\n';
+
+if(sepsis==='yes'){
+
+output += 'SEPSIS PRESENT\n';
+output += '- Early broad-spectrum antibiotics appropriate\n';
+output += '- Source control important\n';
+output += '- Dynamic hemodynamic reassessment required\n\n';
+
+}
+
+if(pct>=1){
+
+output += '- Elevated bacterial infection probability\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'RENAL / CRRT ENGINE\n';
+output += '==============================\n\n';
+
+let crrtIndication='NOT MET';
+
+let crrtReasons=[];
+
+let majorCRRT=false;
+
+if(ammonia>150){
+
+majorCRRT=true;
+
+crrtReasons.push(
+'Severe hyperammonemia'
+);
+
+}
+
+if(
+onsd==='yes' ||
+pupil==='yes' ||
+posturing==='yes'
+){
+
+majorCRRT=true;
+
+crrtReasons.push(
+'High ICP-risk phenotype'
+);
+
+}
+
+if(
+he>=3
+){
+
+majorCRRT=true;
+
+crrtReasons.push(
+'Advanced encephalopathy'
+);
+
+}
+
+if(creatinine>2){
+
+crrtReasons.push(
+'Significant AKI'
+);
+
+}
+
+if(urine<20){
+
+crrtReasons.push(
+'Severe oliguria/anuria'
+);
+
+}
+
+if(overload==='yes'){
+
+crrtReasons.push(
+'Fluid overload'
+);
+
+}
+
+if(ph<7.2){
+
+crrtReasons.push(
+'Severe metabolic acidosis'
+);
+
+}
+
+if(
+majorCRRT ||
+crrtReasons.length>=2
+){
+
+crrtIndication='MET';
+
+}
+
+output += 'CRRT indication status: ';
+output += crrtIndication + '\n\n';
+
+if(crrtIndication==='MET'){
+
+output += 'Reasons:\n';
+
+for(let i=0;i<crrtReasons.length;i++){
+
+output += '- ';
+output += crrtReasons[i];
+output += '\n';
+
+}
+
+output += '\nManagement Strategy:\n';
+output += '- Early CRRT reasonable\n';
+output += '- Continuous modality preferred in unstable ALF\n';
+output += '- Useful for ammonia reduction\n';
+output += '- Useful for ICP mitigation\n';
+output += '- Avoid rapid osmotic shifts\n';
+output += '- Frequent electrolyte monitoring needed\n';
+
+if(ammonia>150){
+
+output += '- Severe hyperammonemia alone can justify early CRRT in ALF\n';
+
+}
+
+}
+else{
+
+output += 'No strong current CRRT trigger detected\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'PLASMA EXCHANGE ENGINE\n';
+output += '==============================\n\n';
+
+let plex='NO';
+
+let plexReasons=[];
+
+if(he>=3){
+
+plex='YES';
+plexReasons.push('Advanced encephalopathy');
+
+}
+
+if(ammonia>150){
+
+plex='YES';
+plexReasons.push('Severe hyperammonemia');
+
+}
+
+if(
+onsd==='yes' ||
+pupil==='yes' ||
+posturing==='yes'
+){
+
+plex='YES';
+plexReasons.push('High ICP-risk phenotype');
+
+}
+
+if(vaso==='high'){
+
+plex='YES';
+plexReasons.push('Severe vasoplegic shock');
+
+}
+
+if(lactate>4){
+
+plex='YES';
+plexReasons.push('Persistent severe hyperlactatemia');
+
+}
+
+if(inr>3.5){
+
+plex='YES';
+plexReasons.push('Severe synthetic dysfunction');
+
+}
+
+if(
+etiology==='Wilson'
+){
+
+plex='YES';
+plexReasons.push('Wilson disease ALF');
+
+}
+
+output += 'Plasma exchange criteria: ';
+output += plex + '\n\n';
+
+if(plex==='YES'){
+
+output += 'Reasons:\n';
+
+for(let i=0;i<plexReasons.length;i++){
+
+output += '- ';
+output += plexReasons[i];
+output += '\n';
+
+}
+
+output += '\nPotential benefits:\n';
+output += '- Cytokine reduction\n';
+output += '- Temporary hemodynamic stabilization\n';
+output += '- Ammonia reduction\n';
+output += '- Bridge to transplant/recovery\n';
+
+}
+else{
+
+output += 'No strong current plasma exchange trigger detected\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'COAGULATION ENGINE\n';
+output += '==============================\n\n';
+
+output += '- Routine INR correction discouraged\n';
+output += '- Correct primarily for active bleeding/procedure\n';
+output += '- ALF can demonstrate rebalanced hemostasis\n';
+output += '- TEG/ROTEM preferred if available\n\n';
+
+output += '==============================\n';
+output += 'TRANSPLANT ENGINE\n';
+output += '==============================\n\n';
+
+let kings='NOT MET';
+
+if(
+etiology==='Paracetamol'
+){
+
+if(
+ph<7.3 ||
+(
+inr>6.5 &&
+creatinine>3.4 &&
+he>=3
+)
+){
+
+kings='MET';
+
+}
+
+}
+else{
+
+if(
+inr>6.5 ||
+(
+he>=3 &&
+lactate>3.5
+)
+){
+
+kings='MET';
+
+}
+
+}
+
+output += 'King’s College Criteria: ';
+output += kings + '\n\n';
+
+let alfed='LOW';
+
+if(
+he>=3 ||
+lactate>3 ||
+vaso==='high' ||
+creatinine>2
+){
+
+alfed='MODERATE';
+
+}
+
+if(
+he>=3 &&
+vaso==='high' &&
+lactate>4
+){
+
+alfed='HIGH';
+
+}
+
+output += 'ALFED Risk: ';
+output += alfed + '\n\n';
+
+if(kings==='MET'){
+
+output += 'URGENT TRANSPLANT REFERRAL ADVISED\n';
+
+}
+
+if(
+he>=3 ||
+vaso==='high' ||
+lactate>4 ||
+onsd==='yes'
+){
+
+output += 'Immediate transplant center escalation advised\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'NEXT 6-HOUR ICU ACTIONS\n';
+output += '==============================\n\n';
+
+output += '1. Continue NAC infusion\n';
+output += '2. Hourly glucose monitoring\n';
+output += '3. Serial neuro checks + ONSD\n';
+output += '4. Repeat INR/lactate/ammonia reassessment\n';
+output += '5. Maintain MAP >65\n';
+output += '6. Avoid fever and hypoxia\n';
+output += '7. Reassess CRRT need dynamically\n';
+output += '8. Minimize ICP triggers\n';
+
+if(kings==='MET'){
+
+output += '9. Activate transplant pathway urgently\n';
+
+}
+
+if(intubation==='YES'){
+
+output += '10. Prepare airway/ventilator strategy\n';
+
+}
+
+if(plex==='YES'){
+
+output += '11. Discuss plasma exchange with transplant center\n';
+
+}
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: ' + err;
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
