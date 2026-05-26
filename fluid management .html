@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra Advanced ICU Fluid Management Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2300px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:20px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+white-space:pre-line;
+line-height:1.8;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ultra Advanced ICU Fluid Management Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. Hemodynamics</h2>
+
+<label>MAP</label>
+<input type="number" id="map">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+<label>Heart Rate</label>
+<input type="number" id="hr">
+
+<label>Vasopressor Requirement</label>
+
+<select id="vaso">
+
+<option value="none">None</option>
+<option value="low">Low Dose</option>
+<option value="high">High Dose</option>
+
+</select>
+
+<label>Fluid Responsive?</label>
+
+<select id="fluidresponsive">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>2. Renal Parameters</h2>
+
+<label>Creatinine</label>
+<input type="number" step="0.1" id="creatinine">
+
+<label>Creatinine Trend</label>
+
+<select id="crtrend">
+
+<option value="unknown">
+Unknown / Single Value Only
+</option>
+
+<option value="stable">
+Stable
+</option>
+
+<option value="improving">
+Improving
+</option>
+
+<option value="worsening">
+Worsening
+</option>
+
+<option value="rapidrise">
+Rapid Rise (>0.3 mg/dL in 48h)
+</option>
+
+</select>
+
+<label>Urine Output (mL/day)</label>
+<input type="number" id="urine">
+
+<label>Urine Output Trend</label>
+
+<select id="uotrend">
+
+<option value="stable">Stable</option>
+<option value="improving">Improving</option>
+<option value="falling">Falling</option>
+<option value="anuria">Anuria</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>3. Fluid Balance / Congestion</h2>
+
+<label>Cumulative Fluid Balance (L)</label>
+<input type="number" step="0.1" id="balance">
+
+<label>Peripheral Edema?</label>
+
+<select id="edema">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Pulmonary Edema?</label>
+
+<select id="pulmonaryedema">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>PaO2/FiO2 Ratio</label>
+<input type="number" id="pfratio">
+
+<label>Bladder Pressure / IAP</label>
+<input type="number" id="iap">
+
+</div>
+
+<div class="card">
+
+<h2>4. Shock / Sepsis</h2>
+
+<label>Sepsis Present?</label>
+
+<select id="sepsis">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Shock Present?</label>
+
+<select id="shock">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Procalcitonin</label>
+<input type="number" step="0.1" id="pct">
+
+</div>
+
+<div class="card">
+
+<h2>5. Cardiac / Liver Context</h2>
+
+<label>Cardiac Dysfunction?</label>
+
+<select id="cardiac">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Cirrhosis / HRS Risk?</label>
+
+<select id="hrs">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Albumin Challenge Response?</label>
+
+<select id="albuminresponse">
+
+<option value="notdone">Not Done</option>
+<option value="improved">Improved</option>
+<option value="noresponse">No Response</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>6. Monitoring / Support</h2>
+
+<label>CRRT Running?</label>
+
+<select id="crrt">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>Mechanical Ventilation?</label>
+
+<select id="vent">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+<label>ARDS Present?</label>
+
+<select id="ards">
+
+<option value="yes">Yes</option>
+<option value="no">No</option>
+
+</select>
+
+</div>
+
+</div>
+
+<button onclick="analyzeFluid()">
+Generate Complete Fluid Management Plan
+</button>
+
+<div class="result">
+
+<h2>Complete ICU Fluid Management Plan</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzeFluid(){
+
+try{
+
+let map=parseFloat(document.getElementById('map').value)||0;
+
+let lactate=parseFloat(document.getElementById('lactate').value)||0;
+
+let hr=parseFloat(document.getElementById('hr').value)||0;
+
+let vaso=document.getElementById('vaso').value;
+
+let fluidresponsive=document.getElementById('fluidresponsive').value;
+
+let creatinine=parseFloat(document.getElementById('creatinine').value)||0;
+
+let crtrend=document.getElementById('crtrend').value;
+
+let urine=parseFloat(document.getElementById('urine').value)||0;
+
+let uotrend=document.getElementById('uotrend').value;
+
+let balance=parseFloat(document.getElementById('balance').value)||0;
+
+let edema=document.getElementById('edema').value;
+
+let pulmonaryedema=document.getElementById('pulmonaryedema').value;
+
+let pfratio=parseFloat(document.getElementById('pfratio').value)||0;
+
+let iap=parseFloat(document.getElementById('iap').value)||0;
+
+let sepsis=document.getElementById('sepsis').value;
+
+let shock=document.getElementById('shock').value;
+
+let pct=parseFloat(document.getElementById('pct').value)||0;
+
+let cardiac=document.getElementById('cardiac').value;
+
+let hrs=document.getElementById('hrs').value;
+
+let albuminresponse=document.getElementById('albuminresponse').value;
+
+let crrt=document.getElementById('crrt').value;
+
+let vent=document.getElementById('vent').value;
+
+let ards=document.getElementById('ards').value;
+
+let output='';
+
+output += '==============================\n';
+output += 'HEMODYNAMIC ENGINE\n';
+output += '==============================\n\n';
+
+output += 'MAP: ' + map + '\n';
+output += 'Lactate: ' + lactate + '\n';
+
+if(map<65){
+output += 'Hemodynamic instability present\n';
+}
+
+if(lactate>2){
+output += 'Hyperlactatemia present\n';
+}
+
+if(vaso==='low'){
+output += 'Low-dose vasopressor support ongoing\n';
+}
+
+if(vaso==='high'){
+output += 'High vasopressor requirement\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'RENAL TRAJECTORY ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Current creatinine: ';
+output += creatinine + '\n';
+
+if(crtrend==='unknown'){
+output += 'Only single creatinine value available\n';
+}
+
+if(crtrend==='stable'){
+output += 'Stable renal trajectory\n';
+}
+
+if(crtrend==='improving'){
+output += 'Improving renal trajectory\n';
+}
+
+if(crtrend==='worsening'){
+output += 'Worsening renal trajectory\n';
+output += 'Progressive AKI concern\n';
+}
+
+if(crtrend==='rapidrise'){
+output += 'Rapid creatinine rise detected\n';
+output += 'Dynamic AKI phenotype present\n';
+output += 'High concern for evolving renal hypoperfusion/sepsis-associated AKI/HRS\n';
+}
+
+output += '\n';
+
+output += 'Urine output: ';
+output += urine + ' mL/day\n';
+
+if(urine<400){
+output += 'Severe oliguria present\n';
+}
+
+if(uotrend==='falling'){
+output += 'Progressive oliguria detected\n';
+}
+
+if(uotrend==='anuria'){
+output += 'ANURIA PRESENT\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'CONGESTION / OVERLOAD ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Cumulative balance: ';
+output += balance + ' L\n';
+
+if(balance>3){
+output += 'Positive fluid balance present\n';
+}
+
+if(balance>5){
+output += 'Marked fluid accumulation\n';
+}
+
+if(edema==='yes'){
+output += 'Peripheral edema present\n';
+}
+
+if(pulmonaryedema==='yes'){
+output += 'Pulmonary edema present\n';
+}
+
+if(pfratio<200){
+output += 'Moderate/severe oxygenation impairment\n';
+}
+
+if(iap>=12){
+output += 'Intra-abdominal hypertension present\n';
+}
+
+if(iap>=20){
+output += 'Possible abdominal compartment syndrome physiology\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'PHYSIOLOGIC PHENOTYPE ENGINE\n';
+output += '==============================\n\n';
+
+let phenotype='';
+
+if(
+fluidresponsive==='yes' &&
+balance<3 &&
+pulmonaryedema==='no'
+){
+phenotype='Fluid Responsive Hypovolemia';
+}
+
+if(
+fluidresponsive==='no' &&
+shock==='yes' &&
+sepsis==='yes'
+){
+phenotype='Vasodilatory Septic Phenotype';
+}
+
+if(
+balance>5 ||
+pulmonaryedema==='yes' ||
+edema==='yes'
+){
+phenotype='Congestive / Overload Phenotype';
+}
+
+if(
+shock==='yes' &&
+pulmonaryedema==='yes'
+){
+phenotype='Mixed Shock + Congestion Phenotype';
+}
+
+if(
+hrs==='yes' &&
+albuminresponse==='noresponse'
+){
+phenotype='HRS Physiology';
+}
+
+output += 'Dominant phenotype: ';
+output += phenotype + '\n\n';
+
+output += '==============================\n';
+output += 'MANAGEMENT ENGINE\n';
+output += '==============================\n\n';
+
+if(phenotype==='Fluid Responsive Hypovolemia'){
+
+output += 'Controlled balanced crystalloid bolus reasonable\n';
+output += 'Reassess MAP/UO/lactate after bolus\n';
+
+}
+
+if(phenotype==='Vasodilatory Septic Phenotype'){
+
+output += 'Earlier vasopressor escalation favored\n';
+output += 'Avoid repeated ineffective fluid boluses\n';
+
+}
+
+if(phenotype==='Congestive / Overload Phenotype'){
+
+output += 'Avoid aggressive fluid administration\n';
+output += 'Consider deresuscitation strategy\n';
+
+}
+
+if(phenotype==='Mixed Shock + Congestion Phenotype'){
+
+output += 'Very high-risk physiology\n';
+output += 'Tiny guided boluses only if responsive\n';
+output += 'Vasopressor support favored\n';
+output += 'CRRT-assisted fluid management may help\n';
+
+}
+
+if(phenotype==='HRS Physiology'){
+
+output += 'HRS-directed therapy consideration\n';
+output += 'Albumin plus vasoconstrictor strategy may help\n';
+output += 'Target MAP improvement\n';
+
+}
+
+if(
+pulmonaryedema==='yes' ||
+ards==='yes'
+){
+
+output += 'Fluid restriction/deresuscitation favored\n';
+
+}
+
+if(iap>=20){
+
+output += 'ACS management may improve organ perfusion\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'RRT / ESCALATION ENGINE\n';
+output += '==============================\n\n';
+
+if(
+uotrend==='anuria' ||
+pulmonaryedema==='yes' ||
+lactate>4
+){
+
+output += 'Evaluate urgent RRT indications\n';
+
+}
+
+if(crrt==='yes'){
+output += 'CRRT support ongoing\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'MONITORING ENGINE\n';
+output += '==============================\n\n';
+
+output += '- Hourly urine output\n';
+output += '- Daily creatinine trend\n';
+output += '- Lactate reassessment\n';
+output += '- Dynamic fluid balance monitoring\n';
+output += '- Pulmonary edema surveillance\n';
+output += '- Vasopressor trend monitoring\n';
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: ' + err;
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
