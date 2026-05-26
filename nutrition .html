@@ -1,0 +1,350 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICU Nutrition Prescription & Feeding Decision Engine</title>
+<style>
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+.container{
+max-width:1500px;
+margin:auto;
+}
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+gap:20px;
+}
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+h1,h2{
+color:#67e8f9;
+}
+label{
+display:block;
+margin-top:10px;
+margin-bottom:5px;
+}
+input,select{
+width:100%;
+padding:10px;
+border-radius:10px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+box-sizing:border-box;
+}
+button{
+width:100%;
+padding:18px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:16px;
+font-size:20px;
+font-weight:bold;
+cursor:pointer;
+}
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+line-height:1.8;
+}
+.alert{
+color:#fca5a5;
+font-weight:bold;
+}
+.good{
+color:#86efac;
+font-weight:bold;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>ICU Nutrition Prescription & Feeding Decision Engine</h1><div class="grid"><div class="card">
+<h2>1. Hemodynamics</h2><label>Weight (kg)</label> <input type="number" id="weight">
+
+<label>MAP</label> <input type="number" id="map">
+
+<label>Lactate</label> <input type="number" step="0.1" id="lactate">
+
+<label>Vasopressor Requirement</label> <select id="vaso">
+
+<option value="none">None</option>
+<option value="low">Low Stable</option>
+<option value="moderate">Moderate Stable</option>
+<option value="high">High / Escalating</option>
+</select>
+</div><div class="card">
+<h2>2. GI Function</h2><label>Feeding Contraindication</label> <select id="contra">
+
+<option value="none">None</option>
+<option value="ischemia">Bowel Ischemia Suspicion</option>
+<option value="obstruction">Complete Obstruction</option>
+<option value="perforation">Perforation</option>
+<option value="bleeding">Uncontrolled GI Bleeding</option>
+<option value="acs">Abdominal Compartment Syndrome</option>
+<option value="ileus">Severe Ileus</option>
+</select><label>Feeding Intolerance</label> <select id="intolerance">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>Aspiration Risk</label> <select id="aspiration">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select>
+</div><div class="card">
+<h2>3. ICU Phenotypes</h2><label>Patient Phenotypes</label> <select id="phenotypes" multiple size="12">
+
+<option value="ards">ARDS</option>
+<option value="crrt">CRRT</option>
+<option value="obesity">Obesity</option>
+<option value="cirrhosis">Cirrhosis</option>
+<option value="pancreatitis">Pancreatitis</option>
+<option value="postop">Post Abdominal Surgery</option>
+<option value="openabdomen">Open Abdomen</option>
+<option value="oncology">Oncology / Cachexia</option>
+<option value="shock">Septic Shock</option>
+<option value="copd">COPD / Hypercapnia</option>
+<option value="transplant">Transplant</option>
+<option value="burns">Burns / Trauma</option>
+</select>
+</div><div class="card">
+<h2>4. Nutrition Risk</h2><label>Days with Poor Intake</label> <input type="number" id="poorintake">
+
+<label>Phosphate</label> <input type="number" step="0.1" id="phos">
+
+<label>Magnesium</label> <input type="number" step="0.1" id="mg">
+
+<label>Potassium</label> <input type="number" step="0.1" id="k">
+
+<label>Albumin</label> <input type="number" step="0.1" id="alb">
+
+</div><div class="card">
+<h2>5. Nutrition Prescription</h2><label>Nutrition Prescription Type</label> <select id="nutritiontype" onchange="toggleNutritionMode()">
+
+<option value="enteral">Enteral Nutrition</option>
+<option value="spn">Supplemental Parenteral Nutrition</option>
+<option value="tpn">Total Parenteral Nutrition</option>
+<option value="ppn">Peripheral Parenteral Nutrition</option>
+</select><div id="enteralSection">
+<label>Preferred Feeding Strategy</label>
+<select id="feedtype">
+<option value="Standard Polymeric Feed">Standard Polymeric Feed</option>
+<option value="High Protein Feed">High Protein Feed</option>
+<option value="Concentrated Fluid-Restricted Feed">Concentrated Fluid-Restricted Feed</option>
+<option value="Renal Formula">Renal Formula</option>
+<option value="Diabetic Formula">Diabetic Formula</option>
+<option value="Semi-Elemental / Peptide Feed">Semi-Elemental / Peptide Feed</option>
+<option value="Hepatic-Aware Formula">Hepatic-Aware Formula</option>
+</select><label>Feed Concentration</label> <select id="concentration">
+
+<option value="1">1 kcal/mL</option>
+<option value="1.5">1.5 kcal/mL</option>
+<option value="2">2 kcal/mL Concentrated Feed</option>
+</select><label>Starting Feed Rate (mL/hr)</label> <input type="number" id="feedrate" value="20">
+
+<label>Protein Modular Requirement</label> <select id="proteinmod">
+
+<option value="none">No Additional Protein Modular</option>
+<option value="once">Protein Modular Once Daily</option>
+<option value="twice">Protein Modular Twice Daily</option>
+<option value="aggressive">Aggressive Protein Supplementation</option>
+</select>
+</div><div id="pnSection" style="display:none;">
+<label>Amino Acid Strategy</label>
+<select id="aaStrategy">
+<option value="standard">Standard Protein PN</option>
+<option value="high">High Protein ICU PN</option>
+<option value="crrt">CRRT / Hypercatabolic PN</option>
+</select><label>Dextrose Strategy</label> <select id="dextroseStrategy">
+
+<option value="conservative">Conservative Glucose Strategy</option>
+<option value="standard">Standard Glucose Strategy</option>
+<option value="refeeding">Refeeding-Cautious Glucose Strategy</option>
+</select><label>Lipid Strategy</label> <select id="lipidStrategy">
+
+<option value="standard">Standard Lipid Strategy</option>
+<option value="reduced">Reduced Lipid Strategy</option>
+<option value="propofol">Propofol-Aware Reduced Lipid</option>
+</select><label>PN Fluid Volume Strategy</label> <select id="pnFluid">
+
+<option value="standard">Standard Volume PN</option>
+<option value="restricted">Fluid-Restricted Concentrated PN</option>
+</select>
+</div><label>Current Nutrition Delivery</label> <select id="delivery">
+
+<option value="full">Full feeds tolerated</option>
+<option value="partial">Partial feeds</option>
+<option value="trophic">Trophic feeds only</option>
+<option value="interruptions">Frequent interruptions</option>
+<option value="minimal">Minimal intake</option>
+<option value="none">No nutrition</option>
+</select><label>Propofol Infusion (mL/hr)</label> <input type="number" id="propofol">
+
+<label>Current Enteral Feeding</label> <select id="enstatus">
+
+<option value="none">Not Started</option>
+<option value="trophic">Trophic</option>
+<option value="full">Full Feeds</option>
+</select>
+</div></div><button onclick="analyzeNutrition()">Generate Nutrition Strategy</button>
+
+<div class="result">
+<h2>ICU Nutrition Analytics</h2>
+<div id="output"></div>
+</div></div><script>
+function toggleNutritionMode(){
+let type=document.getElementById('nutritiontype').value;
+if(type==='enteral'){
+document.getElementById('enteralSection').style.display='block';
+document.getElementById('pnSection').style.display='none';
+}else{
+document.getElementById('enteralSection').style.display='none';
+document.getElementById('pnSection').style.display='block';
+}
+}
+
+function analyzeNutrition(){
+
+let weight=Number(document.getElementById('weight').value);
+let map=Number(document.getElementById('map').value);
+let lactate=Number(document.getElementById('lactate').value);
+let vaso=document.getElementById('vaso').value;
+
+let contra=document.getElementById('contra').value;
+let intolerance=Number(document.getElementById('intolerance').value);
+let aspiration=Number(document.getElementById('aspiration').value);
+
+let phenotypes=Array.from(document.getElementById('phenotypes').selectedOptions).map(o=>o.value);
+
+let poorintake=Number(document.getElementById('poorintake').value);
+let phos=Number(document.getElementById('phos').value);
+let mg=Number(document.getElementById('mg').value);
+let k=Number(document.getElementById('k').value);
+let alb=Number(document.getElementById('alb').value);
+
+let target=Number(document.getElementById('target').value);
+let propofol=Number(document.getElementById('propofol').value);
+let nutritiontype=document.getElementById('nutritiontype').value;
+let aaStrategy=document.getElementById('aaStrategy').value;
+let dextroseStrategy=document.getElementById('dextroseStrategy').value;
+let lipidStrategy=document.getElementById('lipidStrategy').value;
+let pnFluid=document.getElementById('pnFluid').value;
+
+let output='';
+
+let calories=25*weight;
+let protein=1.3*weight;
+
+if(phenotypes.includes('crrt')) protein=2*weight;
+if(phenotypes.includes('burns')) protein=2*weight;
+if(phenotypes.includes('obesity')) calories=22*weight;
+
+let propCalories=(propofol*24*1.1).toFixed(0);
+
+let refeeding=false;
+
+if(poorintake>=5 || phos<2.5 || phenotypes.includes('oncology')){
+refeeding=true;
+}
+
+// FEEDING FEASIBILITY
+if(contra==='none'){
+
+if(vaso==='high' || lactate>4){
+output+='<div class="alert"><b>High-Risk Feeding State:</b> Escalating shock/hemodynamic instability increases gut ischemia risk.</div><br>';
+output+='<div><b>Suggested Strategy:</b> Hold full feeds. Consider trophic feeds only if stabilizing.</div><br>';
+}
+
+else if(intolerance===1 || aspiration===1){
+output+='<div><b>Suggested Feeding Strategy:</b> Post-pyloric or trophic enteral feeding strategy favored.</div><br>';
+}
+
+else{
+output+='<div class="good"><b>Enteral Nutrition Feasible:</b> Full enteral feeding strategy reasonable.</div><br>';
+}
+
+}
+
+else{
+output+='<div class="alert"><b>Enteral Nutrition Contraindicated:</b> '+contra+' detected.</div><br>';
+output+='<div class="good"><b>Nutrition Recommendation:</b> Initiate parenteral nutrition strategy if contraindication expected to persist.</div><br>';
+}
+
+// CALORIES & PROTEIN
+output+='<div><b>Estimated Calorie Target:</b> ~'+Math.round(calories)+' kcal/day</div><br>';
+output+='<div><b>Estimated Protein Target:</b> ~'+Math.round(protein)+' g/day</div><br>';
+
+if(phenotypes.includes('copd')){
+output+='<div><b>Ventilator-Aware Strategy:</b> Avoid overfeeding to reduce excess CO2 production.</div><br>';
+}
+
+if(phenotypes.includes('ards') || phenotypes.includes('cirrhosis')){
+output+='<div><b>Fluid-Aware Nutrition:</b> Prefer concentrated feeds/fluid-restricted strategy.</div><br>';
+}
+
+if(phenotypes.includes('pancreatitis')){
+output+='<div><b>Pancreatitis Nutrition Strategy:</b> Early enteral nutrition preferred whenever feasible. Avoid unnecessary TPN.</div><br>';
+}
+
+// REFEEDING
+if(refeeding){
+output+='<div class="alert"><b>High Refeeding Syndrome Risk:</b> Slow nutrition initiation and aggressive electrolyte monitoring advised.</div><br>';
+output+='<div><b>Thiamine Recommendation:</b> Thiamine supplementation before and during feeding initiation advised.</div><br>';
+output+='<div><b>Suggested Initial Calories:</b> 10–20 kcal/kg/day initially with gradual escalation.</div><br>';
+}
+
+// SPN
+if(target<60 && poorintake>=3){
+output+='<div><b>Supplemental PN Consideration:</b> Nutrition delivery inadequate (&lt;60% target). Consider SPN if persistent.</div><br>';
+}
+
+// PROPOFOL
+if(propofol>0){
+output+='<div><b>Propofol Calories:</b> Approximately '+propCalories+' kcal/day from propofol infusion.</div><br>';
+}
+
+// MONITORING
+output+='<hr>';
+output+='<div><b>Monitoring Priorities:</b></div>';
+output+='<div>• Daily calorie and protein adequacy</div>';
+output+='<div>• Glucose monitoring</div>';
+output+='<div>• Electrolytes (phosphate, potassium, magnesium)</div>';
+output+='<div>• Fluid balance and overload</div>';
+output+='<div>• Feed intolerance / aspiration signs</div>';
+
+if(refeeding){
+output+='<div>• Refeeding syndrome surveillance</div>';
+}
+
+if(propofol>0){
+output+='<div>• Triglyceride monitoring</div>';
+}
+
+if(contra!=='none'){
+output+='<div>• PN-related glucose, triglyceride, liver function monitoring</div>';
+}
+
+output+='<hr>';
+output+='<div><b>Evidence Framework:</b> ASPEN/ESPEN/SCCM-aligned ICU nutrition principles, protein-focused ICU nutrition, refeeding prevention strategy, and vasopressor-aware feeding approach.</div><br>';
+
+output+='<div><b>Important:</b> Final nutrition prescriptions require intensivist and dietitian oversight with local ICU protocols.</div><br>';
+
+
+document.getElementById('output').innerHTML=output;
+}
+</script></body>
+</html>

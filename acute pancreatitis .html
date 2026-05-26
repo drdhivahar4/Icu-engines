@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra Advanced Acute Pancreatitis ICU Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2200px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:20px;
+background:#06b6d4;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+margin-top:25px;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+line-height:1.8;
+white-space:pre-line;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ultra Advanced Acute Pancreatitis ICU Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. Time Phase</h2>
+
+<label>Time From Symptom Onset</label>
+
+<select id="timing">
+
+<option value="<24h"><24h</option>
+<option value="24-72h">24–72h</option>
+<option value="3-7d">3–7 days</option>
+<option value="1-4w">1–4 weeks</option>
+<option value=">4w">>4 weeks</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>2. Diagnosis</h2>
+
+<label>Lipase</label>
+<input type="number" id="lipase">
+
+<label>Typical Pancreatitis Pain?</label>
+
+<select id="pain">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Imaging Positive?</label>
+
+<select id="imaging">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>3. Severity / Infection Risk</h2>
+
+<label>Persistent Organ Failure >48h?</label>
+
+<select id="persistentof">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Procalcitonin</label>
+<input type="number" step="0.1" id="pct">
+
+<label>PCT Trend</label>
+
+<select id="pcttrend">
+
+<option value="unknown">Unknown / Single value only</option>
+<option value="improving">Improving</option>
+<option value="stable">Stable</option>
+<option value="worsening">Worsening</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>4. Etiology</h2>
+
+<select id="etiology">
+
+<option value="Gallstone">Gallstone</option>
+<option value="Alcohol">Alcohol</option>
+<option value="Hypertriglyceridemia">Hypertriglyceridemia</option>
+<option value="Drug induced">Drug induced</option>
+<option value="Post ERCP">Post ERCP</option>
+<option value="Autoimmune">Autoimmune</option>
+
+</select>
+
+<label>Triglycerides</label>
+<input type="number" id="tg">
+
+<label>Cholangitis?</label>
+
+<select id="cholangitis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>CBD Dilated?</label>
+
+<select id="cbd">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>5. Hemodynamics / IVF</h2>
+
+<label>Weight (kg)</label>
+<input type="number" id="weight">
+
+<label>MAP</label>
+<input type="number" id="map">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+<label>BUN</label>
+<input type="number" id="bun">
+
+<label>Urine Output (mL/day)</label>
+<input type="number" id="urine">
+
+<label>Hematocrit (%)</label>
+<input type="number" id="hct">
+
+<label>IVC/Dynamic Assessment Suggests Fluid Responsive?</label>
+
+<select id="fluidresponsive">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Cumulative Fluid Balance (L)</label>
+<input type="number" step="0.1" id="balance">
+
+<label>Fluid Overload / Edema?</label>
+
+<select id="overload">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>PaO2/FiO2 Ratio</label>
+<input type="number" id="pfratio">
+
+<label>Cardiac Dysfunction?</label>
+
+<select id="cardiac">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>6. GI Dysfunction</h2>
+
+<label>Paralytic Ileus?</label>
+
+<select id="ileus">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Vomiting?</label>
+
+<select id="vomiting">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>High GRV?</label>
+
+<select id="grv">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Aspiration Risk?</label>
+
+<select id="aspiration">
+<option value="high">High</option>
+<option value="low">Low</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>7. ACS</h2>
+
+<label>Bladder Pressure</label>
+<input type="number" id="bladder">
+
+<label>Ventilator Pressure Rising?</label>
+
+<select id="ventpressure">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Oliguria?</label>
+
+<select id="oliguria">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>8. Necrosis & Collections</h2>
+
+<label>Necrosis?</label>
+
+<select id="necrosis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Gas in Collection?</label>
+
+<select id="gas">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Collection Type</label>
+
+<select id="collection">
+
+<option value="None">None</option>
+<option value="APFC">APFC</option>
+<option value="ANC">ANC</option>
+<option value="Pseudocyst">Pseudocyst</option>
+<option value="WON">WON</option>
+
+</select>
+
+<label>Clinical Deterioration?</label>
+
+<select id="deterioration">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>9. Nutrition</h2>
+
+<label>Oral Feeding Possible?</label>
+
+<select id="oral">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Post-Pyloric Feeding Needed?</label>
+
+<select id="postpyloric">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>TPN Needed?</label>
+
+<select id="tpn">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>10. Organ Support</h2>
+
+<label>Shock?</label>
+
+<select id="shock">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>ARDS?</label>
+
+<select id="ards">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>AKI?</label>
+
+<select id="aki">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>CRRT Needed?</label>
+
+<select id="crrt">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+</div>
+
+<button onclick="analyzePancreatitis()">
+Generate Complete ICU Plan
+</button>
+
+<div class="result">
+
+<h2>Complete Pancreatitis ICU Management Plan</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzePancreatitis(){
+
+try{
+
+let timing=document.getElementById('timing').value;
+
+let lipase=parseFloat(document.getElementById('lipase').value)||0;
+let pain=document.getElementById('pain').value;
+let imaging=document.getElementById('imaging').value;
+
+let persistentof=document.getElementById('persistentof').value;
+
+let pct=parseFloat(document.getElementById('pct').value)||0;
+let pcttrend=document.getElementById('pcttrend').value;
+
+let etiology=document.getElementById('etiology').value;
+let tg=parseFloat(document.getElementById('tg').value)||0;
+
+let cholangitis=document.getElementById('cholangitis').value;
+let cbd=document.getElementById('cbd').value;
+
+let weight=parseFloat(document.getElementById('weight').value)||70;
+
+let map=parseFloat(document.getElementById('map').value)||0;
+let lactate=parseFloat(document.getElementById('lactate').value)||0;
+let bun=parseFloat(document.getElementById('bun').value)||0;
+let urine=parseFloat(document.getElementById('urine').value)||0;
+let hct=parseFloat(document.getElementById('hct').value)||0;
+
+let fluidresponsive=document.getElementById('fluidresponsive').value;
+
+let balance=parseFloat(document.getElementById('balance').value)||0;
+
+let overload=document.getElementById('overload').value;
+
+let pfratio=parseFloat(document.getElementById('pfratio').value)||0;
+
+let cardiac=document.getElementById('cardiac').value;
+
+let ileus=document.getElementById('ileus').value;
+let vomiting=document.getElementById('vomiting').value;
+let grv=document.getElementById('grv').value;
+let aspiration=document.getElementById('aspiration').value;
+
+let bladder=parseFloat(document.getElementById('bladder').value)||0;
+
+let ventpressure=document.getElementById('ventpressure').value;
+
+let oliguria=document.getElementById('oliguria').value;
+
+let necrosis=document.getElementById('necrosis').value;
+
+let gas=document.getElementById('gas').value;
+
+let collection=document.getElementById('collection').value;
+
+let deterioration=document.getElementById('deterioration').value;
+
+let oral=document.getElementById('oral').value;
+
+let postpyloric=document.getElementById('postpyloric').value;
+
+let tpn=document.getElementById('tpn').value;
+
+let shock=document.getElementById('shock').value;
+
+let ards=document.getElementById('ards').value;
+
+let aki=document.getElementById('aki').value;
+
+let crrt=document.getElementById('crrt').value;
+
+let output='';
+
+output += '==============================\n';
+output += 'TIME-PHASE ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Phase: ' + timing + '\n';
+
+if(timing==='<24h'){
+output += 'Hyperacute inflammatory phase\n';
+}
+
+if(timing==='24-72h'){
+output += 'Early severe inflammatory phase\n';
+}
+
+if(timing==='3-7d'){
+output += 'Necrosis evolution phase\n';
+}
+
+if(timing==='1-4w'){
+output += 'Collection maturation phase\n';
+}
+
+if(timing==='>4w'){
+output += 'Late WON/drainage phase\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'DIAGNOSIS ENGINE\n';
+output += '==============================\n\n';
+
+let criteria=0;
+
+if(lipase>=180) criteria++;
+if(pain==='yes') criteria++;
+if(imaging==='yes') criteria++;
+
+if(criteria>=2){
+
+output += 'Acute pancreatitis confirmed\n';
+
+}
+else{
+
+output += 'Diagnostic criteria incomplete\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'SEVERITY / INFECTION ENGINE\n';
+output += '==============================\n\n';
+
+if(persistentof==='yes'){
+output += 'SEVERE ACUTE PANCREATITIS\n';
+}
+else{
+output += 'No persistent organ failure identified\n';
+}
+
+output += '\n';
+
+output += 'Current Procalcitonin: ';
+output += pct + '\n\n';
+
+if(pct<0.5){
+output += 'Low bacterial sepsis probability\n';
+}
+
+if(pct>=0.5 && pct<1){
+output += 'Intermediate infection probability\n';
+output += 'Close monitoring advised\n';
+}
+
+if(pct>=1){
+output += 'Elevated procalcitonin\n';
+output += 'Increased probability of bacterial sepsis/infected necrosis\n';
+}
+
+if(pct>=2){
+output += 'High infection concern phenotype\n';
+}
+
+if(pct>=5){
+output += 'Very high inflammatory/infective burden\n';
+}
+
+output += '\n';
+
+if(pcttrend==='unknown'){
+output += 'Only single PCT value available\n';
+}
+
+if(pcttrend==='improving'){
+output += 'Improving PCT trend\n';
+}
+
+if(pcttrend==='stable'){
+output += 'Stable PCT trend\n';
+}
+
+if(pcttrend==='worsening'){
+output += 'Worsening PCT trend increases concern for evolving infection/infected necrosis\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ETIOLOGY ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Etiology: ' + etiology + '\n';
+
+if(etiology==='Gallstone'){
+
+if(cholangitis==='yes' || cbd==='yes'){
+output += 'Urgent ERCP likely indicated\n';
+}
+else{
+output += 'No urgent ERCP indication currently\n';
+}
+
+output += 'Interval cholecystectomy advised\n';
+
+}
+
+if(etiology==='Hypertriglyceridemia'){
+
+output += 'Insulin infusion consideration\n';
+
+if(tg>1000'){
+output += 'Severe HTG pancreatitis\n';
+}
+
+}
+
+if(etiology==='Autoimmune'){
+output += 'IgG4 evaluation consideration\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ADVANCED HEMODYNAMIC / IVF ENGINE\n';
+output += '==============================\n\n';
+
+let maintenance=Math.round(weight*1.5);
+
+output += 'Preferred fluid: Lactated Ringer\n';
+output += 'Baseline maintenance estimate: ';
+output += maintenance + ' mL/hr\n\n';
+
+let fluidPhenotype='neutral';
+
+if(
+fluidresponsive==='yes' &&
+map<65 &&
+overload==='no'
+){
+fluidPhenotype='fluid responsive';
+}
+
+if(
+overload==='yes' ||
+balance>3 ||
+bladder>=20 ||
+pfratio<200
+){
+fluidPhenotype='overloaded';
+}
+
+output += 'Hemodynamic phenotype: ';
+output += fluidPhenotype + '\n\n';
+
+if(fluidPhenotype==='fluid responsive'){
+
+output += 'PLAN:\n';
+output += '- LR bolus 500 mL over 30–60 min\n';
+output += '- Reassess MAP/UO/lactate\n';
+output += '- Continue controlled hydration\n\n';
+
+}
+
+if(fluidPhenotype==='neutral'){
+
+output += 'PLAN:\n';
+output += '- Moderate goal-directed hydration\n';
+output += '- Suggested rate: ';
+output += maintenance + ' mL/hr\n';
+output += '- Reassess every 4–6h\n\n';
+
+}
+
+if(fluidPhenotype==='overloaded'){
+
+output += 'OVERLOAD PHENOTYPE IDENTIFIED\n';
+output += '- Avoid aggressive boluses\n';
+output += '- Earlier vasopressor consideration\n';
+output += '- Consider deresuscitation\n';
+
+if(crrt==='yes'){
+output += '- CRRT-assisted fluid removal possible\n';
+}
+
+output += '\n';
+
+}
+
+if(map<65 && fluidresponsive==='no'){
+output += 'Earlier norepinephrine favored over more fluids\n\n';
+}
+
+if(hct>44){
+output += 'Hemoconcentration suggests inadequate resuscitation\n\n';
+}
+
+if(balance>5){
+output += 'High positive balance — risk of ARDS/ACS worsening\n\n';
+}
+
+if(cardiac==='yes'){
+output += 'Cardiac dysfunction present — conservative fluid strategy favored\n\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'GI DYSFUNCTION ENGINE\n';
+output += '==============================\n\n';
+
+if(ileus==='yes'){
+
+output += 'Paralytic ileus likely\n';
+output += '- Correct electrolytes\n';
+output += '- Minimize opioids\n';
+output += '- NG decompression consideration\n';
+
+}
+
+if(vomiting==='yes' || grv==='yes'){
+
+output += 'Gastroparesis/feed intolerance likely\n';
+output += '- Metoclopramide consideration\n';
+output += '- Erythromycin consideration\n';
+
+}
+
+if(aspiration==='high'){
+output += 'High aspiration risk — post-pyloric feeding preferred\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ACS ENGINE\n';
+output += '==============================\n\n';
+
+if(bladder>=12'){
+output += 'Intra-abdominal hypertension present\n';
+}
+
+if(bladder>=20){
+
+output += 'Possible abdominal compartment syndrome\n';
+output += '- NG/rectal decompression\n';
+output += '- Sedation/paralysis consideration\n';
+output += '- Avoid excessive fluids\n';
+
+if(crrt==='yes'){
+output += '- CRRT may assist fluid removal\n';
+}
+
+output += '- Surgical decompression if refractory\n';
+
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'NECROSIS / COLLECTION ENGINE\n';
+output += '==============================\n\n';
+
+if(necrosis==='yes'){
+output += 'Pancreatic necrosis present\n';
+}
+
+output += 'Collection type: ' + collection + '\n';
+
+if(gas==='yes' || deterioration==='yes'){
+output += 'Possible infected necrosis\n';
+}
+
+if(collection==='APFC'){
+output += 'Conservative management favored\n';
+}
+
+if(collection==='ANC'){
+output += 'Avoid premature intervention if possible\n';
+}
+
+if(collection==='Pseudocyst'){
+output += 'Drain only if symptomatic/complicated\n';
+}
+
+if(collection==='WON'){
+output += 'WON identified — drainage technically favorable\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ANTIBIOTIC ENGINE\n';
+output += '==============================\n\n';
+
+if(gas==='yes' || cholangitis==='yes' || pct>=1){
+output += 'Antibiotics likely indicated\n';
+}
+else{
+output += 'Routine prophylactic antibiotics NOT advised\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'NUTRITION ENGINE\n';
+output += '==============================\n\n';
+
+let calories=Math.round(weight*25);
+
+let protein=Math.round(weight*1.5);
+
+output += 'Calories: ' + calories + ' kcal/day\n';
+output += 'Protein: ' + protein + ' g/day\n';
+
+if(oral==='yes'){
+output += 'Early oral low-fat feeding preferred\n';
+}
+else{
+output += 'Enteral nutrition within 24–48h preferred\n';
+}
+
+if(postpyloric==='yes'){
+
+output += 'NJ/post-pyloric feeding preferred\n';
+output += 'Suggested initiation: 20 mL/hr trophic feeding\n';
+
+}
+
+if(tpn==='yes'){
+output += 'TPN/SPN only if EN not feasible\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'INTERVENTION ENGINE\n';
+output += '==============================\n\n';
+
+if(collection==='None'){
+output += 'Conservative management preferred\n';
+}
+
+if(collection==='ANC' || collection==='WON'){
+
+output += 'Preferred escalation:\n';
+output += '1. Endoscopic drainage\n';
+output += '2. Percutaneous drainage\n';
+output += '3. Minimally invasive necrosectomy\n';
+output += '4. Open surgery only as rescue\n';
+
+}
+
+output += 'Delay intervention whenever clinically feasible\n';
+
+output += '\n';
+
+output += '==============================\n';
+output += 'ORGAN SUPPORT ENGINE\n';
+output += '==============================\n\n';
+
+if(shock==='yes'){
+output += 'Norepinephrine preferred vasopressor\n';
+}
+
+if(ards==='yes'){
+output += 'ARDS management required\n';
+}
+
+if(aki==='yes'){
+output += 'AKI surveillance required\n';
+}
+
+if(crrt==='yes'){
+output += 'CRRT support ongoing\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'REASSESSMENT ENGINE\n';
+output += '==============================\n\n';
+
+output += '- MAP hourly\n';
+output += '- Urine output hourly\n';
+output += '- Lactate q6h\n';
+output += '- PCT trend\n';
+output += '- Daily fluid balance\n';
+output += '- Feed tolerance\n';
+output += '- Organ failure progression\n';
+
+if(deterioration==='yes'){
+output += '- Repeat contrast CT consideration\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'TRANSFER / ESCALATION\n';
+output += '==============================\n\n';
+
+if(
+persistentof==='yes' ||
+shock==='yes' ||
+ards==='yes'
+){
+output += 'ICU-level care required\n';
+}
+
+if(collection==='WON' || gas==='yes'){
+output += 'Advanced HPB/endoscopy referral advised\n';
+}
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: ' + err;
+
+}
+
+}
+
+</script>
+
+</body>
+</html>

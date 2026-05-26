@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultra Advanced ACLF / ADCLD ICU Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2200px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:20px;
+margin-top:25px;
+border:none;
+border-radius:18px;
+background:#06b6d4;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+line-height:1.8;
+white-space:pre-line;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Ultra Advanced ACLF / ADCLD ICU Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. Liver Dysfunction</h2>
+
+<label>Bilirubin</label>
+<input type="number" id="bilirubin">
+
+<label>Bilirubin Trend</label>
+
+<select id="bilitrend">
+<option value="unknown">Unknown / Single value only</option>
+<option value="improving">Improving</option>
+<option value="stable">Stable</option>
+<option value="worsening">Worsening</option>
+</select>
+
+<label>INR</label>
+<input type="number" step="0.1" id="inr">
+
+<label>Ascites Present?</label>
+
+<select id="ascites">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>2. Kidney Dysfunction</h2>
+
+<label>Creatinine</label>
+<input type="number" step="0.1" id="creatinine">
+
+<label>Creatinine Trend</label>
+
+<select id="crtrend">
+<option value="unknown">Unknown / Single value only</option>
+<option value="improving">Improving</option>
+<option value="stable">Stable</option>
+<option value="worsening">Worsening</option>
+</select>
+
+<label>Urine Output (mL/day)</label>
+<input type="number" id="urine">
+
+<label>Albumin Challenge Done?</label>
+
+<select id="albumin">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>CRRT Running?</label>
+
+<select id="crrt">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>3. Brain / Encephalopathy</h2>
+
+<label>HE Grade</label>
+
+<select id="he">
+<option value="0">None</option>
+<option value="1">Grade I</option>
+<option value="2">Grade II</option>
+<option value="3">Grade III</option>
+<option value="4">Grade IV</option>
+</select>
+
+<label>Ammonia</label>
+<input type="number" id="ammonia">
+
+<label>Ammonia Trend</label>
+
+<select id="ammtrend">
+<option value="unknown">Unknown / Single value only</option>
+<option value="improving">Improving</option>
+<option value="stable">Stable</option>
+<option value="worsening">Worsening</option>
+</select>
+
+<label>Alternative Causes of AMS Considered?</label>
+
+<select id="ams">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>4. Infection / Sepsis</h2>
+
+<label>Sepsis Present?</label>
+
+<select id="sepsis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Procalcitonin</label>
+<input type="number" step="0.1" id="pct">
+
+<label>PCT Trend</label>
+
+<select id="pcttrend">
+<option value="unknown">Unknown / Single value only</option>
+<option value="improving">Improving</option>
+<option value="stable">Stable</option>
+<option value="worsening">Worsening</option>
+</select>
+
+<label>Likely Source</label>
+
+<select id="source">
+
+<option value="SBP">SBP</option>
+<option value="Pneumonia">Pneumonia</option>
+<option value="UTI">UTI</option>
+<option value="Biliary">Biliary</option>
+<option value="Bloodstream">Bloodstream</option>
+<option value="Unknown">Unknown</option>
+
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>5. Hemodynamics</h2>
+
+<label>MAP</label>
+<input type="number" id="map">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+<label>Lactate Trend</label>
+
+<select id="lacttrend">
+<option value="unknown">Unknown / Single value only</option>
+<option value="improving">Improving</option>
+<option value="stable">Stable</option>
+<option value="worsening">Worsening</option>
+</select>
+
+<label>Vasopressor Requirement</label>
+
+<select id="vaso">
+<option value="none">None</option>
+<option value="low">Low dose</option>
+<option value="high">High dose</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>6. GI Bleeding</h2>
+
+<label>GI Bleeding?</label>
+
+<select id="gibleed">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Variceal Bleed Suspected?</label>
+
+<select id="variceal">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Hemoglobin</label>
+<input type="number" step="0.1" id="hb">
+
+<label>Platelets</label>
+<input type="number" id="platelets">
+
+<label>Fibrinogen</label>
+<input type="number" id="fibrinogen">
+
+</div>
+
+<div class="card">
+
+<h2>7. Nutrition</h2>
+
+<label>Weight (kg)</label>
+<input type="number" id="weight">
+
+<label>Oral Intake Adequate?</label>
+
+<select id="oral">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Post-Pyloric Feeding Needed?</label>
+
+<select id="postpyloric">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>TPN Needed?</label>
+
+<select id="tpn">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Sodium</label>
+<input type="number" id="sodium">
+
+<label>Potassium</label>
+<input type="number" step="0.1" id="potassium">
+
+</div>
+
+</div>
+
+<button onclick="analyzeACLF()">
+Generate Complete ACLF ICU Plan
+</button>
+
+<div class="result">
+
+<h2>Complete ACLF ICU Management Plan</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzeACLF(){
+
+try{
+
+let bilirubin=parseFloat(document.getElementById('bilirubin').value)||0;
+let bilitrend=document.getElementById('bilitrend').value;
+
+let inr=parseFloat(document.getElementById('inr').value)||0;
+
+let ascites=document.getElementById('ascites').value;
+
+let creatinine=parseFloat(document.getElementById('creatinine').value)||0;
+
+let crtrend=document.getElementById('crtrend').value;
+
+let urine=parseFloat(document.getElementById('urine').value)||0;
+
+let albumin=document.getElementById('albumin').value;
+
+let crrt=document.getElementById('crrt').value;
+
+let he=parseInt(document.getElementById('he').value)||0;
+
+let ammonia=parseFloat(document.getElementById('ammonia').value)||0;
+
+let ammtrend=document.getElementById('ammtrend').value;
+
+let ams=document.getElementById('ams').value;
+
+let sepsis=document.getElementById('sepsis').value;
+
+let pct=parseFloat(document.getElementById('pct').value)||0;
+
+let pcttrend=document.getElementById('pcttrend').value;
+
+let source=document.getElementById('source').value;
+
+let map=parseFloat(document.getElementById('map').value)||0;
+
+let lactate=parseFloat(document.getElementById('lactate').value)||0;
+
+let lacttrend=document.getElementById('lacttrend').value;
+
+let vaso=document.getElementById('vaso').value;
+
+let gibleed=document.getElementById('gibleed').value;
+
+let variceal=document.getElementById('variceal').value;
+
+let hb=parseFloat(document.getElementById('hb').value)||0;
+
+let platelets=parseFloat(document.getElementById('platelets').value)||0;
+
+let fibrinogen=parseFloat(document.getElementById('fibrinogen').value)||0;
+
+let weight=parseFloat(document.getElementById('weight').value)||70;
+
+let oral=document.getElementById('oral').value;
+
+let postpyloric=document.getElementById('postpyloric').value;
+
+let tpn=document.getElementById('tpn').value;
+
+let sodium=parseFloat(document.getElementById('sodium').value)||0;
+
+let potassium=parseFloat(document.getElementById('potassium').value)||0;
+
+let output='';
+
+output += '==============================\n';
+output += 'ACLF / ADCLD CLASSIFICATION\n';
+output += '==============================\n\n';
+
+let organFailures=0;
+
+if(bilirubin>=12) organFailures++;
+if(creatinine>=2 || crrt==='yes') organFailures++;
+if(he>=3) organFailures++;
+if(inr>=2.5) organFailures++;
+if(vaso==='high') organFailures++;
+
+if(organFailures===0){
+output += 'No ACLF by CLIF criteria\n';
+}
+
+if(organFailures===1){
+output += 'ACLF Grade 1\n';
+}
+
+if(organFailures===2){
+output += 'ACLF Grade 2\n';
+}
+
+if(organFailures>=3){
+output += 'ACLF Grade 3\n';
+}
+
+output += '\nEstimated Organ Failures: ';
+output += organFailures + '\n\n';
+
+output += '==============================\n';
+output += 'LIVER TRAJECTORY ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Current bilirubin: ';
+output += bilirubin + '\n';
+
+if(bilitrend==='unknown'){
+output += 'Only single bilirubin value available\n';
+}
+
+if(bilitrend==='improving'){
+output += 'Improving hepatic trajectory\n';
+}
+
+if(bilitrend==='stable'){
+output += 'Stable hepatic trajectory\n';
+}
+
+if(bilitrend==='worsening'){
+output += 'Worsening hepatic trajectory\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'RENAL ENGINE\n';
+output += '==============================\n\n';
+
+output += 'Current creatinine: ';
+output += creatinine + '\n';
+
+if(crtrend==='unknown'){
+output += 'Only single creatinine value available\n';
+}
+
+if(crtrend==='improving'){
+output += 'Improving renal trajectory\n';
+}
+
+if(crtrend==='stable'){
+output += 'Stable renal trajectory\n';
+}
+
+if(crtrend==='worsening'){
+output += 'Worsening renal trajectory\n';
+}
+
+if(creatinine>=2 && albumin==='yes'){
+output += 'Possible HRS-AKI phenotype\n';
+}
+
+if(urine<400){
+output += 'Severe oliguria present\n';
+}
+
+if(crrt==='yes'){
+output += 'CRRT support ongoing\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'BRAIN / HE ENGINE\n';
+output += '==============================\n\n';
+
+output += 'HE Grade: ';
+output += he + '\n';
+
+output += 'Current ammonia: ';
+output += ammonia + '\n';
+
+if(ammtrend==='unknown'){
+output += 'Only single ammonia value available\n';
+}
+
+if(ammtrend==='improving'){
+output += 'Improving ammonia trajectory\n';
+}
+
+if(ammtrend==='stable'){
+output += 'Stable ammonia trajectory\n';
+}
+
+if(ammtrend==='worsening'){
+output += 'Worsening ammonia trajectory\n';
+}
+
+if(ams==='no'){
+output += 'Alternative causes of AMS need evaluation\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'SEPSIS ENGINE\n';
+output += '==============================\n\n';
+
+if(sepsis==='yes'){
+output += 'Sepsis phenotype present\n';
+}
+
+output += 'Likely source: ';
+output += source + '\n';
+
+output += 'Current PCT: ';
+output += pct + '\n';
+
+if(pct<0.5){
+output += 'Low bacterial sepsis probability\n';
+}
+
+if(pct>=0.5 && pct<1){
+output += 'Intermediate infection risk\n';
+}
+
+if(pct>=1){
+output += 'Elevated bacterial sepsis probability\n';
+}
+
+if(pct>=2){
+output += 'High infection concern phenotype\n';
+}
+
+if(pcttrend==='unknown'){
+output += 'Only single PCT value available\n';
+}
+
+if(pcttrend==='improving'){
+output += 'Improving PCT trend\n';
+}
+
+if(pcttrend==='stable'){
+output += 'Stable PCT trend\n';
+}
+
+if(pcttrend==='worsening'){
+output += 'Worsening PCT trajectory\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'HEMODYNAMIC ENGINE\n';
+output += '==============================\n\n';
+
+output += 'MAP: ';
+output += map + '\n';
+
+output += 'Lactate: ';
+output += lactate + '\n';
+
+if(map<65){
+output += 'Hemodynamic instability present\n';
+}
+
+if(lacttrend==='unknown'){
+output += 'Only single lactate value available\n';
+}
+
+if(lacttrend==='improving'){
+output += 'Improving perfusion trajectory\n';
+}
+
+if(lacttrend==='stable'){
+output += 'Stable perfusion trajectory\n';
+}
+
+if(lacttrend==='worsening'){
+output += 'Worsening perfusion trajectory\n';
+}
+
+if(vaso==='low'){
+output += 'Low-dose vasopressor support\n';
+}
+
+if(vaso==='high'){
+output += 'High vasopressor requirement\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'GI BLEED ENGINE\n';
+output += '==============================\n\n';
+
+if(gibleed==='yes'){
+
+output += 'GI bleed present\n';
+
+if(variceal==='yes'){
+output += 'Variceal bleed suspected\n';
+output += 'Urgent endoscopy consideration\n';
+output += 'Vasoactive infusion consideration\n';
+}
+
+output += 'Restrictive transfusion strategy favored\n';
+
+}
+
+if(platelets<50000){
+output += 'Severe thrombocytopenia\n';
+}
+
+if(fibrinogen<150){
+output += 'Low fibrinogen — replacement consideration\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'NUTRITION ENGINE\n';
+output += '==============================\n\n';
+
+let calories=Math.round(weight*30);
+
+let protein=Math.round(weight*1.2);
+
+output += 'Calories: ';
+output += calories + ' kcal/day\n';
+
+output += 'Protein: ';
+output += protein + ' g/day\n';
+
+if(oral==='yes'){
+output += 'Oral feeding encouraged\n';
+}
+
+if(postpyloric==='yes'){
+output += 'Post-pyloric feeding preferred\n';
+}
+
+if(tpn==='yes'){
+output += 'TPN/SPN if EN inadequate\n';
+}
+
+if(sodium<125){
+output += 'Severe hyponatremia present\n';
+}
+
+if(potassium<3){
+output += 'Hypokalemia may worsen HE\n';
+}
+
+output += '\n';
+
+output += '==============================\n';
+output += 'REASSESSMENT / ESCALATION\n';
+output += '==============================\n\n';
+
+output += '- Hourly urine output monitoring\n';
+output += '- Daily creatinine trend\n';
+output += '- Serial bilirubin/INR\n';
+output += '- PCT trend monitoring\n';
+output += '- Lactate reassessment\n';
+output += '- HE reassessment\n';
+
+if(organFailures>=2){
+output += '- Early transplant center discussion advised\n';
+}
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: ' + err;
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>

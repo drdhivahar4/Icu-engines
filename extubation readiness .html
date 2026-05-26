@@ -1,0 +1,663 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extubation Readiness Calculator v2.0</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }.container {
+  max-width: 1200px;
+  margin: auto;
+}
+
+.header {
+  background: #111827;
+  padding: 20px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  margin: 0;
+  color: #67e8f9;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.card {
+  background: #111827;
+  padding: 20px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+
+.section-title {
+  color: #67e8f9;
+  margin-bottom: 15px;
+}
+
+.field {
+  margin-bottom: 12px;
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+  color: #cbd5e1;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: white;
+  box-sizing: border-box;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 15px;
+  background: #06b6d4;
+  color: black;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.result {
+  background: #022c22;
+  padding: 20px;
+  border-radius: 20px;
+  margin-bottom: 15px;
+}
+
+.warning {
+  background: #3f3f46;
+  padding: 15px;
+  border-radius: 15px;
+  margin-top: 10px;
+}
+
+@media(max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+  </style>
+</head>
+<body><div class="container">  <div class="header">
+    <h1>Extubation Readiness Calculator</h1>
+    <p>PSV-based extubation assessment for abdominal critical care, ARDS, pancreatitis, oncology, and post-operative ICU patients.</p>
+  </div>  <div class="grid"><div>
+
+  <div class="card">
+    <h2 class="section-title">1. Oxygenation & Ventilation</h2>
+
+    <div class="field">
+      <label>FiO2 (%)</label>
+      <input type="number" id="fio2">
+    </div>
+
+    <div class="field">
+      <label>PEEP</label>
+      <input type="number" id="peep">
+    </div>
+
+    <div class="field">
+      <label>SpO2 (%)</label>
+      <input type="number" id="spo2">
+    </div>
+
+    <div class="field">
+      <label>Respiratory Rate</label>
+      <input type="number" id="rr">
+    </div>
+
+    <div class="field">
+      <label>Tidal Volume (mL)</label>
+      <input type="number" id="tv">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">2. ABG & Metabolic Assessment</h2>
+
+    <div class="field">
+      <label>pH</label>
+      <input type="number" step="0.01" id="ph">
+    </div>
+
+    <div class="field">
+      <label>PaCO2</label>
+      <input type="number" id="paco2">
+    </div>
+
+    <div class="field">
+      <label>HCO3</label>
+      <input type="number" id="hco3">
+    </div>
+
+    <div class="field">
+      <label>Lactate</label>
+      <input type="number" step="0.1" id="lactate">
+    </div>
+
+    <div class="field">
+      <label>ABG Trend</label>
+      <select id="abgtrend">
+        <option value="2">Improving</option>
+        <option value="1">Stable</option>
+        <option value="0">Worsening</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">3. Hemodynamics</h2>
+
+    <div class="field">
+      <label>Heart Rate</label>
+      <input type="number" id="hr">
+    </div>
+
+    <div class="field">
+      <label>MAP</label>
+      <input type="number" id="map">
+    </div>
+
+    <div class="field">
+      <label>Vasopressor Requirement</label>
+      <select id="vaso">
+        <option value="0">None</option>
+        <option value="1">Low Dose</option>
+        <option value="2">Moderate/High Dose</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">4. ET-Tolerant Neurological Assessment</h2>
+
+    <div class="field">
+      <label>Eye Opening</label>
+      <select id="eye">
+        <option value="4">Spontaneous</option>
+        <option value="3">To Voice</option>
+        <option value="2">To Pain</option>
+        <option value="1">None</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Motor Response</label>
+      <select id="motor">
+        <option value="6">Obeys Commands</option>
+        <option value="5">Localizes Pain</option>
+        <option value="4">Withdraws</option>
+        <option value="3">Flexion</option>
+        <option value="2">Extension</option>
+        <option value="1">None</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Muscle Power</label>
+      <select id="power">
+        <option value="2">Good Antigravity Strength</option>
+        <option value="1">Weak but Functional</option>
+        <option value="0">Severe Weakness</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">5. PSV Stability Assessment</h2>
+
+    <div class="field">
+      <label>Time Stable on PSV 8 / PEEP 5 (hours)</label>
+      <input type="number" id="psvtime">
+    </div>
+
+    <div class="field">
+      <label>Persistent Tachypnea?</label>
+      <select id="tachypnea">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">6. Airway Protection</h2>
+
+    <div class="field">
+      <label>Cough Strength</label>
+      <select id="cough">
+        <option value="2">Strong</option>
+        <option value="1">Moderate</option>
+        <option value="0">Weak</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Secretions</label>
+      <select id="secretions">
+        <option value="2">Minimal</option>
+        <option value="1">Moderate</option>
+        <option value="0">Copious</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Accessory Muscle Use</label>
+      <select id="muscles">
+        <option value="2">None</option>
+        <option value="1">Mild</option>
+        <option value="0">Significant</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Duration of Mechanical Ventilation (days)</label>
+      <input type="number" id="ventdays">
+    </div>
+
+    <div class="field">
+      <label>Cumulative Fluid Balance</label>
+      <select id="fluid">
+        <option value="2">Mild Positive (≤ +5L cumulative)</option>
+        <option value="1">Marked Positive (> +5L cumulative)</option>
+        <option value="0">Marked Positive with Clinical Overload</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Delirium / Agitation</label>
+      <select id="delirium">
+        <option value="2">No</option>
+        <option value="1">Mild</option>
+        <option value="0">Significant</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Air Leak Present?</label>
+      <select id="airleak">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Night Extubation?</label>
+      <select id="night">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Previous Failed Extubation?</label>
+      <select id="failedext">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+
+    </div>
+
+  <div class="card">
+    <h2 class="section-title">7. Clinical Overload Conditions</h2>
+
+    <div class="field">
+      <label>Pulmonary Edema</label>
+      <select id="pulmedema">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Significant Pleural Effusion</label>
+      <select id="pleural">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Tense Abdomen / Ascites</label>
+      <select id="abdomen">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Worsening Oxygenation</label>
+      <select id="worseningoxy">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+      </select>
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <div class="field">
+      <label>Patient Conditions / Phenotypes</label>
+      <select id="profile" multiple size="8">
+        <option value="general">General ICU</option>
+        <option value="abdominal">Abdominal Surgery</option>
+        <option value="pancreatitis">Pancreatitis</option>
+        <option value="ards">ARDS</option>
+        <option value="cld">CLD / Hypercapnia</option>
+        <option value="copd">COPD</option>
+        <option value="elderly">Elderly Frailty</option>
+        <option value="obese">Obesity / OHS</option>
+        <option value="onco">Oncology / Cachexia</option>
+      </select>
+      <small style="color:#94a3b8;display:block;margin-top:8px;">
+        Hold Ctrl (Windows) or long-press/select multiple on mobile-supported browsers.
+      </small>
+    </div>
+
+    <button onclick="calculateExtubation()">Calculate Readiness</button>
+  </div>
+
+</div>
+
+<div>
+
+  <div class="card">
+    <h2 class="section-title">Results</h2>
+
+    <div class="result">
+      <h2 id="status">Awaiting Assessment</h2>
+      <p id="risk">Failure Risk: --</p>
+    </div>
+
+    
+
+    <div class="warning">
+      <h3>Clinical Interpretation</h3>
+      <p id="interpretation">Complete assessment to generate interpretation.</p>
+    </div>
+
+  </div>
+
+</div>
+
+  </div></div><script>
+function calculateExtubation() {
+
+  let fio2 = Number(document.getElementById('fio2').value);
+  let peep = Number(document.getElementById('peep').value);
+  let spo2 = Number(document.getElementById('spo2').value);
+  let rr = Number(document.getElementById('rr').value);
+  let tv = Number(document.getElementById('tv').value);
+  let ph = Number(document.getElementById('ph').value);
+  let paco2 = Number(document.getElementById('paco2').value);
+  let hco3 = Number(document.getElementById('hco3').value);
+  let lactate = Number(document.getElementById('lactate').value);
+  let abgtrend = Number(document.getElementById('abgtrend').value);
+
+  let hr = Number(document.getElementById('hr').value);
+  let map = Number(document.getElementById('map').value);
+  let vaso = Number(document.getElementById('vaso').value);
+  let eye = Number(document.getElementById('eye').value);
+  let motor = Number(document.getElementById('motor').value);
+  let power = Number(document.getElementById('power').value);
+  let psvtime = Number(document.getElementById('psvtime').value);
+  let tachypnea = Number(document.getElementById('tachypnea').value);
+  let ventdays = Number(document.getElementById('ventdays').value);
+  let fluid = Number(document.getElementById('fluid').value);
+  let delirium = Number(document.getElementById('delirium').value);
+  let airleak = Number(document.getElementById('airleak').value);
+  let night = Number(document.getElementById('night').value);
+  let failedext = Number(document.getElementById('failedext').value);
+
+  let pulmedema = Number(document.getElementById('pulmedema').value);
+  let pleural = Number(document.getElementById('pleural').value);
+  let abdomen = Number(document.getElementById('abdomen').value);
+  let worseningoxy = Number(document.getElementById('worseningoxy').value);
+
+  let profile = Array.from(document.getElementById('profile').selectedOptions).map(option => option.value);
+
+  if(profile.length === 0) {
+    profile = ['general'];
+  }
+  let cough = Number(document.getElementById('cough').value);
+  let secretions = Number(document.getElementById('secretions').value);
+  let muscles = Number(document.getElementById('muscles').value);
+
+  let rsbi = rr / (tv / 1000);
+
+  // RSBI calculated internally
+
+  let score = 0;
+
+  if(ph >= 7.32) score++;
+  if(lactate <= 2.5) score++;
+  score += abgtrend;
+
+  if(fio2 <= 40) score++;
+  if(peep <= 5) score++;
+  if(spo2 >= 92) score++;
+  if(rr < 30) score++;
+  if(rsbi < 105) score++;
+  if(hr < 130) score++;
+  if(map >= 65) score++;
+  if(vaso == 0) score++;
+  if(eye >= 3) score++;
+  if(motor >= 5) score++;
+  score += power;
+
+  if(profile.includes('general') || profile.includes('abdominal')) {
+    if(psvtime >= 0.5) score++;
+    if(psvtime >= 1) score++;
+  }
+
+  if(profile.includes('pancreatitis') || profile.includes('ards') || profile.includes('onco')) {
+    if(psvtime >= 2) score++;
+    if(psvtime >= 6) score++;
+  }
+
+  if(profile.includes('cld') || profile.includes('copd') || profile.includes('obese')) {
+    if(psvtime >= 1) score++;
+    if(psvtime >= 2) score++;
+  }
+
+  if(profile.includes('elderly')) {
+    if(psvtime >= 2) score++;
+  }
+
+  if(tachypnea == 0) score++;
+
+  if(ventdays <= 7) score++;
+
+  score += fluid;
+  score += delirium;
+  score += airleak;
+
+  if(night == 1) score -= 1;
+
+  if(fluid == 2 && (pulmedema == 1 || pleural == 1 || abdomen == 1 || worseningoxy == 1)) {
+    score -= 3;
+  }
+
+  if(fluid == 1 && (pulmedema == 1 || pleural == 1 || abdomen == 1 || worseningoxy == 1)) {
+    score -= 2;
+  }
+  if(failedext == 1) score -= 2;
+
+  score += cough;
+  score += secretions;
+  score += muscles;
+
+  if(profile.includes('abdominal')) {
+    score -= 1;
+  }
+
+  if(profile.includes('pancreatitis')) {
+    score -= 1;
+  }
+
+  if(profile.includes('ards')) {
+    score -= 2;
+
+    if(rr > 28 && muscles < 2) {
+      score -= 2;
+    }
+  }
+
+  if(profile.includes('cld')) {
+    score -= 1;
+  }
+
+  if(profile.includes('onco')) {
+    score -= 2;
+  }
+
+  if(profile.includes('copd')) {
+    score -= 1;
+
+    if(paco2 > 60 && ph < 7.35) {
+      score -= 2;
+    }
+  }
+
+  if(profile.includes('elderly')) {
+    score -= 2;
+
+    if(power == 0) {
+      score -= 2;
+    }
+  }
+
+  if(profile.includes('obese')) {
+    score -= 2;
+
+    if(rr > 28) {
+      score -= 1;
+    }
+  }
+
+  let status = '';
+  let risk = '';
+  let interpretation = '';
+
+  // HARD STOP SAFETY RULES
+  let hardStop = false;
+
+  if(cough == 0 && secretions == 0) {
+    hardStop = true;
+    interpretation += ' Weak cough with copious secretions represents very high airway failure risk. ';
+  }
+
+  if(rr > 32 && muscles < 2) {
+    hardStop = true;
+    interpretation += ' Persistent tachypnea with accessory muscle use suggests occult respiratory fatigue. ';
+  }
+
+  if((pulmedema == 1 || pleural == 1 || abdomen == 1) && fluid < 2) {
+    hardStop = true;
+    interpretation += ' Significant overload physiology detected despite fluid balance category. ';
+  }
+
+  if(ventdays > 10 && power == 0) {
+    hardStop = true;
+    interpretation += ' Prolonged ventilation with severe weakness indicates high extubation failure risk. ';
+  }
+
+  if(profile.includes('obese') && rr > 30) {
+    score -= 2;
+  }
+
+  if(profile.includes('pancreatitis') && psvtime < 2) {
+    score -= 2;
+  }
+
+  if(profile.includes('ards') && psvtime < 4) {
+    score -= 3;
+  }
+
+  if(profile.includes('elderly') && delirium < 2) {
+    score -= 2;
+  }
+
+  if(hardStop) {
+    status = 'HIGH RISK';
+    risk = 'Very High Extubation Failure Risk';
+    interpretation += ' Hard-stop safety criteria triggered. Extubation should be deferred until reversible high-risk features improve.';
+  }
+  else if(score >= 15) {
+    status = 'READY FOR EXTUBATION';
+    risk = 'Low Failure Risk';
+    interpretation = 'Patient appears suitable for extubation. Consider HFNC or NIV support depending on disease profile and secretion burden.';
+  }
+  else if(score >= 11) {
+    status = 'BORDERLINE';
+    risk = 'Moderate Failure Risk';
+    interpretation = 'Borderline readiness. Optimize secretion clearance, pain control, respiratory mechanics, and monitor fatigue risk before extubation.';
+  }
+  else {
+    status = 'HIGH RISK';
+    risk = 'High Extubation Failure Risk';
+    interpretation = 'High extubation failure risk. Reassess work of breathing, airway protection, neurological reserve, and disease-specific physiological limitations.';
+  }
+
+  document.getElementById('status').innerText = status;
+  document.getElementById('risk').innerText = risk;
+  if(profile.includes('cld') && paco2 > 55 && ph < 7.35) {
+    interpretation += ' Chronic hypercapnic respiratory failure pattern detected. Strongly consider planned NIV support post-extubation.';
+  }
+
+  if(pulmedema == 1 || pleural == 1 || abdomen == 1 || worseningoxy == 1) {
+    interpretation += ' Clinical fluid overload physiology detected despite cumulative balance category. Extubation risk may be significantly underestimated by fluid balance alone.';
+  }
+
+  if(profile.includes('pancreatitis') && fluid == 0) {
+    interpretation += ' Significant positive fluid balance may predispose to respiratory deterioration after extubation.';
+  }
+
+  if(failedext == 1) {
+    interpretation += ' Previous extubation failure substantially increases current failure risk.';
+  }
+
+  if(profile.includes('copd')) {
+    interpretation += ' COPD phenotype detected. Delayed hypercapnic fatigue and secretion burden should be anticipated. Planned NIV support may reduce reintubation risk.';
+  }
+
+  if(profile.includes('elderly')) {
+    interpretation += ' Elderly/frailty phenotype detected. Even mild weakness or delirium may significantly impair airway protection and endurance.';
+  }
+
+  if(profile.includes('obese')) {
+    interpretation += ' Obesity/OHS phenotype detected. Increased work of breathing and nocturnal hypoventilation risk should be considered. HFNC or NIV support may be beneficial.';
+  }
+
+  if(ventdays > 10) {
+    interpretation += ' Prolonged mechanical ventilation suggests elevated diaphragm fatigue and ICU-acquired weakness risk.';
+  }
+
+  document.getElementById('interpretation').innerText = interpretation;
+}
+</script></body>
+</html>

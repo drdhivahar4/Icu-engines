@@ -1,0 +1,599 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sepsis Antibiotic Decision Support Engine</title>
+<style>
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+.container{
+max-width:1400px;
+margin:auto;
+}
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+gap:20px;
+}
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+h1,h2{
+color:#67e8f9;
+}
+label{
+display:block;
+margin-top:10px;
+margin-bottom:5px;
+}
+input,select{
+width:100%;
+padding:10px;
+border-radius:10px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+box-sizing:border-box;
+}
+button{
+width:100%;
+padding:18px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:16px;
+font-size:20px;
+font-weight:bold;
+cursor:pointer;
+}
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+line-height:1.8;
+}
+.alert{
+color:#fca5a5;
+font-weight:bold;
+}
+.good{
+color:#86efac;
+font-weight:bold;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Sepsis Antibiotic Decision Support Engine</h1><div class="grid"><div class="card">
+<h2>1. Infection Profile</h2><label>Suspected Source</label> <select id="source">
+
+<option value="unknown">Unknown Source</option>
+<option value="lung">Pneumonia / VAP</option>
+<option value="abdomen">Intra-abdominal Sepsis</option>
+<option value="uti">UTI / Urosepsis</option>
+<option value="line">Line Sepsis / CLABSI</option>
+<option value="ssti">Skin / Soft Tissue</option>
+<option value="cns">CNS Infection</option>
+<option value="fungal">Possible Fungal Sepsis</option>
+</select><label>Community or Hospital Acquired?</label> <select id="acquired">
+
+<option value="community">Community Acquired</option>
+<option value="hospital">Hospital Acquired</option>
+</select><label>Healthcare Exposure Risks</label> <select id="healthcare" multiple size="8">
+
+<option value="recenthospital">Recent Hospitalization</option>
+<option value="priorabx">Prior Antibiotics &lt;90 days</option>
+<option value="dialysis">Dialysis</option>
+<option value="recenticu">Recent ICU Admission</option>
+<option value="recentop">Recent Surgery</option>
+<option value="ventilation">Prolonged Ventilation</option>
+<option value="centrallineexp">Central Line Exposure</option>
+<option value="tpnexp">TPN Exposure</option>
+</select><label>Septic Shock Present?</label> <select id="shock">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>Norepinephrine Requirement</label> <select id="vasopressor">
+
+<option value="none">None</option>
+<option value="low">Low Dose (<0.1 mcg/kg/min)</option>
+<option value="moderate">Moderate Dose (0.1–0.2 mcg/kg/min)</option>
+<option value="high">High Dose (>0.2 mcg/kg/min)</option>
+</select>
+</div><div class="card">
+<h2>2. Patient Phenotypes</h2><label>Patient Phenotypes</label> <select id="phenotypes" multiple size="10">
+
+<option value="transplant">Transplant Recipient</option>
+<option value="onco">Oncology</option>
+<option value="neutropenia">Neutropenia</option>
+<option value="cirrhosis">Cirrhosis</option>
+<option value="ckd">CKD</option>
+<option value="crrt">CRRT</option>
+<option value="vap">Ventilator-associated Pneumonia</option>
+<option value="prolongedicu">Prolonged ICU Stay</option>
+<option value="mdrcolonization">Prior MDR Colonization</option>
+<option value="pancreatitis">Pancreatitis</option>
+<option value="postabdominalsurgery">Post Abdominal Surgery</option>
+<option value="anastomoticleak">Anastomotic Leak Suspicion</option>
+<option value="biliarysepsis">Biliary Sepsis</option>
+<option value="openabdomen">Open Abdomen</option>
+<option value="relooklap">Repeat / Relook Laparotomy</option>
+<option value="tpn">TPN</option>
+<option value="steroids">Steroid/Immunosuppression</option>
+<option value="fungalrisk">High Fungal Risk</option>
+<option value="foley">Indwelling Urinary Catheter</option>
+<option value="centralline">Central Venous Catheter</option>
+</select>
+</div><div class="card">
+<h2>3. Resistance Risk</h2><label>MDR Risk</label> <select id="mdr">
+
+<option value="0">Low</option>
+<option value="1">High</option>
+</select><label>Prior Carbapenem Exposure</label> <select id="carbapenem">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>Immunocompromised</label> <select id="immuno">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>Neutropenia</label> <select id="neutro">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select>
+</div><div class="card">
+<h2>3. Culture Status</h2><label>Blood Cultures Sent?</label> <select id="bloodculture">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>Source-Specific Cultures Sent?</label> <select id="sourceculture">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>Culture Result Available?</label> <select id="cultureavail">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>Culture Organism</label> <input type="text" id="organism" placeholder="Example: Klebsiella ESBL">
+
+<label>Resistance / Sensitivity Pattern</label> <input type="text" id="sensitivity" placeholder="Example: Meropenem S, PipTazo R, Colistin S">
+
+<label>Culture Site</label> <select id="culturesite">
+
+<option value="blood">Bloodstream</option>
+<option value="lung">Lung</option>
+<option value="urine">Urine</option>
+<option value="abdomen">Intra-abdominal</option>
+<option value="cns">CNS</option>
+<option value="softtissue">Soft Tissue</option>
+</select>
+</div><div class="card">
+<h2>4. Organ Dysfunction</h2><label>AKI Present?</label> <select id="aki">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>Liver Dysfunction Present?</label> <select id="liver">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>CRRT / Dialysis?</label> <select id="crrt">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select><label>Procalcitonin (ng/mL)</label> <input type="number" step="0.01" id="pct">
+
+<label>Source Control Achieved?</label> <select id="sourcecontrol">
+
+<option value="0">No</option>
+<option value="1">Yes</option>
+</select>
+</div></div><button onclick="generateAdvice()">Generate Antibiotic Strategy</button>
+
+<div class="result">
+<h2>Sepsis Antibiotic Analytics</h2>
+<div id="output"></div>
+</div></div><script>
+function generateAdvice(){
+
+let source=document.getElementById('source').value;
+let phenotypes=Array.from(document.getElementById('phenotypes').selectedOptions).map(o=>o.value);
+let acquired=document.getElementById('acquired').value;
+let healthcare=Array.from(document.getElementById('healthcare').selectedOptions).map(o=>o.value);
+let shock=Number(document.getElementById('shock').value);
+let vasopressor=document.getElementById('vasopressor').value;
+let mdr=Number(document.getElementById('mdr').value);
+let carbapenem=Number(document.getElementById('carbapenem').value);
+let immuno=Number(document.getElementById('immuno').value);
+let neutro=Number(document.getElementById('neutro').value);
+
+let bloodculture=Number(document.getElementById('bloodculture').value);
+let sourceculture=Number(document.getElementById('sourceculture').value);
+let cultureavail=Number(document.getElementById('cultureavail').value);
+let organism=document.getElementById('organism').value;
+let sensitivity=document.getElementById('sensitivity').value.toLowerCase();
+let culturesite=document.getElementById('culturesite').value;
+
+let aki=Number(document.getElementById('aki').value);
+let liver=Number(document.getElementById('liver').value);
+let crrt=Number(document.getElementById('crrt').value);
+let pct=Number(document.getElementById('pct').value);
+let sourcecontrol=Number(document.getElementById('sourcecontrol').value);
+
+let output='';
+let empiric='';
+let regimen='';
+let rationale='';
+let dosing='';
+
+// RESET
+regimen = '';
+rationale = '';
+dosing = '';
+empiric = '';
+
+// LUNG
+if(source === 'lung'){
+    if(acquired === 'community' && shock === 0 && mdr === 0){
+        regimen = 'Ceftriaxone + Azithromycin';
+        rationale = 'Low MDR community-acquired pneumonia phenotype';
+        dosing = 'Standard CAP dosing';
+    } else {
+        regimen = 'Piperacillin-Tazobactam ± Linezolid';
+        rationale = 'Hospital/VAP phenotype needing gram-negative + MRSA coverage';
+        dosing = 'Extended infusion beta-lactam preferred';
+    }
+}
+
+// ABDOMEN
+else if(source === 'abdomen'){
+
+if(phenotypes.includes('postabdominalsurgery')){
+rationale += ' Post abdominal surgery phenotype increases concern for healthcare-associated flora, anaerobes, Enterococcus, and ESBL organisms.';
+}
+
+if(phenotypes.includes('anastomoticleak')){
+rationale += ' Anastomotic leak suspicion increases need for urgent source control and broad abdominal coverage.';
+}
+
+if(phenotypes.includes('biliarysepsis')){
+rationale += ' Biliary sepsis phenotype favors gram-negative and Enterococcus-aware strategy.';
+}
+
+if(phenotypes.includes('openabdomen') || phenotypes.includes('relooklap')){
+rationale += ' Open abdomen/relook laparotomy phenotype significantly increases MDR and fungal risk.';
+}
+
+    if(shock === 1 || mdr === 1){
+        regimen = 'Meropenem extended infusion ± Echinocandin depending on fungal risk';
+        rationale = 'Severe abdominal sepsis with MDR/fungal risk';
+        dosing = 'ICMR/ISCCM-aligned prolonged infusion meropenem strategy preferred in severe abdominal sepsis/shock.';
+    } else {
+        regimen = 'Piperacillin-Tazobactam';
+        rationale = 'Broad abdominal and anaerobic coverage';
+        dosing = 'Extended infusion preferred';
+    }
+}
+
+// UTI
+else if(source === 'uti'){
+    if(mdr === 0 && shock === 0){
+        regimen = 'Ceftriaxone';
+        rationale = 'Low-risk community urosepsis';
+        dosing = 'Renal adjustment if AKI';
+    } else {
+        regimen = 'Piperacillin-Tazobactam or Meropenem';
+        rationale = 'Healthcare-associated or ESBL-risk urosepsis';
+        dosing = 'Adjust for AKI/CRRT';
+    }
+}
+
+// LINE
+else if(source === 'line'){
+    regimen = 'Vancomycin + Gram-negative coverage';
+    rationale = 'CLABSI phenotype';
+    dosing = 'Monitor renal function and troughs';
+}
+
+// CNS
+else if(source === 'cns'){
+    regimen = 'Ceftriaxone + Vancomycin';
+    rationale = 'Need CNS penetration';
+    dosing = 'Meningitic dosing required';
+}
+
+// UNKNOWN
+else{
+    regimen = 'Piperacillin-Tazobactam';
+    rationale = 'Undifferentiated sepsis without clear MDR phenotype';
+    dosing = 'Escalate if shock/MDR risk';
+}
+let cultures='';
+let suggestions='';
+
+if(source==='lung'){
+
+if(acquired==='community' && shock===0 && mdr===0){
+regimen='Ceftriaxone + azithromycin';
+rationale='Community-acquired pneumonia phenotype with low MDR risk.';
+dosing='Standard CAP dosing strategy.';
+}
+
+else if(acquired==='hospital' || phenotypes.includes('vap')){
+regimen='Piperacillin-tazobactam or meropenem depending on MDR risk ± linezolid if MRSA concern';
+rationale='Hospital-acquired/VAP phenotype requires strong gram-negative coverage and lung penetration.';
+dosing='Consider prolonged infusion beta-lactam strategy.';
+}
+empiric='Preferred empiric approach: Piperacillin-tazobactam or cefoperazone-sulbactam. Add MRSA coverage if VAP/high MRSA risk.';
+cultures='Blood cultures ×2 and sputum/endotracheal aspirate culture recommended.';
+}
+
+if(source==='abdomen'){
+
+if(shock===1 || mdr===1){
+regimen='Meropenem ± echinocandin depending on fungal-risk phenotype';
+rationale='Severe intra-abdominal sepsis with MDR/shock phenotype.';
+dosing='Consider prolonged infusion meropenem.';
+}else{
+regimen='Piperacillin-tazobactam';
+rationale='Broad abdominal coverage including anaerobes.';
+dosing='Standard extended infusion strategy preferred.';
+}
+empiric='Preferred empiric approach: Piperacillin-tazobactam. Escalate to meropenem if severe sepsis, MDR risk, or prior broad-spectrum exposure.';
+cultures='Blood cultures and intra-abdominal drain/pus cultures recommended.';
+suggestions='Source control is critical in abdominal sepsis.';
+}
+
+if(source==='uti'){
+
+if(mdr===0 && shock===0){
+regimen='Ceftriaxone';
+rationale='Community urinary sepsis with low MDR probability.';
+dosing='Renal dose adjustment if AKI present.';
+}else{
+regimen='Piperacillin-tazobactam or meropenem depending on ESBL/MDR risk';
+rationale='Complicated healthcare-associated urosepsis phenotype.';
+dosing='Dose-adjust for AKI/CRRT.';
+}
+empiric='Preferred empiric approach: Cefoperazone-sulbactam or piperacillin-tazobactam. Consider carbapenem if ESBL/MDR risk.';
+cultures='Urine culture and blood cultures recommended before antibiotics if feasible.';
+
+if(phenotypes.includes('foley')){
+suggestions+=' Indwelling urinary catheter present: evaluate catheter change/removal and CAUTI risk.';
+}
+}
+
+if(source==='line'){
+regimen='Vancomycin or linezolid + gram-negative coverage depending on shock severity';
+rationale='CLABSI phenotype requires resistant gram-positive coverage.';
+dosing='Monitor renal function and trough exposure where appropriate.';
+empiric='Preferred empiric approach: Broad gram-positive and gram-negative coverage with MRSA consideration.';
+cultures='Peripheral and line blood cultures recommended.';
+suggestions='Evaluate need for line removal.';
+
+if(phenotypes.includes('centralline')){
+suggestions+=' Central venous catheter phenotype increases CLABSI risk.';
+}
+}
+
+if(source==='ssti'){
+empiric='Preferred empiric approach: MRSA-active therapy plus gram-negative/anaerobic coverage if necrotizing or abdominal involvement suspected.';
+cultures='Wound/pus cultures and blood cultures recommended.';
+}
+
+if(source==='cns'){
+regimen='Ceftriaxone or cefepime + vancomycin';
+rationale='Need CNS penetration and meningitic dosing.';
+dosing='Use meningitic dose strategy.';
+empiric='Preferred empiric approach: Ceftriaxone or cefepime plus vancomycin. Consider antiviral coverage depending on suspicion.';
+cultures='Blood cultures and CSF studies if safe.';
+}
+
+if(source==='fungal'){
+empiric='High-risk fungal phenotype detected. Consider echinocandin-based strategy depending on candidemia risk and local epidemiology.';
+cultures='Blood cultures and fungal cultures/biomarkers recommended.';
+
+if(phenotypes.includes('tpn') || phenotypes.includes('pancreatitis') || phenotypes.includes('fungalrisk')){
+suggestions+=' High invasive fungal-risk phenotype detected.';
+}
+}
+
+if(source==='unknown'){
+empiric='Unknown-source sepsis: broad-spectrum empiric therapy guided by shock severity, MDR risk, and local antibiogram advised.';
+cultures='Blood cultures ×2, urine culture, respiratory samples if intubated, and focused imaging/source search recommended.';
+}
+
+if(acquired==='hospital'){
+empiric+=' Hospital-acquired phenotype increases probability of Pseudomonas, Acinetobacter, MRSA, ESBL organisms, and resistant Enterococcus.';
+}
+
+if(acquired==='community'){
+empiric+=' Community-acquired phenotype may allow narrower-spectrum therapy if shock/MDR risk absent.';
+}
+
+if(healthcare.includes('recenthospital')){
+empiric+=' Recent hospitalization increases healthcare-associated resistant organism risk.';
+}
+
+if(healthcare.includes('priorabx')){
+empiric+=' Recent antibiotic exposure increases MDR selection pressure.';
+}
+
+if(healthcare.includes('dialysis')){
+empiric+=' Dialysis exposure increases resistant gram-negative and line-related infection risk.';
+}
+
+if(healthcare.includes('recenticu')){
+empiric+=' Recent ICU exposure increases MDR gram-negative concern.';
+}
+
+if(healthcare.includes('recentop')){
+empiric+=' Recent surgery increases healthcare-associated and source-control related infection probability.';
+}
+
+if(healthcare.includes('ventilation')){
+empiric+=' Prolonged ventilation phenotype increases VAP and MDR gram-negative concern.';
+}
+
+if(healthcare.includes('centrallineexp')){
+empiric+=' Central line exposure increases CLABSI risk.';
+}
+
+if(healthcare.includes('tpnexp')){
+empiric+=' TPN exposure increases invasive fungal risk.';
+}
+
+if(mdr===1){
+empiric+=' MDR-risk phenotype present: consider carbapenem-based escalation depending on local resistance patterns.';
+}
+
+if(carbapenem===1){
+empiric+=' Prior carbapenem exposure increases resistant gram-negative risk.';
+}
+
+if(immuno===1 || neutro===1 || phenotypes.includes('transplant') || phenotypes.includes('steroids')){
+empiric+=' Immunocompromised/neutropenic phenotype: broaden resistant organism and fungal coverage considerations.';
+}
+
+if(shock===1){
+empiric+=' Septic shock phenotype: prioritize early broad-spectrum antibiotics and urgent source control.';
+}
+
+if(vasopressor==='low'){
+empiric+=' Vasopressor requirement suggests evolving hemodynamic instability and favors early appropriate source-directed therapy.';
+}
+
+if(vasopressor==='moderate'){
+empiric+=' Moderate vasopressor requirement indicates severe sepsis phenotype. Delayed/inadequate therapy risk increased.';
+}
+
+if(vasopressor==='high'){
+empiric+=' High vasopressor requirement indicates high-risk septic shock phenotype. Broad-spectrum therapy, rapid source control, and PK/PD optimization strongly favored.';
+}
+
+output+='<div class="good"><b>Suggested Empiric Regimen:</b> '+regimen+'</div><br>';
+output+='<div><b>Rationale:</b> '+rationale+'</div><br>';
+output+='<div><b>Dosing / PK-PD Strategy:</b> '+dosing+'</div><br>';
+output+='<div><b>Empiric Antibiotic Strategy:</b> '+empiric+'</div><br>';
+output+='<div><b>Recommended Cultures:</b> '+cultures+'</div><br>';
+
+if(suggestions.length>0){
+output+='<div><b>Additional Suggestions:</b> '+suggestions+'</div><br>';
+}
+
+if(bloodculture===0){
+output+='<div class="alert"><b>Missing Critical Step:</b> Blood cultures not documented.</div><br>';
+}
+
+if(sourceculture===0){
+output+='<div class="alert"><b>Source Culture Gap:</b> Source-specific cultures appear missing.</div><br>';
+}
+
+if(cultureavail===1 && organism.length>0){
+
+let targeted='Review susceptibility profile carefully.';
+let org=organism.toLowerCase();
+
+if(org.includes('klebsiella')){
+if(sensitivity.includes('meropenem s')){
+targeted='Meropenem appears active and appropriate for serious ESBL Klebsiella infection.';
+}
+if(sensitivity.includes('pip') && sensitivity.includes('r')){
+targeted+=' Piperacillin-tazobactam resistance detected.';
+}
+}
+
+if(org.includes('pseudomonas')){
+targeted='Use antipseudomonal therapy with reliable site penetration.';
+}
+
+if(org.includes('staph')){
+if(sensitivity.includes('mrsa')){
+targeted='MRSA-directed therapy advised. Consider lung penetration if pneumonia.';
+}else{
+targeted='MSSA phenotype: beta-lactam preferred if susceptible.';
+}
+}
+
+if(org.includes('candida')){
+targeted='Evaluate invasive candidiasis probability and source control.';
+}
+
+if(culturesite==='lung'){
+targeted+=' Ensure pulmonary penetration. Avoid daptomycin in pneumonia.';
+}
+
+if(culturesite==='cns'){
+targeted+=' Ensure meningitic dosing and CNS penetration.';
+}
+
+if(culturesite==='urine'){
+targeted+=' Ensure urinary-active antibiotic selection.';
+}
+
+if(culturesite==='abdomen'){
+targeted+=' Ensure anaerobic and intra-abdominal coverage when relevant.';
+}
+
+output+='<div class="good"><b>Targeted Antibiotic Strategy:</b> '+targeted+'</div><br>';
+}
+
+if(aki===1){
+output+='<div><b>AKI Consideration:</b> Ensure renal-dose adjustment and nephrotoxin awareness.</div><br>';
+}
+
+if(liver===1){
+output+='<div><b>Liver Dysfunction Consideration:</b> Monitor hepatotoxicity and drug metabolism issues.</div><br>';
+}
+
+if(crrt===1){
+output+='<div><b>CRRT Consideration:</b> Antibiotic dosing should account for extracorporeal clearance.</div><br>';
+}
+
+if(sourcecontrol===0 && (source==='abdomen' || source==='line')){
+output+='<div class="alert"><b>Source Control Warning:</b> Antibiotics alone may fail without adequate drainage/device removal/source control.</div><br>';
+}
+
+if(pct<0.25 && shock===0){
+output+='<div><b>Procalcitonin Interpretation:</b> Low procalcitonin with no shock lowers probability of severe bacterial sepsis. Reassess antibiotic necessity clinically.</div><br>';
+}
+
+if(pct>=0.25 && pct<2){
+output+='<div><b>Procalcitonin Interpretation:</b> Intermediate procalcitonin supports possible bacterial infection depending on source and clinical context.</div><br>';
+}
+
+if(pct>=2){
+output+='<div class="good"><b>Procalcitonin Interpretation:</b> Elevated procalcitonin supports significant bacterial sepsis phenotype.</div><br>';
+}
+
+if(pct>10){
+output+='<div class="alert"><b>Marked Procalcitonin Elevation:</b> Severe bacterial sepsis/shock phenotype strongly possible.</div><br>';
+}
+
+if(empiric.includes('meropenem') && empiric.includes('metronidazole')){
+output+='<div class="alert"><b>Duplicate Anaerobic Coverage Alert:</b> Review need for overlapping anaerobic therapy.</div><br>';
+}
+
+if(vasopressor==='high' && acquired==='hospital'){
+output+='<div class="alert"><b>High-Risk ICU Sepsis Phenotype:</b> Ensure rapid active therapy, PK/PD optimization, and urgent source control.</div><br>';
+}
+
+if(acquired==='community' && mdr===0 && shock===0){
+output+='<div class="good"><b>De-escalation Potential:</b> Narrow-spectrum therapy may become feasible after culture review.</div><br>';
+}
+
+output+='<div><b>ICMR/ISCCM Stewardship Principles:</b> Early active therapy, daily de-escalation review, source-control prioritization, avoidance of unnecessary carbapenems, and PK/PD optimization in critically ill patients.</div><br><div><b>General Stewardship Advice:</b> Reassess antibiotics at 48–72 hours for de-escalation, duration optimization, source control adequacy, and biomarker trend interpretation.</div><br>';
+
+
+document.getElementById('output').innerHTML=output;
+}
+</script></body>
+</html>
