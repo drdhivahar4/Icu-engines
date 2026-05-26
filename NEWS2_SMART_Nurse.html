@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>NEWS2 Score · SMART Nurse</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:system-ui,-apple-system,sans-serif;background:#f8fafc;min-height:100vh;padding-bottom:100px;}
+  .sticky-header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 16px rgba(79,70,229,.3);}
+  .header-title-small{font-size:11px;color:#c7d2fe;font-weight:700;letter-spacing:1.5px;}
+  .header-title{font-size:18px;font-weight:800;color:#fff;}
+  .score-bubble{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:background .3s;}
+  .score-bubble.active{box-shadow:0 0 0 3px white,0 0 0 5px var(--risk-color,#4f46e5);}
+  .score-bubble span.num{font-size:22px;font-weight:900;color:#fff;line-height:1;}
+  .score-bubble span.sub{font-size:9px;color:rgba(255,255,255,.8);}
+  .progress-bar{height:4px;background:#e2e8f0;}
+  .progress-fill{height:100%;background:#6366f1;transition:width .3s;}
+  .risk-hint{margin:12px 16px 0;border-radius:12px;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border:1.5px solid rgba(0,0,0,.08);}
+  .risk-hint .rl{font-size:14px;font-weight:700;}
+  .risk-hint .ra{font-size:13px;color:#64748b;}
+  .cards{padding:12px 16px;display:flex;flex-direction:column;gap:12px;}
+  .card{background:#fff;border-radius:20px;border:1.5px solid #e2e8f0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);transition:all .2s;}
+  .card.done{border:2px solid #6366f1;box-shadow:0 2px 16px rgba(99,102,241,.12);}
+  .card-header{padding:14px 18px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1f5f9;}
+  .card-header-left{display:flex;align-items:center;gap:10px;}
+  .card-emoji{font-size:24px;}
+  .card-label{font-weight:700;font-size:16px;color:#1e293b;}
+  .card-unit{font-size:12px;color:#94a3b8;}
+  .score-dot{width:36px;height:36px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;}
+  .options{display:grid;gap:8px;padding:12px;}
+  .opt-btn{padding:14px 8px;border-radius:14px;border:1.5px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .15s;min-height:70px;justify-content:center;}
+  .opt-btn.selected{border:2.5px solid #4f46e5;background:#eef2ff;}
+  .opt-score{width:30px;height:30px;border-radius:50%;background:#e2e8f0;color:#64748b;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;transition:all .15s;}
+  .opt-btn.selected .opt-score{color:#fff;}
+  .opt-label{font-size:13px;font-weight:500;color:#374151;text-align:center;line-height:1.2;}
+  .opt-btn.selected .opt-label{font-weight:700;color:#4338ca;}
+  .bottom-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 16px 20px;background:rgba(248,250,252,.95);backdrop-filter:blur(10px);border-top:1px solid #e2e8f0;}
+  .calc-btn{width:100%;padding:18px;border-radius:18px;border:none;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;}
+  .calc-btn.ready{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 4px 20px rgba(79,70,229,.35);}
+  .calc-btn.disabled{background:#e2e8f0;color:#94a3b8;cursor:not-allowed;}
+  /* Result screen */
+  #result-screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px;flex-direction:column;}
+  #result-screen.show{display:flex;}
+  .result-card{background:#fff;border-radius:24px;padding:32px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.12);}
+  .result-emoji{font-size:56px;margin-bottom:8px;}
+  .result-level{font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+  .result-score{font-size:72px;font-weight:900;line-height:1;margin-bottom:4px;}
+  .result-label{font-size:14px;color:#64748b;margin-bottom:12px;}
+  .result-action{border-radius:12px;padding:12px 16px;margin-bottom:24px;}
+  .result-action span{font-size:15px;font-weight:600;}
+  .breakdown{text-align:left;margin-bottom:24px;}
+  .breakdown-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}
+  .breakdown-row:last-child{border-bottom:none;padding-top:12px;}
+  .breakdown-row.total{font-weight:700;font-size:16px;}
+  .hint-box{font-size:13px;color:#94a3b8;margin-bottom:20px;padding:10px;background:#f8fafc;border-radius:10px;}
+  .hint-box strong{color:#374151;}
+  .reset-btn{width:100%;padding:16px;border-radius:16px;border:none;background:#4f46e5;color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;}
+</style>
+</head>
+<body>
+
+<!-- CALCULATOR SCREEN -->
+<div id="calc-screen">
+  <div class="sticky-header">
+    <div>
+      <div class="header-title-small">SMART NURSE · NEWS2</div>
+      <div class="header-title">Early Warning Score</div>
+    </div>
+    <div class="score-bubble" id="score-bubble">
+      <span class="num" id="score-num">0</span>
+      <span class="sub" id="score-sub">0/7</span>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div id="risk-hint" style="display:none" class="risk-hint">
+    <span class="rl" id="risk-level-text"></span>
+    <span class="ra" id="risk-action-text"></span>
+  </div>
+  <div class="cards" id="cards"></div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="bottom-bar" id="bottom-bar">
+  <button class="calc-btn disabled" id="calc-btn" onclick="showResult()">Fill all fields (0/7 done)</button>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="result-screen">
+  <div class="result-card" id="result-card">
+    <div class="result-emoji" id="res-emoji"></div>
+    <div class="result-level" id="res-level"></div>
+    <div class="result-score" id="res-score"></div>
+    <div class="result-label">NEWS2 Score</div>
+    <div class="result-action" id="res-action-box">
+      <span id="res-action"></span>
+    </div>
+    <div class="breakdown" id="breakdown"></div>
+    <div class="hint-box" id="hint-box"></div>
+    <button class="reset-btn" onclick="reset()">🔄 New Patient</button>
+  </div>
+</div>
+
+<script>
+const PARAMS = [
+  { key:"rr", label:"Resp. Rate", unit:"breaths/min", emoji:"🫁",
+    options:[{l:"≤8",s:3},{l:"9–11",s:1},{l:"12–20",s:0},{l:"21–24",s:2},{l:"≥25",s:3}] },
+  { key:"spo2", label:"SpO₂", unit:"%", emoji:"💧",
+    options:[{l:"≤91%",s:3},{l:"92–93%",s:2},{l:"94–95%",s:1},{l:"≥96%",s:0}] },
+  { key:"o2", label:"On Oxygen?", unit:"", emoji:"🔵",
+    options:[{l:"Room Air",s:0},{l:"On O₂",s:2}] },
+  { key:"sbp", label:"Systolic BP", unit:"mmHg", emoji:"❤️",
+    options:[{l:"≤90",s:3},{l:"91–100",s:2},{l:"101–110",s:1},{l:"111–219",s:0},{l:"≥220",s:3}] },
+  { key:"hr", label:"Heart Rate", unit:"bpm", emoji:"💓",
+    options:[{l:"≤40",s:3},{l:"41–50",s:1},{l:"51–90",s:0},{l:"91–110",s:1},{l:"111–130",s:2},{l:"≥131",s:3}] },
+  { key:"avpu", label:"Consciousness", unit:"ACVPU", emoji:"🧠",
+    options:[{l:"Alert",s:0},{l:"Confused",s:3},{l:"Voice",s:3},{l:"Pain",s:3},{l:"Unresponsive",s:3}] },
+  { key:"temp", label:"Temperature", unit:"°F", emoji:"🌡️",
+    options:[{l:"≤95.0°F",s:3},{l:"95.1–96.8°F",s:1},{l:"96.9–100.4°F",s:0},{l:"100.5–102.2°F",s:1},{l:"≥102.3°F",s:2}] },
+];
+
+const scoreColor = s => s===0?"#16a34a":s===1?"#2563eb":s===2?"#d97706":"#dc2626";
+const getRisk = (total, sel) => {
+  const hasTriple = Object.values(sel).some(x=>x===3);
+  if(total>=7) return {level:"HIGH",color:"#dc2626",light:"#fef2f2",emoji:"🚨",action:"Emergency response needed"};
+  if(total>=5||hasTriple) return {level:"MEDIUM",color:"#d97706",light:"#fffbeb",emoji:"⚠️",action:"Urgent ward review"};
+  if(total>=1) return {level:"LOW",color:"#2563eb",light:"#eff6ff",emoji:"🔵",action:"Monitor every 4–6 hrs"};
+  return {level:"ZERO",color:"#16a34a",light:"#f0fdf4",emoji:"✅",action:"Monitor every 12 hrs"};
+};
+
+let selected = {}; // key -> {score, idx}
+
+function buildCards() {
+  const container = document.getElementById('cards');
+  container.innerHTML = '';
+  PARAMS.forEach((p, pi) => {
+    const cols = p.options.length<=2?2:p.options.length===3?3:2;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'card-'+p.key;
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-header-left">
+          <span class="card-emoji">${p.emoji}</span>
+          <div>
+            <div class="card-label">${p.label}</div>
+            ${p.unit?`<div class="card-unit">${p.unit}</div>`:''}
+          </div>
+        </div>
+        <div class="score-dot" id="dot-${p.key}" style="display:none"></div>
+      </div>
+      <div class="options" style="grid-template-columns:repeat(${cols},1fr)" id="opts-${p.key}">
+        ${p.options.map((o,i)=>`
+          <button class="opt-btn" id="opt-${p.key}-${i}" onclick="pick('${p.key}',${i},${o.s})">
+            <div class="opt-score" id="oscore-${p.key}-${i}" style="background:${scoreColor(o.s)}20;color:${scoreColor(o.s)}">${o.s}</div>
+            <div class="opt-label">${o.l}</div>
+          </button>
+        `).join('')}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function pick(key, idx, score) {
+  // Deselect previous
+  const prev = selected[key];
+  if(prev!==undefined) {
+    const prevBtn = document.getElementById(`opt-${key}-${prev.idx}`);
+    if(prevBtn) {
+      prevBtn.classList.remove('selected');
+      const prevParam = PARAMS.find(p=>p.key===key);
+      const prevScore = prevParam.options[prev.idx].s;
+      const prevDot = document.getElementById(`oscore-${key}-${prev.idx}`);
+      if(prevDot){ prevDot.style.background=scoreColor(prevScore)+'20'; prevDot.style.color=scoreColor(prevScore); }
+    }
+  }
+  // Select new
+  selected[key] = {score, idx};
+  const btn = document.getElementById(`opt-${key}-${idx}`);
+  btn.classList.add('selected');
+  const scoreDot = document.getElementById(`oscore-${key}-${idx}`);
+  if(scoreDot){ scoreDot.style.background=scoreColor(score); scoreDot.style.color='#fff'; }
+
+  // Update card
+  const card = document.getElementById('card-'+key);
+  card.classList.add('done');
+  const dot = document.getElementById('dot-'+key);
+  dot.style.display='flex';
+  dot.style.background=scoreColor(score);
+  dot.textContent=score;
+
+  updateHeader();
+}
+
+function updateHeader() {
+  const keys = Object.keys(selected);
+  const filled = keys.length;
+  const total = keys.reduce((sum,k)=>sum+selected[k].score,0);
+  const scoreMap = {};
+  keys.forEach(k=>scoreMap[k]=selected[k].score);
+  const risk = getRisk(total, scoreMap);
+
+  // Update bubble
+  document.getElementById('score-num').textContent = total;
+  document.getElementById('score-sub').textContent = `${filled}/7`;
+  const bubble = document.getElementById('score-bubble');
+  bubble.style.background = filled>0 ? risk.color : 'rgba(255,255,255,.2)';
+  bubble.classList.toggle('active', filled>0);
+  document.documentElement.style.setProperty('--risk-color', risk.color);
+
+  // Progress
+  document.getElementById('progress-fill').style.width = `${(filled/7)*100}%`;
+
+  // Risk hint
+  if(filled>0) {
+    document.getElementById('risk-hint').style.display='flex';
+    document.getElementById('risk-hint').style.background=risk.light;
+    document.getElementById('risk-level-text').textContent=risk.level+' RISK';
+    document.getElementById('risk-level-text').style.color=risk.color;
+    document.getElementById('risk-action-text').textContent=risk.action;
+  }
+
+  // Bottom button
+  const btn = document.getElementById('calc-btn');
+  if(filled===7) {
+    btn.className='calc-btn ready';
+    btn.textContent=`Calculate Score (7/7 done) →`;
+  } else {
+    btn.className='calc-btn disabled';
+    btn.textContent=`Fill all fields (${filled}/7 done)`;
+  }
+}
+
+function showResult() {
+  const keys = Object.keys(selected);
+  if(keys.length<7) return;
+  const total = keys.reduce((sum,k)=>sum+selected[k].score,0);
+  const scoreMap = {};
+  keys.forEach(k=>scoreMap[k]=selected[k].score);
+  const risk = getRisk(total, scoreMap);
+
+  document.getElementById('calc-screen').style.display='none';
+  document.getElementById('bottom-bar').style.display='none';
+  const rs = document.getElementById('result-screen');
+  rs.classList.add('show');
+  rs.style.background = risk.light;
+
+  document.getElementById('res-emoji').textContent = risk.emoji;
+  document.getElementById('res-level').textContent = risk.level+' RISK';
+  document.getElementById('res-level').style.color = risk.color;
+  document.getElementById('res-score').textContent = total;
+  document.getElementById('res-score').style.color = risk.color;
+  document.getElementById('res-action-box').style.background = risk.light;
+  document.getElementById('res-action-box').style.border = `1.5px solid ${risk.color}40`;
+  document.getElementById('res-action').textContent = risk.action;
+  document.getElementById('res-action').style.color = risk.color;
+
+  // Breakdown
+  let bd = '';
+  PARAMS.forEach(p=>{
+    const s = selected[p.key]?.score??'—';
+    bd += `<div class="breakdown-row"><span>${p.emoji} ${p.label}</span><span style="color:${scoreColor(s)};font-weight:700">${s} pts</span></div>`;
+  });
+  bd += `<div class="breakdown-row total"><span>TOTAL</span><span style="color:${risk.color}">${total} pts</span></div>`;
+  document.getElementById('breakdown').innerHTML = bd;
+  document.getElementById('hint-box').innerHTML = `Enter <strong>NEWS2 = ${total}</strong> in your Google Form`;
+}
+
+function reset() {
+  selected = {};
+  document.getElementById('result-screen').classList.remove('show');
+  document.getElementById('calc-screen').style.display='block';
+  document.getElementById('bottom-bar').style.display='block';
+  document.getElementById('risk-hint').style.display='none';
+  buildCards();
+  updateHeader();
+}
+
+buildCards();
+updateHeader();
+</script>
+</body>
+</html>
