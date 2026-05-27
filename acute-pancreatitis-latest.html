@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acute Pancreatitis ICU Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090d;--s1:#0e1119;--s2:#131824;--border:#1a2030;
+  --text:#cbd5e1;--muted:#475569;
+  --mild:#34d399;--mod:#f59e0b;--sev:#f43f5e;
+  --blue:#38bdf8;--purple:#a78bfa;--orange:#f97316;
+  --mono:'IBM Plex Mono',monospace;--body:'DM Sans',sans-serif;--display:'Syne',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 35% at 50% 0%,rgba(245,158,11,0.04) 0%,transparent 65%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:2rem 1rem 5rem}
+
+header{text-align:center;margin-bottom:2rem}
+.chip{display:inline-flex;align-items:center;gap:.4rem;border:1px solid rgba(245,158,11,.25);border-radius:99px;padding:.3rem .9rem;margin-bottom:.9rem;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;color:rgba(245,158,11,.7);text-transform:uppercase}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--mod);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+h1{font-family:var(--display);font-size:clamp(1.5rem,5vw,2.4rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:.4rem}
+.sub{color:var(--muted);font-size:.8rem}
+
+.tabs{display:flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1.5rem;background:var(--s1)}
+.tab-btn{flex:1;min-width:80px;padding:.65rem .3rem;background:transparent;border:none;color:var(--muted);font-family:var(--mono);font-size:.58rem;letter-spacing:.06em;cursor:pointer;transition:all .2s;text-transform:uppercase;border-bottom:2px solid transparent}
+.tab-btn.active{background:var(--s2);color:var(--text);border-bottom-color:var(--mod)}
+.tab-btn:hover:not(.active){color:var(--text)}
+.panel{display:none;animation:fadeUp .3s ease}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.4rem;margin-bottom:1rem}
+.card-title{font-family:var(--display);font-size:1.05rem;font-weight:700;margin-bottom:.3rem}
+.card-sub{font-size:.75rem;color:var(--muted);margin-bottom:1.1rem;line-height:1.5}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem}
+.field{display:flex;flex-direction:column;gap:.3rem}
+.field label{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:.6rem .8rem;color:var(--text);font-family:var(--mono);font-size:.85rem;outline:none;transition:border .18s;width:100%}
+.field input:focus,.field select:focus{border-color:var(--mod)}
+.field .hint{font-size:.62rem;color:var(--muted);opacity:.55}
+
+.cb-grid{display:grid;grid-template-columns:1fr 1fr;gap:.4rem;margin-bottom:1rem}
+.cb-item{display:flex;align-items:center;gap:.5rem;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:.55rem .75rem;cursor:pointer;transition:border .18s}
+.cb-item:has(input:checked){border-color:var(--mod)}
+.cb-item input{accent-color:var(--mod)}
+.cb-item span{font-size:.78rem}
+
+.calc-btn{width:100%;padding:.8rem;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;color:var(--mod);font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;cursor:pointer;text-transform:uppercase;transition:all .18s;margin-top:.25rem}
+.calc-btn:hover{background:rgba(245,158,11,.18)}
+
+.result-box{margin-top:1rem;display:none;animation:fadeUp .3s ease}
+.big-num{font-family:var(--display);font-size:3rem;font-weight:800;line-height:1}
+.num-unit{font-family:var(--mono);font-size:.65rem;opacity:.4;margin-bottom:.5rem}
+.interp{font-size:.82rem;padding:.85rem 1rem;border-radius:8px;border:1px solid;line-height:1.6;margin-bottom:.75rem}
+
+.score-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.65rem;margin-bottom:1rem}
+.score-card{background:var(--s2);border-radius:10px;padding:1rem;border:1px solid var(--border)}
+.score-name{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.score-val{font-family:var(--display);font-size:1.8rem;font-weight:800;line-height:1;margin-bottom:.2rem}
+.score-interp{font-size:.72rem;opacity:.65}
+
+.severity-badge{display:inline-flex;align-items:center;gap:.5rem;border-radius:8px;padding:.5rem 1rem;font-family:var(--mono);font-size:.75rem;font-weight:600;letter-spacing:.08em;margin-bottom:1rem}
+
+.step-list{list-style:none;display:flex;flex-direction:column;gap:.5rem}
+.step-item{display:flex;gap:.65rem;padding:.75rem;background:var(--s2);border-radius:8px;border-left:3px solid var(--mod);font-size:.8rem;line-height:1.5}
+.step-num{font-family:var(--mono);color:var(--mod);font-weight:600;flex-shrink:0}
+
+.m-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:.45rem;margin-top:.5rem}
+.m-item{display:flex;justify-content:space-between;align-items:baseline;padding:.5rem .75rem;background:var(--s2);border-radius:7px;gap:.5rem}
+.m-param{font-size:.78rem;flex:1}
+.m-val{font-family:var(--mono);font-size:.7rem;text-align:right}
+.ok{color:#34d399}.warn{color:#f59e0b}.bad{color:#f43f5e}.info{color:#38bdf8}
+
+.sec-head{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.65rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.section{margin-bottom:1.25rem}
+.section:last-child{margin-bottom:0}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.5rem}
+.tag{background:rgba(0,0,0,.35);border-radius:4px;padding:.22rem .6rem;font-size:.7rem;opacity:.8}
+
+.infobox{display:flex;gap:.6rem;align-items:flex-start;background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.15);border-radius:8px;padding:.75rem 1rem;font-size:.78rem;color:rgba(203,213,225,.7);line-height:1.55;margin-top:.75rem}
+.warnbox{display:flex;gap:.6rem;align-items:flex-start;background:rgba(244,63,94,.05);border:1px solid rgba(244,63,94,.2);border-radius:8px;padding:.75rem 1rem;font-size:.78rem;color:rgba(203,213,225,.8);line-height:1.55;margin-top:.75rem}
+
+.option-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.65rem;margin-top:.5rem}
+.option-card{background:var(--s2);border-radius:10px;padding:1rem;border:1px solid var(--border)}
+.opt-title{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.45rem}
+.opt-body{font-size:.75rem;line-height:1.65;opacity:.8}
+
+.caveat{text-align:center;font-size:.7rem;color:var(--muted);margin-top:2rem;line-height:1.7;padding:1rem;border:1px dashed rgba(255,255,255,.07);border-radius:10px}
+
+/* Checklist */
+.chk-item{display:flex;align-items:flex-start;gap:.65rem;padding:.7rem;background:var(--s2);border-radius:8px;margin-bottom:.4rem;cursor:pointer;transition:background .18s}
+.chk-item.done{background:rgba(52,211,153,.07);border:1px solid rgba(52,211,153,.15)}
+.chk-box{width:18px;height:18px;border:2px solid var(--border);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .18s}
+.chk-item.done .chk-box{background:var(--mild);border-color:var(--mild)}
+.chk-text{font-size:.8rem;line-height:1.45}
+.chk-sub{font-size:.68rem;color:var(--muted);margin-top:.15rem}
+
+.bisap-row{display:flex;align-items:center;justify-content:space-between;padding:.65rem .85rem;background:var(--s2);border-radius:8px;margin-bottom:.4rem;cursor:pointer;border:1px solid var(--border);transition:all .18s}
+.bisap-row.selected{border-color:var(--mod);background:rgba(245,158,11,.08)}
+.bisap-label{font-size:.82rem}
+.bisap-pts{font-family:var(--mono);font-size:.75rem;color:var(--muted)}
+.bisap-row.selected .bisap-pts{color:var(--mod)}
+
+@media(max-width:520px){
+  .field-grid{grid-template-columns:1fr}
+  .cb-grid{grid-template-columns:1fr}
+  .score-grid{grid-template-columns:1fr 1fr}
+  .tab-btn{font-size:.52rem;padding:.6rem .2rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="chip"><span class="dot"></span>Evidence-Based · ACG 2024 · IAP/APA Guidelines</div>
+  <h1>Acute Pancreatitis</h1>
+  <p class="sub">ICU Management Engine — Severity · Fluids · Nutrition · Antibiotics · Interventions</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('diagnosis',this)">Diagnosis</button>
+  <button class="tab-btn" onclick="showTab('severity',this)">Severity</button>
+  <button class="tab-btn" onclick="showTab('fluids',this)">Fluids</button>
+  <button class="tab-btn" onclick="showTab('nutrition',this)">Nutrition</button>
+  <button class="tab-btn" onclick="showTab('pain',this)">Pain</button>
+  <button class="tab-btn" onclick="showTab('infection',this)">Infection</button>
+  <button class="tab-btn" onclick="showTab('intervention',this)">Intervention</button>
+  <button class="tab-btn" onclick="showTab('monitoring',this)">Monitoring</button>
+  <button class="tab-btn" onclick="showTab('checklist',this)">Checklist</button>
+</div>
+
+<!-- ══ DIAGNOSIS ══ -->
+<div id="tab-diagnosis" class="panel active">
+
+  <div class="card" style="border-color:rgba(245,158,11,.25)">
+    <div class="card-title">Atlanta 2012 — Diagnostic Criteria</div>
+    <div class="card-sub">Diagnosis requires <strong>2 of the following 3 criteria</strong></div>
+    <div class="option-grid">
+      <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+        <div class="opt-title" style="color:var(--mild)">① Characteristic Pain</div>
+        <div class="opt-body">Epigastric pain — severe, persistent<br>Radiates to back in 50%<br>May radiate to flanks<br>Worse lying flat, better leaning forward<br>Nausea and vomiting common</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(56,189,248,.3)">
+        <div class="opt-title" style="color:var(--blue)">② Serum Lipase or Amylase</div>
+        <div class="opt-body">≥3× upper limit of normal<br>Lipase preferred — more sensitive & specific<br>Lipase remains elevated longer (3–5 days)<br>Amylase normalises in 24–48h<br>Magnitude does not correlate with severity</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(167,139,250,.3)">
+        <div class="opt-title" style="color:var(--purple)">③ Characteristic Imaging</div>
+        <div class="opt-body">CT/MRI: pancreatic oedema, peripancreatic fat stranding, necrosis<br>USS: hypoechoic, enlarged pancreas<br>CT not needed if criteria ① + ② both met<br>CT reserved for diagnostic uncertainty or assessment of severity at 48–72h</div>
+      </div>
+    </div>
+    <div class="infobox" style="margin-top:.75rem"><span>💡</span><span>If 2 of 3 criteria met — diagnosis confirmed. CT is NOT required for diagnosis if pain + lipase ≥3× ULN both present. Avoid unnecessary early CT — does not change early management and radiation dose.</span></div>
+  </div>
+
+  <!-- LIPASE / AMYLASE CALCULATOR -->
+  <div class="card">
+    <div class="card-title">Lipase & Amylase Calculator</div>
+    <div class="card-sub">Enter your lab values and local upper limit of normal (ULN) to confirm diagnostic threshold</div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Serum Lipase (U/L)</label>
+        <input type="number" id="dx-lipase" placeholder="e.g. 840">
+        <span class="hint">Normal: typically &lt;60 U/L (lab dependent)</span>
+      </div>
+      <div class="field">
+        <label>Lipase ULN (U/L)</label>
+        <input type="number" id="dx-lipase-uln" placeholder="e.g. 60" value="60">
+        <span class="hint">Your lab's upper limit of normal</span>
+      </div>
+      <div class="field">
+        <label>Serum Amylase (U/L)</label>
+        <input type="number" id="dx-amylase" placeholder="e.g. 420">
+        <span class="hint">Normal: typically &lt;100 U/L</span>
+      </div>
+      <div class="field">
+        <label>Amylase ULN (U/L)</label>
+        <input type="number" id="dx-amylase-uln" placeholder="e.g. 100" value="100">
+        <span class="hint">Your lab's upper limit of normal</span>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcEnzymes()">Check Diagnostic Threshold</button>
+    <div class="result-box" id="enzyme-result"></div>
+  </div>
+
+  <!-- IMAGING GUIDE -->
+  <div class="card">
+    <div class="card-title">Imaging — When and What</div>
+    <div class="section">
+      <div class="sec-head">Ultrasound (USS) — First Line on Admission</div>
+      <ul class="step-list">
+        <li class="step-item"><span class="step-num">✅</span><span>All patients with AP should have USS on admission — look for gallstones, common bile duct (CBD) dilation, biliary sludge</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span>USS may show enlarged, hypoechoic pancreas — but often limited by overlying bowel gas</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span>CBD &gt;8mm (or &gt;10mm post-cholecystectomy) suggests obstruction → consider MRCP or ERCP</span></li>
+      </ul>
+    </div>
+    <div class="section">
+      <div class="sec-head">CT with IV Contrast — NOT Routine on Day 1</div>
+      <ul class="step-list">
+        <li class="step-item"><span class="step-num">✅</span><span><strong>Diagnostic uncertainty</strong> — cannot confirm AP by clinical + enzyme criteria</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span><strong>Severe or deteriorating</strong> at 48–72h — assess for necrosis, complications (CTSI scoring)</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span><strong>New fever or clinical deterioration</strong> — rule out infected necrosis, new collections, abscesses</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span><strong>At 4 weeks</strong> — assess for walled-off necrosis (WON) before intervention planning</span></li>
+        <li class="step-item"><span class="step-num">🚫</span><span><strong>Mild AP with clear diagnosis</strong> — CT not needed. No management change and unnecessary radiation + contrast risk.</span></li>
+      </ul>
+    </div>
+    <div class="section">
+      <div class="sec-head">MRCP / EUS — When Gallstones Suspected but USS Unclear</div>
+      <ul class="step-list">
+        <li class="step-item"><span class="step-num">✅</span><span>MRCP — non-invasive, no radiation, best for CBD stones, pancreatic duct anatomy, divisum</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span>EUS — if MRCP unavailable or inconclusive, or pre-ERCP assessment</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span>MRI abdomen with MRCP — useful if CT contraindicated (contrast allergy, renal impairment) or for soft tissue characterisation of necrosis</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ETIOLOGY WORKUP -->
+  <div class="card">
+    <div class="card-title">Etiology Workup</div>
+    <div class="card-sub">Identify cause in all patients — guides specific treatment and prevention of recurrence</div>
+    <div class="option-grid">
+      <div class="option-card" style="border-color:rgba(245,158,11,.3)">
+        <div class="opt-title" style="color:var(--mod)">Gallstone (40–50%)</div>
+        <div class="opt-body">USS: gallstones / CBD dilation<br>ALT &gt;3× ULN at 48h = gallstone AP<br>MRCP / EUS if USS inconclusive<br>→ Same-admission cholecystectomy (mild AP)</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(167,139,250,.3)">
+        <div class="opt-title" style="color:var(--purple)">Alcohol (30%)</div>
+        <div class="opt-body">History: &gt;5 drinks/day for &gt;5 years<br>GGT, MCV often elevated<br>Exclude other causes first<br>→ Alcohol cessation counselling, refer addiction services</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(244,63,94,.3)">
+        <div class="opt-title" style="color:var(--sev)">Hypertriglyceridaemia</div>
+        <div class="opt-body">TG &gt;11.3 mmol/L diagnostic<br>TG 5.6–11.3 mmol/L — probable<br>May have lipaemic serum<br>→ Insulin infusion / plasmapheresis if severe</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+        <div class="opt-title" style="color:var(--mild)">Hypercalcaemia</div>
+        <div class="opt-body">Serum calcium &gt;2.6 mmol/L<br>Check PTH, PTHrP, Vit D, myeloma screen<br>Hyperparathyroidism most common cause<br>→ Treat hypercalcaemia, avoid RL</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(56,189,248,.3)">
+        <div class="opt-title" style="color:var(--blue)">Drug-induced</div>
+        <div class="opt-body">Azathioprine, thiazides, valproate, steroids, didanosine, GLP-1 agonists, ERCP<br>Check full drug history<br>Stop offending agent<br>Rechallenge contraindicated</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(249,115,22,.3)">
+        <div class="opt-title" style="color:var(--orange)">Autoimmune / Other</div>
+        <div class="opt-body">IgG4 — autoimmune pancreatitis (AIP)<br>Type 1: IgG4 &gt;135 mg/dL, responds to steroids<br>Pancreas divisum — MRCP<br>Idiopathic: EUS to exclude microlithiasis</div>
+      </div>
+    </div>
+    <div class="infobox" style="margin-top:.75rem"><span>🔍</span><span>If no cause found after USS + TG + calcium + drug history — check <strong>IgG4</strong>, organise <strong>MRCP</strong> for divisum/anomaly, and arrange <strong>EUS</strong> to exclude microlithiasis. Do not label as idiopathic without full workup.</span></div>
+  </div>
+
+  <!-- DIFFERENTIAL DIAGNOSIS -->
+  <div class="card">
+    <div class="card-title">Differential Diagnosis</div>
+    <div class="card-sub">Conditions that mimic AP — exclude especially if enzyme rise is modest (&lt;3× ULN)</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Perforated peptic ulcer</span><span class="m-val warn">Erect CXR — free gas</span></div>
+      <div class="m-item"><span class="m-param">Acute cholecystitis</span><span class="m-val info">Murphy's sign, USS, mild enzyme rise</span></div>
+      <div class="m-item"><span class="m-param">Mesenteric ischaemia</span><span class="m-val bad">Lactate, CT angio — do not miss</span></div>
+      <div class="m-item"><span class="m-param">Acute MI (inferior)</span><span class="m-val bad">ECG + troponin in all AP patients</span></div>
+      <div class="m-item"><span class="m-param">Aortic dissection</span><span class="m-val bad">CT aorta if tearing pain, BP differential</span></div>
+      <div class="m-item"><span class="m-param">Bowel obstruction</span><span class="m-val info">AXR / CT — air-fluid levels</span></div>
+      <div class="m-item"><span class="m-param">Diabetic ketoacidosis</span><span class="m-val warn">Amylase elevated in DKA without AP</span></div>
+      <div class="m-item"><span class="m-param">Ectopic pregnancy</span><span class="m-val bad">βhCG in women of childbearing age</span></div>
+      <div class="m-item"><span class="m-param">Renal colic</span><span class="m-val info">Urinalysis, CT KUB</span></div>
+      <div class="m-item"><span class="m-param">Hepatitis / liver abscess</span><span class="m-val info">LFTs, USS, viral serology</span></div>
+    </div>
+    <div class="warnbox" style="margin-top:.75rem"><span>⚠️</span><span>Amylase alone is NOT specific — elevated in many conditions (parotitis, DKA, renal failure, bowel ischaemia, macroamylasaemia). Always use <strong>lipase</strong> as the primary diagnostic enzyme.</span></div>
+  </div>
+
+  <!-- INITIAL BLOODS -->
+  <div class="card">
+    <div class="card-title">Admission Investigations Checklist</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Serum lipase</span><span class="m-val ok">Primary diagnostic enzyme</span></div>
+      <div class="m-item"><span class="m-param">Serum amylase</span><span class="m-val ok">Secondary — less specific</span></div>
+      <div class="m-item"><span class="m-param">FBC</span><span class="m-val info">WBC — infection, SIRS</span></div>
+      <div class="m-item"><span class="m-param">U&E / Creatinine</span><span class="m-val info">Renal function, fluid status</span></div>
+      <div class="m-item"><span class="m-param">LFTs + Bilirubin</span><span class="m-val info">ALT &gt;3× → gallstone aetiology</span></div>
+      <div class="m-item"><span class="m-param">Serum calcium</span><span class="m-val info">Aetiology + severity marker</span></div>
+      <div class="m-item"><span class="m-param">Triglycerides</span><span class="m-val info">Fasting — aetiology</span></div>
+      <div class="m-item"><span class="m-param">Glucose</span><span class="m-val info">Hyperglycaemia — severity</span></div>
+      <div class="m-item"><span class="m-param">CRP</span><span class="m-val warn">Peaks 48–72h — &gt;150 = severe</span></div>
+      <div class="m-item"><span class="m-param">PCT</span><span class="m-val warn">&gt;1 = infection suspected</span></div>
+      <div class="m-item"><span class="m-param">ABG</span><span class="m-val warn">Hypoxia, acidosis — severity</span></div>
+      <div class="m-item"><span class="m-param">Coagulation / DIC screen</span><span class="m-val warn">If severe or deteriorating</span></div>
+      <div class="m-item"><span class="m-param">Blood cultures × 2</span><span class="m-val warn">If fever or sepsis suspected</span></div>
+      <div class="m-item"><span class="m-param">ECG + Troponin</span><span class="m-val bad">Exclude MI in all patients</span></div>
+      <div class="m-item"><span class="m-param">βhCG</span><span class="m-val info">Women of childbearing age</span></div>
+      <div class="m-item"><span class="m-param">Urine dipstick</span><span class="m-val info">Exclude UTI, haematuria (renal colic)</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ SEVERITY ══ -->
+<div id="tab-severity" class="panel">
+
+  <div class="card">
+    <div class="card-title">Patient Setup</div>
+    <div class="card-sub">Enter patient details — used across all calculators</div>
+    <div class="field-grid">
+      <div class="field"><label>Age (years)</label><input type="number" id="pt-age" placeholder="e.g. 52" oninput="syncPatient()"></div>
+      <div class="field"><label>Weight (kg)</label><input type="number" id="pt-wt" placeholder="e.g. 70" oninput="syncPatient()"></div>
+      <div class="field"><label>Gender</label>
+        <select id="pt-sex" onchange="syncPatient()">
+          <option value="">Select</option>
+          <option value="M">Male</option>
+          <option value="F">Female</option>
+        </select>
+      </div>
+      <div class="field"><label>Serum Calcium (mmol/L)</label><input type="number" id="pt-ca" placeholder="e.g. 2.1" step="0.1" oninput="syncPatient()"></div>
+      <div class="field"><label>Serum Triglycerides (mmol/L)</label><input type="number" id="pt-tg" placeholder="e.g. 3.2" step="0.1"></div>
+      <div class="field"><label>Etiology</label>
+        <select id="pt-etiol">
+          <option value="">Unknown / investigating</option>
+          <option value="gallstone">Gallstone</option>
+          <option value="alcohol">Alcohol</option>
+          <option value="hypertrig">Hypertriglyceridaemia</option>
+          <option value="drug">Drug-induced</option>
+          <option value="idiopathic">Idiopathic</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="cb-grid" style="margin-bottom:.5rem">
+      <label class="cb-item"><input type="checkbox" id="cm-dm"> <span>Diabetes Mellitus</span></label>
+      <label class="cb-item"><input type="checkbox" id="cm-ckd"> <span>CKD</span></label>
+      <label class="cb-item"><input type="checkbox" id="cm-ihd"> <span>IHD / Cardiac disease</span></label>
+      <label class="cb-item"><input type="checkbox" id="cm-copd"> <span>COPD / Lung disease</span></label>
+      <label class="cb-item"><input type="checkbox" id="cm-liver"> <span>Liver disease</span></label>
+      <label class="cb-item"><input type="checkbox" id="cm-obese"> <span>Obesity (BMI >30)</span></label>
+    </div>
+  </div>
+
+  <!-- BISAP -->
+  <div class="card">
+    <div class="card-title">BISAP Score</div>
+    <div class="card-sub">Bedside Index of Severity in Acute Pancreatitis — Score ≥3 predicts severe AP with high mortality</div>
+
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1">
+      <span class="bisap-label">BUN &gt;25 mg/dL (urea &gt;8.9 mmol/L)</span>
+      <span class="bisap-pts">+1</span>
+    </div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1">
+      <span class="bisap-label">Impaired mental status (GCS &lt;15 or confusion)</span>
+      <span class="bisap-pts">+1</span>
+    </div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1">
+      <span class="bisap-label">SIRS present (≥2 of: temp &gt;38 or &lt;36, HR &gt;90, RR &gt;20, WBC &gt;12 or &lt;4)</span>
+      <span class="bisap-pts">+1</span>
+    </div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1">
+      <span class="bisap-label">Age &gt;60 years</span>
+      <span class="bisap-pts">+1</span>
+    </div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1">
+      <span class="bisap-label">Pleural effusion on imaging</span>
+      <span class="bisap-pts">+1</span>
+    </div>
+
+    <button class="calc-btn" onclick="calcBISAP()" style="margin-top:.85rem">Calculate BISAP</button>
+    <div class="result-box" id="bisap-result">
+      <div class="big-num" id="bisap-num">0</div>
+      <div class="num-unit">/ 5 points</div>
+      <div class="interp" id="bisap-interp"></div>
+    </div>
+  </div>
+
+  <!-- Ranson's -->
+  <div class="card">
+    <div class="card-title">Ranson's Criteria</div>
+    <div class="card-sub">Score ≥3 = severe. Assess 5 criteria at admission + 6 at 48h. (Non-gallstone pancreatitis criteria)</div>
+
+    <div class="sec-head" style="margin-top:.25rem">At Admission</div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">Age &gt;55 years</span><span class="bisap-pts">+1</span></div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">WBC &gt;16,000/mm³</span><span class="bisap-pts">+1</span></div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">Blood glucose &gt;11 mmol/L (non-diabetic)</span><span class="bisap-pts">+1</span></div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">LDH &gt;350 IU/L</span><span class="bisap-pts">+1</span></div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">AST &gt;250 IU/L</span><span class="bisap-pts">+1</span></div>
+
+    <div class="sec-head" style="margin-top:1rem">At 48 hours</div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">Haematocrit fall &gt;10%</span><span class="bisap-pts">+1</span></div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">BUN rise &gt;1.8 mmol/L</span><span class="bisap-pts">+1</span></div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">Serum calcium &lt;2 mmol/L</span><span class="bisap-pts">+1</span></div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">PaO₂ &lt;8 kPa (60 mmHg)</span><span class="bisap-pts">+1</span></div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">Base deficit &gt;4 mEq/L</span><span class="bisap-pts">+1</span></div>
+    <div class="bisap-row" onclick="toggleBISAP(this,1)" data-pts="1"><span class="bisap-label">Fluid sequestration &gt;6 L</span><span class="bisap-pts">+1</span></div>
+
+    <button class="calc-btn" onclick="calcRanson()">Calculate Ranson's Score</button>
+    <div class="result-box" id="ranson-result">
+      <div class="big-num" id="ranson-num">0</div>
+      <div class="num-unit">/ 11 points</div>
+      <div class="interp" id="ranson-interp"></div>
+    </div>
+  </div>
+
+  <!-- Atlanta + CTSI -->
+  <div class="card">
+    <div class="card-title">Atlanta Classification 2012</div>
+    <div class="card-sub">Defines severity by organ failure and local complications</div>
+    <div class="option-grid">
+      <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+        <div class="opt-title" style="color:var(--mild)">Mild AP</div>
+        <div class="opt-body">No organ failure<br>No local complications<br>Usually resolves in 1 week<br>Mortality &lt;1%</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(245,158,11,.3)">
+        <div class="opt-title" style="color:var(--mod)">Moderately Severe AP</div>
+        <div class="opt-body">Transient organ failure (&lt;48h)<br>AND/OR local complications<br>No persistent organ failure<br>Mortality 8%</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(244,63,94,.3)">
+        <div class="opt-title" style="color:var(--sev)">Severe AP</div>
+        <div class="opt-body">Persistent organ failure &gt;48h<br>Single or multi-organ<br>Infected necrosis = very high risk<br>Mortality 30–40%</div>
+      </div>
+    </div>
+    <div class="infobox" style="margin-top:.75rem"><span>📋</span><span><strong>Organ failure</strong> = Marshall score ≥2 in respiratory (PaO₂/FiO₂ &lt;300), renal (creatinine &gt;170 µmol/L), or cardiovascular (systolic BP &lt;90 despite fluids)</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">CT Severity Index (Balthazar / CTSI)</div>
+    <div class="card-sub">Requires contrast CT — best at 48–72h. CTSI = Balthazar grade + Necrosis score. Score ≥7 = severe, high morbidity/mortality</div>
+    <div class="field-grid">
+      <div class="field"><label>Balthazar Grade</label>
+        <select id="balthazar">
+          <option value="0">A — Normal pancreas (0)</option>
+          <option value="1">B — Focal enlargement (1)</option>
+          <option value="2">C — Peripancreatic inflammation (2)</option>
+          <option value="3">D — Single peripancreatic collection (3)</option>
+          <option value="4">E — Multiple collections / gas (4)</option>
+        </select>
+      </div>
+      <div class="field"><label>Necrosis on CT</label>
+        <select id="necrosis-ct">
+          <option value="0">No necrosis (0)</option>
+          <option value="2">Necrosis &lt;30% (2)</option>
+          <option value="4">Necrosis 30–50% (4)</option>
+          <option value="6">Necrosis &gt;50% (6)</option>
+        </select>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcCTSI()">Calculate CTSI</button>
+    <div class="result-box" id="ctsi-result">
+      <div class="big-num" id="ctsi-num">0</div>
+      <div class="num-unit">/ 10 points</div>
+      <div class="interp" id="ctsi-interp"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FLUIDS ══ -->
+<div id="tab-fluids" class="panel">
+  <div class="card">
+    <div class="card-title">Fluid Choice</div>
+    <div class="card-sub">ACG 2024 / IAP guidelines — Lactated Ringer's is preferred over Normal Saline</div>
+    <div id="fluid-choice-display" style="margin-bottom:.75rem"></div>
+    <div class="option-grid">
+      <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+        <div class="opt-title" style="color:var(--mild)">Lactated Ringer's (RL) — FIRST LINE</div>
+        <div class="opt-body">Reduces SIRS and systemic inflammation vs NS<br>Closer to physiological pH<br>Use when calcium is NORMAL<br>Evidence: WATERFALL trial 2022</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(56,189,248,.3)">
+        <div class="opt-title" style="color:var(--blue)">Plasmalyte — If Hypercalcaemia</div>
+        <div class="opt-body">RL contains calcium (3 mmol/L)<br>Avoid RL if Ca²⁺ &gt;2.6 mmol/L<br>Plasmalyte = calcium-free alternative<br>Also use in severe hypercalcaemia aetiology</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(244,63,94,.2)">
+        <div class="opt-title" style="color:var(--sev)">Normal Saline — AVOID</div>
+        <div class="opt-body">Hyperchloraemic acidosis risk<br>Worsens SIRS<br>Only use if RL/Plasmalyte unavailable<br>Not recommended as first line</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Fluid Calculator</div>
+    <div class="card-sub">Goal-directed fluid therapy — reassess every 6h with clinical targets</div>
+    <div class="field-grid">
+      <div class="field"><label>Weight (kg)</label><input type="number" id="f-wt" placeholder="from patient setup or enter"></div>
+      <div class="field"><label>Hypoperfusion / Shock?</label>
+        <select id="f-hypo">
+          <option value="no">No — haemodynamically stable</option>
+          <option value="yes">Yes — hypotension, tachycardia, oliguria</option>
+        </select>
+      </div>
+      <div class="field"><label>Fluid Responsive?</label>
+        <select id="f-resp">
+          <option value="yes">Yes — UO improved, HR ↓, MAP ↑</option>
+          <option value="no">No — no response to previous bolus</option>
+          <option value="unknown">Not yet assessed</option>
+        </select>
+      </div>
+      <div class="field"><label>Phase of AP</label>
+        <select id="f-phase">
+          <option value="early">Early (&lt;72h) — active SIRS phase</option>
+          <option value="late">Late (&gt;72h) — consider fluid restriction</option>
+        </select>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcFluids()">Calculate Fluid Prescription</button>
+    <div class="result-box" id="fluid-result"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Fluid Response Targets</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Urine output</span><span class="m-val ok">0.5–1 mL/kg/hr</span></div>
+      <div class="m-item"><span class="m-param">Heart rate</span><span class="m-val ok">&lt;100 bpm</span></div>
+      <div class="m-item"><span class="m-param">MAP</span><span class="m-val ok">≥65 mmHg</span></div>
+      <div class="m-item"><span class="m-param">BUN trend at 24h</span><span class="m-val ok">Decreasing = responding</span></div>
+      <div class="m-item"><span class="m-param">Haematocrit</span><span class="m-val ok">35–44%</span></div>
+      <div class="m-item"><span class="m-param">Creatinine trend</span><span class="m-val ok">Stable or falling</span></div>
+      <div class="m-item"><span class="m-param">Lactate</span><span class="m-val ok">&lt;2 mmol/L or clearing</span></div>
+      <div class="m-item"><span class="m-param">Reassess every</span><span class="m-val info">6 hours</span></div>
+    </div>
+    <div class="warnbox"><span>⚠️</span><span>Fluid overload is harmful in AP — positive balance &gt;3–4 L/day associated with worse outcomes, ARDS, abdominal compartment syndrome. Stop aggressive fluids once resuscitated.</span></div>
+  </div>
+
+  <div class="card" style="border-color:rgba(245,158,11,.2)">
+    <div class="card-title">Special Situations</div>
+    <div class="section">
+      <div class="sec-head">Hypertriglyceridaemia-induced AP (TG &gt;11.3 mmol/L)</div>
+      <ul class="step-list">
+        <li class="step-item"><span class="step-num">01</span><span>Insulin infusion 0.1–0.3 units/kg/hr — activates lipoprotein lipase, clears TG rapidly. Monitor glucose hourly.</span></li>
+        <li class="step-item"><span class="step-num">02</span><span>Plasmapheresis if TG &gt;22.6 mmol/L or rapid deterioration — removes TG directly. Specialist involvement essential.</span></li>
+        <li class="step-item"><span class="step-num">03</span><span>Avoid glucose-containing fluids initially — may worsen hypertriglyceridaemia</span></li>
+        <li class="step-item"><span class="step-num">04</span><span>Long-term: fenofibrate + dietary counselling after recovery</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NUTRITION ══ -->
+<div id="tab-nutrition" class="panel">
+  <div class="card">
+    <div class="card-title">Nutrition Decision</div>
+    <div class="card-sub">Early enteral nutrition within 24–48h is strongly recommended — bowel rest is harmful (ACG 2024)</div>
+    <div class="field-grid">
+      <div class="field"><label>Weight (kg)</label><input type="number" id="n-wt" placeholder="e.g. 70"></div>
+      <div class="field"><label>AP Severity</label>
+        <select id="n-sev">
+          <option value="mild">Mild AP</option>
+          <option value="moderate">Moderately Severe AP</option>
+          <option value="severe">Severe AP</option>
+        </select>
+      </div>
+      <div class="field"><label>Can patient eat / tolerate oral?</label>
+        <select id="n-oral">
+          <option value="yes">Yes — alert, no vomiting, pain manageable</option>
+          <option value="no">No — vomiting, ileus, pain, intubated</option>
+        </select>
+      </div>
+      <div class="field"><label>Days since admission</label>
+        <input type="number" id="n-days" placeholder="e.g. 1" min="0" max="30">
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcNutrition()">Generate Nutrition Plan</button>
+    <div class="result-box" id="nutrition-result"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Nutrition Reference</div>
+    <div class="section">
+      <div class="sec-head">Caloric & Protein Targets</div>
+      <div class="m-grid">
+        <div class="m-item"><span class="m-param">Energy target</span><span class="m-val info">25–35 kcal/kg/day</span></div>
+        <div class="m-item"><span class="m-param">Protein target</span><span class="m-val info">1.2–1.5 g/kg/day</span></div>
+        <div class="m-item"><span class="m-param">Start oral</span><span class="m-val ok">Soft low-fat diet — no NBM</span></div>
+        <div class="m-item"><span class="m-param">NG vs NJ</span><span class="m-val ok">NG equivalent to NJ in most AP</span></div>
+        <div class="m-item"><span class="m-param">TPN timing</span><span class="m-val warn">Only if EN not tolerated &gt;5–7 days</span></div>
+        <div class="m-item"><span class="m-param">Probiotics</span><span class="m-val bad">NOT recommended (PROPATRIA trial)</span></div>
+        <div class="m-item"><span class="m-param">Glutamine</span><span class="m-val warn">No proven benefit in AP</span></div>
+        <div class="m-item"><span class="m-param">Omega-3</span><span class="m-val warn">Insufficient evidence</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-head">Route of Nutrition — Evidence</div>
+      <div class="option-grid">
+        <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+          <div class="opt-title" style="color:var(--mild)">Oral (First Choice)</div>
+          <div class="opt-body">Start within 24h if tolerated<br>Soft low-fat diet<br>No bowel rest<br>Advance as tolerated</div>
+        </div>
+        <div class="option-card" style="border-color:rgba(245,158,11,.3)">
+          <div class="opt-title" style="color:var(--mod)">Nasogastric / Nasojejunal</div>
+          <div class="opt-body">If cannot eat within 24–48h<br>NG = NJ in evidence (PYTHON trial)<br>Polymeric formula<br>Start at 20–30 mL/hr, increase</div>
+        </div>
+        <div class="option-card" style="border-color:rgba(244,63,94,.2)">
+          <div class="opt-title" style="color:var(--sev)">TPN — Last Resort</div>
+          <div class="opt-body">Only if EN contraindicated or<br>not tolerated after 5–7 days<br>Central venous access required<br>Higher infection risk</div>
+        </div>
+      </div>
+    </div>
+    <div class="warnbox"><span>⚠️</span><span>Nil by mouth is NOT recommended in AP. Early oral feeding reduces infections, length of stay, and organ failure. Even in severe AP, attempt enteral feeding via NG/NJ.</span></div>
+  </div>
+</div>
+
+<!-- ══ PAIN ══ -->
+<div id="tab-pain" class="panel">
+  <div class="card">
+    <div class="card-title">Pain Management — Stepwise</div>
+    <div class="card-sub">Adequate analgesia is essential — undertreated pain worsens stress response and ileus. Latest evidence supports opioids as safe in AP.</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">01</span><span><strong>Paracetamol (Acetaminophen) — First Line</strong><br>1g IV/PO every 6–8h. Regular dosing, not PRN. Safe, effective, opioid-sparing. Reduce dose if liver disease.</span></li>
+      <li class="step-item"><span class="step-num">02</span><span><strong>NSAIDs — Use with Caution</strong><br>Diclofenac 75mg IM or rectal / Indomethacin 25–50mg TDS. Anti-inflammatory benefit. <span style="color:var(--warn)">Avoid if AKI, renal impairment, peptic ulcer, or haemodynamic instability.</span></span></li>
+      <li class="step-item"><span class="step-num">03</span><span><strong>Tramadol — Moderate Pain</strong><br>50–100mg IV/PO every 6–8h. Weak opioid + serotonin/NE reuptake inhibitor. Avoid in seizure history. Nausea common — add antiemetic.</span></li>
+      <li class="step-item"><span class="step-num">04</span><span><strong>Morphine / Fentanyl — Severe Pain</strong><br>Morphine 2.5–5mg IV PRN or PCA. Fentanyl preferred if renal failure (no active metabolite accumulation). <span style="color:var(--mild)">No evidence morphine worsens AP — old Oddi spasm concern is not supported by RCTs.</span></span></li>
+      <li class="step-item"><span class="step-num">05</span><span><strong>Epidural Analgesia — Severe / Refractory</strong><br>Thoracic epidural (T6–T10) in severe AP with intractable pain. Reduces splanchnic vasoconstriction, may improve pancreatic perfusion. Requires anaesthesia/pain team.</span></li>
+      <li class="step-item"><span class="step-num">06</span><span><strong>Antiemetics — Always Co-prescribe</strong><br>Ondansetron 4–8mg IV TDS or Metoclopramide 10mg TDS. Nausea worsens pain experience and prevents oral nutrition.</span></li>
+    </ul>
+    <div class="warnbox" style="margin-top:.75rem"><span>⚠️</span><span>Avoid pethidine (meperidine) — neurotoxic metabolite norpethidine accumulates in renal failure → seizures. Not recommended in AP.</span></div>
+    <div class="infobox"><span>💊</span><span>Epidural use early in severe AP is associated with reduced mortality and organ failure in observational studies. Consider in any severe AP with inadequate pain control on systemic opioids.</span></div>
+  </div>
+</div>
+
+<!-- ══ INFECTION ══ -->
+<div id="tab-infection" class="panel">
+
+  <div class="card" style="border-color:rgba(244,63,94,.2)">
+    <div class="card-title">Procalcitonin (PCT) Interpretation</div>
+    <div class="card-sub">PCT is the best biomarker for bacterial infection in AP — guides antibiotic decision</div>
+    <div class="field-grid">
+      <div class="field"><label>PCT value (ng/mL)</label><input type="number" id="pct-val" placeholder="e.g. 1.8" step="0.1"></div>
+      <div class="field"><label>Clinical context</label>
+        <select id="pct-ctx">
+          <option value="fever">Fever / new deterioration</option>
+          <option value="stable">Clinically stable</option>
+          <option value="necrosis">Known necrosis on CT</option>
+        </select>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcPCT()">Interpret PCT</button>
+    <div class="result-box" id="pct-result"></div>
+    <div class="m-grid" style="margin-top:.75rem">
+      <div class="m-item"><span class="m-param">PCT &lt;0.5 ng/mL</span><span class="m-val ok">Infection unlikely</span></div>
+      <div class="m-item"><span class="m-param">PCT 0.5–1.0</span><span class="m-val warn">Borderline — monitor</span></div>
+      <div class="m-item"><span class="m-param">PCT &gt;1.0 ng/mL</span><span class="m-val bad">Suspect infection — may/may not involve pancreas</span></div>
+      <div class="m-item"><span class="m-param">PCT &gt;3.5 ng/mL</span><span class="m-val bad">High likelihood infected necrosis or bacteraemia</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Antibiotic Guidelines</div>
+    <div class="card-sub">NO prophylactic antibiotics in AP — only treat confirmed or strongly suspected infection (ACG 2024, IAP/APA)</div>
+
+    <div class="section">
+      <div class="sec-head">Indications for Antibiotics</div>
+      <ul class="step-list">
+        <li class="step-item"><span class="step-num">✅</span><span><strong>Infected pancreatic necrosis</strong> — CT: gas in necrosis, or FNA culture positive</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span><strong>Acute cholangitis</strong> — Charcot's triad / Reynolds pentad (gallstone AP)</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span><strong>Bacteraemia / sepsis</strong> — positive blood cultures or septic shock</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span><strong>Concurrent infection</strong> — pneumonia, UTI, line infection</span></li>
+        <li class="step-item"><span class="step-num">✅</span><span><strong>PCT &gt;1 + clinical deterioration</strong> + no other source — empirical antibiotics reasonable</span></li>
+        <li class="step-item"><span class="step-num">🚫</span><span><strong>Sterile necrosis alone</strong> — NO antibiotics. Prophylactic antibiotics do NOT prevent infected necrosis (IAP meta-analysis)</span></li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">Antibiotic Choice — Infected Necrosis</div>
+      <div class="option-grid">
+        <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+          <div class="opt-title" style="color:var(--mild)">First Line — Carbapenems</div>
+          <div class="opt-body">Meropenem 1g IV TDS<br>Imipenem 500mg IV QDS<br>Excellent pancreatic penetration<br>Broad G+ve, G-ve, anaerobe cover</div>
+        </div>
+        <div class="option-card" style="border-color:rgba(245,158,11,.3)">
+          <div class="opt-title" style="color:var(--mod)">Alternative</div>
+          <div class="opt-body">Ciprofloxacin 400mg IV BD<br>+ Metronidazole 500mg IV TDS<br>Good pancreatic penetration<br>Use if carbapenem allergy</div>
+        </div>
+        <div class="option-card" style="border-color:rgba(167,139,250,.3)">
+          <div class="opt-title" style="color:var(--purple)">Cholangitis</div>
+          <div class="opt-body">Piperacillin-tazobactam 4.5g IV TDS<br>Or cefuroxime + metronidazole<br>Adjust per local guidelines<br>ERCP within 24h if cholangitis</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sec-head">Culture Guidelines</div>
+      <ul class="step-list">
+        <li class="step-item"><span class="step-num">01</span><span><strong>Blood cultures × 2 sets</strong> — before antibiotics if fever ≥38.5°C or sepsis suspected. Repeat if fever spikes.</span></li>
+        <li class="step-item"><span class="step-num">02</span><span><strong>CT-guided FNA of necrosis</strong> — if infected necrosis suspected and no gas visible on CT. Gram stain + culture. However, FNA has 20% false-negative rate — clinical context matters.</span></li>
+        <li class="step-item"><span class="step-num">03</span><span><strong>Drain fluid culture</strong> — send sample from any pigtail drain insertion. Change antibiotics per sensitivities.</span></li>
+        <li class="step-item"><span class="step-num">04</span><span><strong>Urine culture</strong> — if catheterised and new fever. UTI common in ICU patients.</span></li>
+        <li class="step-item"><span class="step-num">05</span><span><strong>Duration</strong> — infected necrosis: 4–6 weeks total (IV then step down to oral). Review at 2 weeks with clinical/CRP/PCT response.</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INTERVENTION ══ -->
+<div id="tab-intervention" class="panel">
+
+  <div class="card">
+    <div class="card-title">ERCP — Indications & Timing</div>
+    <div class="card-sub">ERCP is NOT routine in AP — only when biliary obstruction with cholangitis is confirmed</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">✅</span><span><strong>Acute cholangitis</strong> — ERCP within 24 hours. Charcot's triad: RUQ pain + fever + jaundice.</span></li>
+      <li class="step-item"><span class="step-num">✅</span><span><strong>Persistent CBD obstruction</strong> without cholangitis — ERCP within 72h if bilirubin not improving</span></li>
+      <li class="step-item"><span class="step-num">🚫</span><span><strong>Predicted severe AP without cholangitis</strong> — NO benefit shown. ERCP does not prevent complications in this group.</span></li>
+      <li class="step-item"><span class="step-num">🚫</span><span><strong>Mild gallstone AP with spontaneous passage</strong> — ERCP not needed. Cholecystectomy planned instead.</span></li>
+    </ul>
+    <div class="infobox"><span>🫶</span><span>Rectal indomethacin 100mg given at time of ERCP reduces post-ERCP pancreatitis risk. Recommend for all patients undergoing ERCP.</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pancreatic Necrosis — Step-Up Approach</div>
+    <div class="card-sub">PANTER & TENSION trials — minimally invasive step-up is superior to open surgery</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">01</span><span><strong>Conservative first</strong> — sterile necrosis: antibiotics NOT needed. Wait and watch. Many resolve without intervention.</span></li>
+      <li class="step-item"><span class="step-num">02</span><span><strong>Delay intervention 4+ weeks</strong> — allow walled-off necrosis (WON) to form. Liquefied WON is far easier to drain than early acute necrotic collection. Only deviate if septic shock or deteriorating.</span></li>
+      <li class="step-item"><span class="step-num">03</span><span><strong>Step 1: Percutaneous / Endoscopic Drainage (Pigtail)</strong> — first intervention. CT/US-guided pigtail drain into collection. Can also use endoscopic ultrasound-guided transmural drainage (EUCD) if close to stomach/duodenum wall.</span></li>
+      <li class="step-item"><span class="step-num">04</span><span><strong>Step 2: Minimally Invasive Necrosectomy</strong> — if drainage inadequate. Video-assisted retroperitoneal debridement (VARD) or endoscopic necrosectomy via stent. Preferred over open.</span></li>
+      <li class="step-item"><span class="step-num">05</span><span><strong>Step 3: Open Surgical Necrosectomy</strong> — last resort only. High morbidity/mortality. Reserved for failed minimally invasive approach, bowel perforation, uncontrolled haemorrhage.</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Pigtail Drainage — Indications & Guide</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Infected necrosis / abscess</span><span class="m-val ok">Primary indication</span></div>
+      <div class="m-item"><span class="m-param">Symptomatic pseudocyst</span><span class="m-val ok">If &gt;6cm or causing symptoms</span></div>
+      <div class="m-item"><span class="m-param">Timing</span><span class="m-val warn">Delay ≥4 weeks if possible</span></div>
+      <div class="m-item"><span class="m-param">Sterile necrosis</span><span class="m-val bad">Do NOT drain</span></div>
+      <div class="m-item"><span class="m-param">Guide</span><span class="m-val info">CT or USS guided</span></div>
+      <div class="m-item"><span class="m-param">Drain care</span><span class="m-val info">Flush 10 mL saline BD, culture fluid</span></div>
+    </div>
+    <div class="infobox"><span>📡</span><span>Endoscopic ultrasound-guided drainage (EUCD with LAMS stent) is now preferred for WON adjacent to stomach/duodenum — lower re-intervention rate than percutaneous (TENSION trial 2021).</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cholecystectomy Timing</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">✅</span><span><strong>Mild gallstone AP</strong> — same admission cholecystectomy before discharge. Reduces recurrent AP risk significantly (PONCHO trial). Ideally within 48–72h of symptom resolution.</span></li>
+      <li class="step-item"><span class="step-num">⏳</span><span><strong>Moderately severe / Severe AP</strong> — delay cholecystectomy until full recovery, local complications resolved, and patient fit for surgery. Typically 6–8 weeks.</span></li>
+      <li class="step-item"><span class="step-num">⏳</span><span><strong>Necrosis present</strong> — defer until necrosis managed and patient optimised. Concurrent cholecystectomy at time of necrosectomy may be considered by experienced surgeons.</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Vascular Complications</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Splenic vein thrombosis</span><span class="m-val warn">Common — monitor, anticoagulate if symptomatic varices</span></div>
+      <div class="m-item"><span class="m-param">Portal vein thrombosis</span><span class="m-val warn">Anticoagulate — LMWH then warfarin</span></div>
+      <div class="m-item"><span class="m-param">Pseudoaneurysm</span><span class="m-val bad">Sentinel bleed → urgent CT angio → IR embolisation</span></div>
+      <div class="m-item"><span class="m-param">Haemorrhage from drain</span><span class="m-val bad">Stop drain irrigation → CT angio urgently</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MONITORING ══ -->
+<div id="tab-monitoring" class="panel">
+  <div class="card">
+    <div class="card-title">Monitoring Targets & Frequency</div>
+    <div class="section">
+      <div class="sec-head">Haemodynamic & Renal</div>
+      <div class="m-grid">
+        <div class="m-item"><span class="m-param">UO target</span><span class="m-val ok">0.5–1 mL/kg/hr</span></div>
+        <div class="m-item"><span class="m-param">MAP target</span><span class="m-val ok">≥65 mmHg</span></div>
+        <div class="m-item"><span class="m-param">HR target</span><span class="m-val ok">&lt;100 bpm</span></div>
+        <div class="m-item"><span class="m-param">Creatinine</span><span class="m-val info">Daily — AKI common in severe AP</span></div>
+        <div class="m-item"><span class="m-param">BUN trend</span><span class="m-val ok">Decreasing = good fluid response</span></div>
+        <div class="m-item"><span class="m-param">Haematocrit</span><span class="m-val ok">35–44% (target in early AP)</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-head">Inflammatory Markers</div>
+      <div class="m-grid">
+        <div class="m-item"><span class="m-param">CRP peak</span><span class="m-val warn">48–72h, &gt;150 mg/L = severe</span></div>
+        <div class="m-item"><span class="m-param">PCT</span><span class="m-val info">Daily if infection suspected</span></div>
+        <div class="m-item"><span class="m-param">WBC</span><span class="m-val info">Daily — trend more important</span></div>
+        <div class="m-item"><span class="m-param">Lipase / Amylase</span><span class="m-val warn">Do NOT use to monitor severity — does not correlate with course</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-head">Metabolic</div>
+      <div class="m-grid">
+        <div class="m-item"><span class="m-param">Glucose</span><span class="m-val ok">Target 6–10 mmol/L</span></div>
+        <div class="m-item"><span class="m-param">Calcium</span><span class="m-val warn">Hypocalcaemia = severity marker. Replace if symptomatic.</span></div>
+        <div class="m-item"><span class="m-param">Magnesium</span><span class="m-val info">Replace — often low</span></div>
+        <div class="m-item"><span class="m-param">Albumin</span><span class="m-val warn">Low = poor prognosis, nutritional target</span></div>
+        <div class="m-item"><span class="m-param">Triglycerides</span><span class="m-val info">If hypertrig. aetiology — monitor daily</span></div>
+        <div class="m-item"><span class="m-param">LFTs / Bilirubin</span><span class="m-val info">If gallstone — monitor for obstruction</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-head">Respiratory</div>
+      <div class="m-grid">
+        <div class="m-item"><span class="m-param">SpO₂</span><span class="m-val ok">≥94% (continuous monitoring)</span></div>
+        <div class="m-item"><span class="m-param">PaO₂/FiO₂</span><span class="m-val warn">&lt;300 = ARDS — escalate respiratory support</span></div>
+        <div class="m-item"><span class="m-param">CXR</span><span class="m-val info">Daily in severe AP — pleural effusions, ARDS</span></div>
+        <div class="m-item"><span class="m-param">Pleural effusion</span><span class="m-val warn">Left-sided common — drain only if compromising ventilation</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-head">Abdominal Compartment Syndrome</div>
+      <div class="m-grid">
+        <div class="m-item"><span class="m-param">Bladder pressure</span><span class="m-val info">Measure if distended abdomen + oliguria</span></div>
+        <div class="m-item"><span class="m-param">IAP &gt;12 mmHg</span><span class="m-val warn">Intra-abdominal hypertension — restrict fluids</span></div>
+        <div class="m-item"><span class="m-param">IAP &gt;20 mmHg + organ failure</span><span class="m-val bad">ACS — surgical decompression may be needed</span></div>
+        <div class="m-item"><span class="m-param">Risk factors</span><span class="m-val warn">Massive fluid resuscitation, ileus, ascites</span></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-head">Imaging Schedule</div>
+      <div class="m-grid">
+        <div class="m-item"><span class="m-param">USS abdomen</span><span class="m-val info">On admission — gallstones, CBD</span></div>
+        <div class="m-item"><span class="m-param">CT with contrast</span><span class="m-val info">48–72h if severe or deteriorating</span></div>
+        <div class="m-item"><span class="m-param">CT repeat</span><span class="m-val info">At 4 weeks — assess WON for intervention</span></div>
+        <div class="m-item"><span class="m-param">CT if new fever/deterioration</span><span class="m-val warn">Rule out infected necrosis, new collections</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CHECKLIST ══ -->
+<div id="tab-checklist" class="panel">
+  <div class="card">
+    <div class="card-title">AP Management Checklist</div>
+    <div class="card-sub">Tap each item to mark complete. Commonly missed steps included.</div>
+    <div id="chk-list"></div>
+    <div style="margin-top:.85rem;font-family:var(--mono);font-size:.7rem;color:var(--muted)">Progress: <span id="chk-progress">0</span> / <span id="chk-total">0</span> completed</div>
+  </div>
+
+  <div class="card" style="border-color:rgba(245,158,11,.2)">
+    <div class="card-title">Things Commonly Missed in AP</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>Etiology not identified</strong> — if gallstones excluded, check TG, calcium, medications, IgG4 (autoimmune), anatomical (MRCP for divisum)</span></li>
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>Fluid overload</strong> — continuing aggressive IVF beyond 48h in a resuscitated patient. Causes ARDS, ACS, worsens outcomes.</span></li>
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>Bowel rest ordered unnecessarily</strong> — early oral feeding is evidence-based. NBM increases complications.</span></li>
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>Prophylactic antibiotics prescribed</strong> — not indicated in sterile necrosis. Drives resistance.</span></li>
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>DVT prophylaxis omitted</strong> — start LMWH when haemostasis confirmed, usually 24–48h. AP patients at high VTE risk.</span></li>
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>Stress ulcer prophylaxis forgotten</strong> — PPI in all ICU AP patients. Risk of GI bleeding especially with coagulopathy.</span></li>
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>Same-admission cholecystectomy missed</strong> — for mild gallstone AP. Reduces risk of recurrence from 18% to 1.5% (PONCHO trial).</span></li>
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>Alcohol counselling not done</strong> — if alcohol aetiology, refer to addiction services before discharge.</span></li>
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>Pseudoaneurysm missed</strong> — unexplained anaemia drop + abdominal pain in a patient with necrosis = urgent CT angio.</span></li>
+      <li class="step-item"><span class="step-num">⚠️</span><span><strong>Glycaemic control neglected</strong> — AP causes insulin resistance. Target 6–10 mmol/L. New-onset DM may develop post-AP.</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="caveat">⚠ Educational and decision-support use only — based on ACG 2024, IAP/APA, and ESPEN guidelines.<br>All management decisions require clinical judgement, senior review, and specialist input.</div>
+</div>
+
+<script>
+function showTab(name, btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function calcEnzymes() {
+  const lipase = parseFloat(document.getElementById('dx-lipase').value);
+  const lipaseULN = parseFloat(document.getElementById('dx-lipase-uln').value) || 60;
+  const amylase = parseFloat(document.getElementById('dx-amylase').value);
+  const amylaseULN = parseFloat(document.getElementById('dx-amylase-uln').value) || 100;
+  const res = document.getElementById('enzyme-result');
+  res.style.display = 'block';
+  let html = '';
+  if(!isNaN(lipase)) {
+    const mult = (lipase/lipaseULN).toFixed(1);
+    const meets = lipase >= lipaseULN*3;
+    const col = meets?'var(--mild)':lipase>=lipaseULN?'var(--mod)':'var(--sev)';
+    html += `<div style="background:${col}0e;border:1px solid ${col}55;border-radius:8px;padding:.85rem 1rem;margin-bottom:.65rem">
+      <div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:${col};margin-bottom:.3rem">Serum Lipase</div>
+      <div style="font-family:var(--display);font-size:2.2rem;font-weight:800;color:${col}">${lipase} <span style="font-size:1rem">U/L</span></div>
+      <div style="font-family:var(--mono);font-size:.75rem;opacity:.6;margin-bottom:.3rem">${mult}× ULN (ULN=${lipaseULN} U/L)</div>
+      <div style="font-size:.8rem;opacity:.85">${meets?'✅ <strong>Meets diagnostic criterion ②</strong> — Lipase ≥3× ULN. AP criterion confirmed.':lipase>=lipaseULN?'⚠ Elevated but &lt;3× ULN — does not meet Atlanta threshold. Consider other diagnoses.':'❌ Normal lipase — enzyme criterion not met. Consider imaging or alternative diagnosis.'}</div>
+    </div>`;
+  }
+  if(!isNaN(amylase)) {
+    const mult = (amylase/amylaseULN).toFixed(1);
+    const meets = amylase >= amylaseULN*3;
+    const col = meets?'var(--mild)':amylase>=amylaseULN?'var(--mod)':'var(--sev)';
+    html += `<div style="background:${col}0e;border:1px solid ${col}55;border-radius:8px;padding:.85rem 1rem;margin-bottom:.65rem">
+      <div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:${col};margin-bottom:.3rem">Serum Amylase</div>
+      <div style="font-family:var(--display);font-size:2.2rem;font-weight:800;color:${col}">${amylase} <span style="font-size:1rem">U/L</span></div>
+      <div style="font-family:var(--mono);font-size:.75rem;opacity:.6;margin-bottom:.3rem">${mult}× ULN (ULN=${amylaseULN} U/L)</div>
+      <div style="font-size:.8rem;opacity:.85">${meets?'✅ <strong>Meets diagnostic criterion ②</strong> — Amylase ≥3× ULN. Less specific than lipase.':amylase>=amylaseULN?'⚠ Elevated but &lt;3× ULN. Amylase alone insufficient. Confirm with lipase.':'❌ Normal amylase. Amylase may normalise in 24–48h. Check lipase if suspected AP.'}</div>
+    </div>`;
+  }
+  if(!html) html = '<div class="infobox"><span>ℹ️</span><span>Enter at least one enzyme value to calculate.</span></div>';
+  const lipaseMeets = !isNaN(lipase) && lipase >= lipaseULN*3;
+  const amylaseMeets = !isNaN(amylase) && amylase >= amylaseULN*3;
+  if(lipaseMeets || amylaseMeets) {
+    html += `<div style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.4);border-radius:8px;padding:.85rem 1rem;margin-top:.5rem">
+      <div style="color:var(--mild);font-weight:600;margin-bottom:.25rem">✅ Enzyme Criterion MET</div>
+      <div style="font-size:.8rem;opacity:.8">If characteristic epigastric pain also present → <strong>AP diagnosis confirmed</strong> (2 of 3 Atlanta criteria met). CT not required for diagnosis.</div>
+    </div>`;
+  }
+  res.innerHTML = html;
+}
+
+// Sync patient weight to fluid/nutrition tabs
+function syncPatient() {
+  const wt = document.getElementById('pt-wt').value;
+  const ca = parseFloat(document.getElementById('pt-ca').value);
+  const fwt = document.getElementById('f-wt');
+  const nwt = document.getElementById('n-wt');
+  if(fwt && wt) fwt.value = wt;
+  if(nwt && wt) nwt.value = wt;
+
+  // Fluid choice hint
+  const div = document.getElementById('fluid-choice-display');
+  if(ca && div) {
+    if(ca > 2.6) {
+      div.innerHTML = `<div class="warnbox"><span>⚠️</span><span>Calcium ${ca} mmol/L — HIGH. Use <strong>Plasmalyte</strong> instead of RL. RL contains calcium and may worsen hypercalcaemia.</span></div>`;
+    } else if(ca) {
+      div.innerHTML = `<div class="infobox"><span>✅</span><span>Calcium ${ca} mmol/L — normal. <strong>Lactated Ringer's (RL)</strong> is the recommended choice.</span></div>`;
+    }
+  }
+}
+
+// BISAP toggle
+function toggleBISAP(row) {
+  row.classList.toggle('selected');
+}
+
+function calcBISAP() {
+  const rows = document.querySelectorAll('#tab-severity .card:nth-child(2) .bisap-row');
+  let score = 0;
+  rows.forEach(r => { if(r.classList.contains('selected')) score++; });
+  const res = document.getElementById('bisap-result');
+  const num = document.getElementById('bisap-num');
+  const interp = document.getElementById('bisap-interp');
+  res.style.display = 'block';
+  num.textContent = score;
+  let col, msg;
+  if(score <= 1){ col='var(--mild)'; msg='Low risk — mortality <1%. Likely mild AP. Monitor closely but high-level intervention unlikely needed.'; }
+  else if(score === 2){ col='var(--mod)'; msg='Moderate risk — mortality ~2–3%. Moderately severe AP possible. Ensure adequate monitoring and early senior review.'; }
+  else { col='var(--sev)'; msg=`BISAP ≥3 — High risk of severe AP. Mortality increases significantly (up to 22% at score 5). ICU admission, aggressive monitoring, early specialist involvement essential.`; }
+  num.style.color = col;
+  interp.style.borderColor = col+'55'; interp.style.background = col+'0e'; interp.style.color = col;
+  interp.innerHTML = `<strong>Score ${score}/5</strong><br><span style="color:var(--text);opacity:.8">${msg}</span>`;
+}
+
+function calcRanson() {
+  const allRows = document.querySelectorAll('#tab-severity .card:nth-child(3) .bisap-row');
+  let score = 0;
+  allRows.forEach(r => { if(r.classList.contains('selected')) score++; });
+  const res = document.getElementById('ranson-result');
+  const num = document.getElementById('ranson-num');
+  const interp = document.getElementById('ranson-interp');
+  res.style.display = 'block';
+  num.textContent = score;
+  let col, msg, mort;
+  if(score < 3){ col='var(--mild)'; mort='&lt;1%'; msg='Mild AP — low morbidity. Most resolve with conservative management.'; }
+  else if(score <= 4){ col='var(--mod)'; mort='~15%'; msg='Moderate–Severe AP — significant morbidity. ICU monitoring recommended.'; }
+  else if(score <= 6){ col='var(--sev)'; mort='40%'; msg='Severe AP — high morbidity and mortality. ICU admission essential.'; }
+  else { col='var(--sev)'; mort='~100%'; msg='Critically Severe AP — extremely high mortality. Full ICU support, early multidisciplinary involvement.'; }
+  num.style.color = col;
+  interp.style.borderColor = col+'55'; interp.style.background = col+'0e'; interp.style.color = col;
+  interp.innerHTML = `<strong>Score ${score}/11 — Predicted mortality ${mort}</strong><br><span style="color:var(--text);opacity:.8">${msg}</span>`;
+}
+
+function calcCTSI() {
+  const b = parseInt(document.getElementById('balthazar').value);
+  const n = parseInt(document.getElementById('necrosis-ct').value);
+  const score = b + n;
+  const res = document.getElementById('ctsi-result');
+  const num = document.getElementById('ctsi-num');
+  const interp = document.getElementById('ctsi-interp');
+  res.style.display = 'block';
+  num.textContent = score;
+  let col, msg;
+  if(score <= 2){ col='var(--mild)'; msg='Mild — morbidity 8%, mortality 3%. Low risk of complications.'; }
+  else if(score <= 6){ col='var(--mod)'; msg='Moderate — morbidity 35%, mortality 6%. Monitor for local complications.'; }
+  else { col='var(--sev)'; msg='Severe — morbidity 92%, mortality 17%. High risk of infected necrosis and need for intervention.'; }
+  num.style.color = col;
+  interp.style.borderColor = col+'55'; interp.style.background = col+'0e'; interp.style.color = col;
+  interp.innerHTML = `<strong>CTSI ${score}/10 — ${col===('var(--mild)')?'Mild':col===('var(--mod)')?'Moderate':'Severe'}</strong><br><span style="color:var(--text);opacity:.8">${msg}</span>`;
+}
+
+// FLUIDS
+function calcFluids() {
+  const wt = parseFloat(document.getElementById('f-wt').value);
+  const hypo = document.getElementById('f-hypo').value;
+  const resp = document.getElementById('f-resp').value;
+  const phase = document.getElementById('f-phase').value;
+  const ptCa = parseFloat(document.getElementById('pt-ca').value);
+  if(!wt){ alert('Enter patient weight.'); return; }
+
+  const fluid = (ptCa > 2.6) ? 'Plasmalyte' : 'Lactated Ringer\'s (RL)';
+  const fluidColor = (ptCa > 2.6) ? 'var(--blue)' : 'var(--mild)';
+  const bolus = (wt * 10).toFixed(0);
+  const maint = (wt * 1.5).toFixed(0);
+
+  let bolusPlan = '';
+  if(hypo === 'yes' && resp === 'yes') {
+    bolusPlan = `<div style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:8px;padding:.85rem 1rem;margin-bottom:.65rem">
+      <div style="color:var(--mild);font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem">✅ BOLUS — Give Now</div>
+      <div style="font-family:var(--display);font-size:2rem;font-weight:800;color:var(--mild)">${bolus} mL</div>
+      <div style="font-family:var(--mono);font-size:.65rem;opacity:.45;margin-bottom:.35rem">10 mL/kg bolus of ${fluid}</div>
+      <div style="font-size:.78rem;opacity:.8">Hypoperfusion present + fluid responsive. Give over 30–60 min. Reassess UO, HR, MAP at 30 min. Repeat if still responsive and haemodynamically unstable. Maximum 2–3 boluses before reassessing cause.</div>
+    </div>`;
+  } else if(hypo === 'yes' && resp === 'no') {
+    bolusPlan = `<div class="warnbox"><span>⚠️</span><span>Hypoperfusion present but NOT fluid responsive. Further boluses unlikely to help and may cause harm. Consider vasopressors (noradrenaline), reassess diagnosis, check for ACS (bladder pressure). Involve ICU/senior.</span></div>`;
+  } else if(hypo === 'no') {
+    bolusPlan = `<div class="infobox"><span>ℹ️</span><span>Patient haemodynamically stable — no bolus needed. Start maintenance fluids below.</span></div>`;
+  } else {
+    bolusPlan = `<div class="infobox"><span>ℹ️</span><span>Assess fluid responsiveness (passive leg raise, response to previous bolus, PLR + CO monitoring) before giving bolus.</span></div>`;
+  }
+
+  let maintPlan = '';
+  if(phase === 'late') {
+    maintPlan = `<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:.85rem 1rem;margin-bottom:.65rem">
+      <div style="color:var(--mod);font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem">⚠ LATE PHASE — Fluid Caution</div>
+      <div style="font-size:.78rem;opacity:.8">&gt;72h — SIRS phase waning. Reduce or stop maintenance IVF if patient euvolaemic, tolerating oral/EN, and haemodynamically stable. Ongoing aggressive IVF in late AP increases ARDS, ACS, and mortality risk.</div>
+    </div>`;
+  } else {
+    maintPlan = `<div style="background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.25);border-radius:8px;padding:.85rem 1rem;margin-bottom:.65rem">
+      <div style="color:var(--blue);font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem">Maintenance Rate</div>
+      <div style="font-family:var(--display);font-size:2rem;font-weight:800;color:var(--blue)">${maint} mL/hr</div>
+      <div style="font-family:var(--mono);font-size:.65rem;opacity:.45;margin-bottom:.35rem">1.5 mL/kg/hr of ${fluid}</div>
+      <div style="font-size:.78rem;opacity:.8">Early phase (&lt;72h). Reassess every 6h against fluid response targets. Titrate down if UO &gt;1 mL/kg/hr sustained or signs of overload.</div>
+    </div>`;
+  }
+
+  const res = document.getElementById('fluid-result');
+  res.style.display = 'block';
+  res.innerHTML = bolusPlan + maintPlan +
+    `<div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Fluid choice: <strong style="color:${fluidColor}">${fluid}</strong>${ptCa>2.6?' (hypercalcaemia — avoid RL)':' (calcium normal)'}</div>`;
+}
+
+// NUTRITION
+function calcNutrition() {
+  const wt = parseFloat(document.getElementById('n-wt').value);
+  const sev = document.getElementById('n-sev').value;
+  const oral = document.getElementById('n-oral').value;
+  const days = parseInt(document.getElementById('n-days').value) || 0;
+  if(!wt){ alert('Enter weight.'); return; }
+
+  const kcalLow = Math.round(wt * 25), kcalHigh = Math.round(wt * 35);
+  const protein = (wt * 1.3).toFixed(0);
+  let plan = '';
+
+  if(oral === 'yes') {
+    plan = `<div style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);border-radius:8px;padding:.9rem 1rem;margin-bottom:.65rem">
+      <div style="color:var(--mild);font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem">✅ Oral Feeding — Start Now</div>
+      <div style="font-size:.82rem;line-height:1.6;opacity:.85">Start <strong>soft, low-fat oral diet</strong> immediately. No bowel rest. Advance to normal diet as tolerated. Target <strong>${kcalLow}–${kcalHigh} kcal/day</strong> and <strong>${protein}g protein/day</strong>. Add nutritional supplement drinks if intake poor.</div>
+    </div>`;
+  } else {
+    const route = days <= 2 ? 'Nasogastric (NG) tube feeding — NG equivalent to NJ in evidence' : days <= 7 ? 'Nasogastric or Nasojejunal feeding' : 'Consider NJ or TPN if EN not tolerated';
+    plan = `<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:8px;padding:.9rem 1rem;margin-bottom:.65rem">
+      <div style="color:var(--mod);font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.4rem">Enteral Nutrition — ${route}</div>
+      <div style="font-size:.82rem;line-height:1.6;opacity:.85">
+        Start EN within 24–48h. Route: <strong>${route}</strong><br>
+        Start at <strong>20–30 mL/hr</strong> polymeric formula. Increase by 10 mL/hr every 6h as tolerated.<br>
+        Target: <strong>${kcalLow}–${kcalHigh} kcal/day</strong> | Protein: <strong>${protein}g/day</strong><br>
+        ${days > 7 ? '<span style="color:var(--sev)">Day '+days+': If EN still not tolerated after 7 days → consider TPN. Involve dietitian urgently.</span>' : ''}
+      </div>
+    </div>`;
+  }
+
+  const res = document.getElementById('nutrition-result');
+  res.style.display = 'block';
+  res.innerHTML = plan + `<div class="infobox"><span>📊</span><span>Involve clinical dietitian early in all moderate–severe AP. Indirect calorimetry is gold standard for caloric targets if available.</span></div>`;
+}
+
+// PCT
+function calcPCT() {
+  const pct = parseFloat(document.getElementById('pct-val').value);
+  const ctx = document.getElementById('pct-ctx').value;
+  if(isNaN(pct)){ alert('Enter PCT value.'); return; }
+  const res = document.getElementById('pct-result');
+  res.style.display = 'block';
+  let col, msg;
+  if(pct < 0.5){ col='var(--mild)'; msg='PCT &lt;0.5 — infection unlikely. No antibiotics indicated based on PCT alone. Continue monitoring. Repeat in 24h if clinical concern persists.'; }
+  else if(pct < 1.0){ col='var(--mod)'; msg='PCT 0.5–1.0 — borderline. Monitor closely. Repeat PCT in 12–24h. If clinical deterioration or rising PCT → consider antibiotic initiation. Send blood cultures.'; }
+  else if(pct < 3.5){ col='var(--sev)'; msg=`PCT >1.0 — INFECTION SUSPECTED. May or may not involve the pancreas directly. Send blood cultures × 2 immediately. Consider empirical antibiotics (meropenem 1g IV TDS if necrosis suspected). CT to assess necrosis status.`; }
+  else { col='var(--sev)'; msg='PCT &gt;3.5 — HIGH LIKELIHOOD of infected necrosis or bacteraemia. Start meropenem immediately after cultures. CT urgently. Consider CT-guided FNA if no gas visible. ICU involvement essential.'; }
+  res.innerHTML = `<div style="font-family:var(--display);font-size:2.8rem;font-weight:800;color:${col}">${pct.toFixed(1)}</div>
+    <div style="font-family:var(--mono);font-size:.65rem;opacity:.4;margin-bottom:.5rem">ng/mL</div>
+    <div class="interp" style="border-color:${col}55;background:${col}0e;color:${col}"><strong>${pct>=1?'INFECTION SUSPECTED':pct>=0.5?'BORDERLINE':'LOW RISK'}</strong><br><span style="color:var(--text);opacity:.8">${msg}</span></div>`;
+}
+
+// CHECKLIST
+const checklist = [
+  {t:'Confirm diagnosis (lipase/amylase ≥3× ULN or CT features)',s:'Diagnosis'},
+  {t:'Identify etiology — USS, TG, calcium, alcohol history, medications',s:'Diagnosis'},
+  {t:'BISAP and Ranson\'s score calculated',s:'Severity'},
+  {t:'Severity classified by Atlanta criteria (mild / mod-severe / severe)',s:'Severity'},
+  {t:'IV access established, baseline bloods sent (FBC, U&E, LFT, CRP, PCT, glucose, TG, Ca)',s:'Workup'},
+  {t:'Catheter inserted for accurate UO monitoring',s:'Monitoring'},
+  {t:'Fluid choice decided: RL or Plasmalyte (check calcium)',s:'Fluids'},
+  {t:'Fluid bolus given if hypoperfusion present (10 mL/kg)',s:'Fluids'},
+  {t:'Maintenance IVF running at 1.5 mL/kg/hr',s:'Fluids'},
+  {t:'Fluid response reassessment planned at 6h',s:'Fluids'},
+  {t:'Analgesia prescribed — paracetamol regularly + opioid PRN',s:'Pain'},
+  {t:'Antiemetics prescribed',s:'Pain'},
+  {t:'Early oral/enteral feeding initiated within 24–48h',s:'Nutrition'},
+  {t:'Dietitian referral made in moderate–severe AP',s:'Nutrition'},
+  {t:'Prophylactic antibiotics NOT prescribed (unless indicated)',s:'Infection'},
+  {t:'Blood cultures sent if fever or PCT >1',s:'Infection'},
+  {t:'CT planned at 48–72h if severe or deteriorating',s:'Imaging'},
+  {t:'USS done — gallstones / CBD assessed',s:'Imaging'},
+  {t:'Cholecystectomy plan documented (same admission if mild gallstone AP)',s:'Intervention'},
+  {t:'ERCP only if cholangitis — NOT routine',s:'Intervention'},
+  {t:'DVT prophylaxis prescribed (LMWH when haemostasis confirmed)',s:'Supportive'},
+  {t:'Stress ulcer prophylaxis (PPI) started',s:'Supportive'},
+  {t:'Glycaemic control plan — target 6–10 mmol/L',s:'Supportive'},
+  {t:'Alcohol/substance counselling referral if relevant etiology',s:'Discharge'},
+  {t:'Goals of care discussion if severe AP with multi-organ failure',s:'Communication'},
+];
+
+let checked = new Array(checklist.length).fill(false);
+function buildChecklist() {
+  const container = document.getElementById('chk-list');
+  document.getElementById('chk-total').textContent = checklist.length;
+  checklist.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'chk-item';
+    div.innerHTML = `<div class="chk-box" id="cb${i}"></div><div class="chk-text">${item.t}<div class="chk-sub">${item.s}</div></div>`;
+    div.onclick = () => {
+      checked[i] = !checked[i];
+      div.classList.toggle('done', checked[i]);
+      div.querySelector('.chk-box').innerHTML = checked[i] ? '✓' : '';
+      div.querySelector('.chk-box').style.color = checked[i] ? '#fff' : '';
+      document.getElementById('chk-progress').textContent = checked.filter(Boolean).length;
+    };
+    container.appendChild(div);
+  });
+}
+buildChecklist();
+</script>
+</body>
+</html>
