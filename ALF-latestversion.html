@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acute Liver Failure — ICU Decision Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090d;--s1:#0e1119;--s2:#131824;--border:#1a2030;
+  --text:#cbd5e1;--muted:#475569;
+  --amber:#f59e0b;--red:#f43f5e;--green:#34d399;--blue:#38bdf8;--purple:#a78bfa;--orange:#f97316;
+  --mono:'IBM Plex Mono',monospace;--body:'DM Sans',sans-serif;--display:'Syne',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--body);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 35% at 50% 0%,rgba(245,158,11,0.04) 0%,transparent 65%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:2rem 1rem 5rem}
+
+header{text-align:center;margin-bottom:2rem}
+.chip{display:inline-flex;align-items:center;gap:.4rem;border:1px solid rgba(245,158,11,.25);border-radius:99px;padding:.3rem .9rem;margin-bottom:.9rem;font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;color:rgba(245,158,11,.7);text-transform:uppercase}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+h1{font-family:var(--display);font-size:clamp(1.5rem,5vw,2.4rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:.4rem}
+.sub{color:var(--muted);font-size:.8rem}
+
+.tabs{display:flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1.5rem;background:var(--s1)}
+.tab-btn{flex:1;min-width:70px;padding:.6rem .25rem;background:transparent;border:none;color:var(--muted);font-family:var(--mono);font-size:.55rem;letter-spacing:.05em;cursor:pointer;transition:all .2s;text-transform:uppercase;border-bottom:2px solid transparent}
+.tab-btn.active{background:var(--s2);color:var(--text);border-bottom-color:var(--amber)}
+.tab-btn:hover:not(.active){color:var(--text)}
+.panel{display:none;animation:fadeUp .3s ease}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.card{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:1.4rem;margin-bottom:1rem}
+.card-title{font-family:var(--display);font-size:1.05rem;font-weight:700;margin-bottom:.3rem}
+.card-sub{font-size:.75rem;color:var(--muted);margin-bottom:1rem;line-height:1.5}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem}
+.field{display:flex;flex-direction:column;gap:.3rem}
+.field label{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.field input,.field select{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:.6rem .8rem;color:var(--text);font-family:var(--mono);font-size:.85rem;outline:none;transition:border .18s;width:100%}
+.field input:focus,.field select:focus{border-color:var(--amber)}
+.field .hint{font-size:.62rem;color:var(--muted);opacity:.55}
+
+.calc-btn{width:100%;padding:.8rem;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:8px;color:var(--amber);font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;cursor:pointer;text-transform:uppercase;transition:all .18s;margin-top:.25rem}
+.calc-btn:hover{background:rgba(245,158,11,.18)}
+
+.result-box{margin-top:1rem;display:none;animation:fadeUp .3s ease}
+.big-num{font-family:var(--display);font-size:2.8rem;font-weight:800;line-height:1}
+.num-unit{font-family:var(--mono);font-size:.65rem;opacity:.4;margin-bottom:.5rem}
+.interp{font-size:.82rem;padding:.85rem 1rem;border-radius:8px;border:1px solid;line-height:1.6;margin-bottom:.75rem}
+
+.step-list{list-style:none;display:flex;flex-direction:column;gap:.45rem}
+.step-item{display:flex;gap:.65rem;padding:.75rem;background:var(--s2);border-radius:8px;border-left:3px solid var(--amber);font-size:.8rem;line-height:1.5}
+.step-item.red{border-left-color:var(--red)}
+.step-item.green{border-left-color:var(--green)}
+.step-item.blue{border-left-color:var(--blue)}
+.step-item.purple{border-left-color:var(--purple)}
+.step-num{font-family:var(--mono);color:var(--amber);font-weight:600;flex-shrink:0}
+.step-num.red{color:var(--red)}
+.step-num.green{color:var(--green)}
+.step-num.blue{color:var(--blue)}
+
+.m-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:.45rem;margin-top:.5rem}
+.m-item{display:flex;justify-content:space-between;align-items:baseline;padding:.5rem .75rem;background:var(--s2);border-radius:7px;gap:.5rem}
+.m-param{font-size:.78rem;flex:1}
+.m-val{font-family:var(--mono);font-size:.7rem;text-align:right}
+.ok{color:#34d399}.warn{color:#f59e0b}.bad{color:#f43f5e}.info{color:#38bdf8}
+
+.sec-head{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.65rem;padding-bottom:.5rem;border-bottom:1px solid var(--border);margin-top:1rem}
+.sec-head:first-child{margin-top:0}
+
+.option-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.65rem;margin-top:.5rem}
+.option-card{background:var(--s2);border-radius:10px;padding:1rem;border:1px solid var(--border)}
+.opt-title{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.45rem}
+.opt-body{font-size:.75rem;line-height:1.65;opacity:.8}
+
+.infobox{display:flex;gap:.6rem;align-items:flex-start;background:rgba(56,189,248,.05);border:1px solid rgba(56,189,248,.15);border-radius:8px;padding:.75rem 1rem;font-size:.78rem;color:rgba(203,213,225,.7);line-height:1.55;margin-top:.75rem}
+.warnbox{display:flex;gap:.6rem;align-items:flex-start;background:rgba(244,63,94,.05);border:1px solid rgba(244,63,94,.2);border-radius:8px;padding:.75rem 1rem;font-size:.78rem;color:rgba(203,213,225,.8);line-height:1.55;margin-top:.75rem}
+.greenbox{display:flex;gap:.6rem;align-items:flex-start;background:rgba(52,211,153,.05);border:1px solid rgba(52,211,153,.2);border-radius:8px;padding:.75rem 1rem;font-size:.78rem;color:rgba(203,213,225,.8);line-height:1.55;margin-top:.75rem}
+
+.chk-item{display:flex;align-items:flex-start;gap:.65rem;padding:.7rem;background:var(--s2);border-radius:8px;margin-bottom:.4rem;cursor:pointer;transition:background .18s;border:1px solid transparent}
+.chk-item.done{background:rgba(52,211,153,.07);border-color:rgba(52,211,153,.2)}
+.chk-box{width:18px;height:18px;border:2px solid var(--border);border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .18s}
+.chk-item.done .chk-box{background:var(--green);border-color:var(--green);color:#fff;font-size:.7rem}
+.chk-text{font-size:.8rem;line-height:1.45}
+.chk-sub{font-size:.68rem;color:var(--muted);margin-top:.15rem}
+
+.severity-pill{display:inline-flex;align-items:center;gap:.4rem;border-radius:6px;padding:.3rem .75rem;font-family:var(--mono);font-size:.7rem;font-weight:600;margin:.2rem}
+
+.dose-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:1rem 1.1rem;margin-top:.75rem}
+.dose-title{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);margin-bottom:.5rem}
+
+.caveat{text-align:center;font-size:.7rem;color:var(--muted);margin-top:2rem;line-height:1.7;padding:1rem;border:1px dashed rgba(255,255,255,.07);border-radius:10px}
+
+@media(max-width:520px){
+  .field-grid{grid-template-columns:1fr}
+  .tab-btn{font-size:.48rem;padding:.55rem .15rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="chip"><span class="dot"></span>INASL · EASL · AASLD 2024 — Indian Guidelines</div>
+  <h1>Acute Liver Failure</h1>
+  <p class="sub">ICU Decision Engine — Diagnosis · Etiology · Management · Transplant Criteria</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('diagnosis',this)">Diagnosis</button>
+  <button class="tab-btn" onclick="showTab('etiology',this)">Etiology</button>
+  <button class="tab-btn" onclick="showTab('severity',this)">Severity</button>
+  <button class="tab-btn" onclick="showTab('icp',this)">ICP</button>
+  <button class="tab-btn" onclick="showTab('nac',this)">NAC</button>
+  <button class="tab-btn" onclick="showTab('pex',this)">Plasma Exch</button>
+  <button class="tab-btn" onclick="showTab('crrt',this)">CRRT</button>
+  <button class="tab-btn" onclick="showTab('specific',this)">Specific Rx</button>
+  <button class="tab-btn" onclick="showTab('transplant',this)">Transplant</button>
+  <button class="tab-btn" onclick="showTab('monitoring',this)">Monitoring</button>
+</div>
+
+<!-- ══ DIAGNOSIS ══ -->
+<div id="tab-diagnosis" class="panel active">
+  <div class="card">
+    <div class="card-title">ALF — Definition (AASLD / INASL 2024)</div>
+    <div class="card-sub">Acute liver failure requires ALL of the following criteria</div>
+    <ul class="step-list">
+      <li class="step-item green"><span class="step-num green">①</span><span><strong>Coagulopathy</strong> — INR ≥1.5 (not correctable by vitamin K)</span></li>
+      <li class="step-item green"><span class="step-num green">②</span><span><strong>Hepatic Encephalopathy</strong> — any grade (I–IV) in the setting of acute liver injury</span></li>
+      <li class="step-item green"><span class="step-num green">③</span><span><strong>No pre-existing liver disease</strong> — except Wilson's disease, autoimmune hepatitis, or Budd-Chiari (which can present acutely on chronic disease)</span></li>
+      <li class="step-item green"><span class="step-num green">④</span><span><strong>Duration of illness ≤26 weeks</strong> from onset of jaundice to onset of encephalopathy</span></li>
+    </ul>
+    <div class="warnbox"><span>⚠️</span><span><strong>ALF ≠ ACLF:</strong> ACLF occurs in patients with pre-existing chronic liver disease / cirrhosis. Use CLIF-SOFA for ACLF, King's College / ALFED for ALF. Management differs significantly.</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ALF Classification by Time Course</div>
+    <div class="option-grid">
+      <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+        <div class="opt-title" style="color:var(--green)">Hyperacute ALF</div>
+        <div class="opt-body">Jaundice to encephalopathy: <strong>&lt;7 days</strong><br>Causes: Paracetamol, Hep A, Hep E, ischaemia<br>Higher ICP risk<br>Better transplant-free survival<br>Massive coagulopathy common</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(245,158,11,.3)">
+        <div class="opt-title" style="color:var(--amber)">Acute ALF</div>
+        <div class="opt-body">Jaundice to encephalopathy: <strong>8–28 days</strong><br>Causes: Hep E, drug-induced, Hep B<br>Intermediate ICP risk<br>Intermediate prognosis<br>Most common in India</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(244,63,94,.3)">
+        <div class="opt-title" style="color:var(--red)">Subacute ALF</div>
+        <div class="opt-body">Jaundice to encephalopathy: <strong>29 days – 26 weeks</strong><br>Causes: DILI, seronegative, autoimmune<br>Lower ICP risk<br>Worst prognosis without transplant<br>High ascites, renal failure</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Admission Investigations</div>
+    <div class="sec-head">Mandatory on Admission</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">INR / PT</span><span class="m-val info">Hourly in early phase if rapidly rising</span></div>
+      <div class="m-item"><span class="m-param">LFTs (ALT, AST, ALP, GGT, Bilirubin)</span><span class="m-val info">Baseline + daily</span></div>
+      <div class="m-item"><span class="m-param">Serum Ammonia</span><span class="m-val warn">Arterial preferred. &gt;150 = high ICP risk</span></div>
+      <div class="m-item"><span class="m-param">Blood glucose</span><span class="m-val warn">Hourly — hypoglycaemia common</span></div>
+      <div class="m-item"><span class="m-param">ABG + Lactate</span><span class="m-val warn">Acidosis = poor prognosis</span></div>
+      <div class="m-item"><span class="m-param">FBC + CRP + PCT</span><span class="m-val info">Infection surveillance</span></div>
+      <div class="m-item"><span class="m-param">U&E + Creatinine</span><span class="m-val info">Hepatorenal syndrome risk</span></div>
+      <div class="m-item"><span class="m-param">Phosphate</span><span class="m-val ok">Rising phosphate = regeneration signal</span></div>
+      <div class="m-item"><span class="m-param">Paracetamol level</span><span class="m-val info">Send in all ALF regardless of history</span></div>
+      <div class="m-item"><span class="m-param">Serum Ceruloplasmin + Copper</span><span class="m-val warn">Wilson's — low ALP paradox</span></div>
+      <div class="m-item"><span class="m-param">ANA, ASMA, AMA, LKM-1</span><span class="m-val info">Autoimmune hepatitis screen</span></div>
+      <div class="m-item"><span class="m-param">IgG level</span><span class="m-val info">Elevated in AIH</span></div>
+      <div class="m-item"><span class="m-param">USS Abdomen + Doppler</span><span class="m-val warn">Budd-Chiari, portal flow, liver size</span></div>
+      <div class="m-item"><span class="m-param">Blood cultures ×2</span><span class="m-val warn">Before antibiotics if fever</span></div>
+      <div class="m-item"><span class="m-param">Urine culture</span><span class="m-val info">Baseline</span></div>
+      <div class="m-item"><span class="m-param">ECG + Echo</span><span class="m-val info">Ischaemic hepatitis workup</span></div>
+    </div>
+    <div class="sec-head">Viral Serology Panel (India)</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">HEV IgM</span><span class="m-val bad">Most common cause in India — always send</span></div>
+      <div class="m-item"><span class="m-param">HAV IgM</span><span class="m-val warn">Young patients / endemic areas</span></div>
+      <div class="m-item"><span class="m-param">HBsAg + Anti-HBc IgM</span><span class="m-val warn">Acute Hep B (IgM confirms acute)</span></div>
+      <div class="m-item"><span class="m-param">HCV RNA (not antibody)</span><span class="m-val info">Antibody may be negative early</span></div>
+      <div class="m-item"><span class="m-param">HEV PCR</span><span class="m-val info">If IgM negative but HEV suspected</span></div>
+      <div class="m-item"><span class="m-param">HSV / CMV / EBV PCR</span><span class="m-val info">Immunocompromised / atypical</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ETIOLOGY ══ -->
+<div id="tab-etiology" class="panel">
+  <div class="card">
+    <div class="card-title">Etiology in India — Frequency</div>
+    <div class="option-grid">
+      <div class="option-card" style="border-color:rgba(244,63,94,.3)">
+        <div class="opt-title" style="color:var(--red)">Hepatitis E (HEV) — 40–50%</div>
+        <div class="opt-body">Most common in India<br>Especially severe in pregnancy (20–25% mortality)<br>HEV IgM + HEV PCR<br>Faeco-oral — contaminated water<br>No specific antiviral — supportive</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(245,158,11,.3)">
+        <div class="opt-title" style="color:var(--amber)">Anti-TB DILI — 10–15%</div>
+        <div class="opt-body">INH, Rifampicin, PZA<br>Idiosyncratic hepatotoxicity<br>Stop ALL anti-TB drugs immediately<br>Rechallenge after INR normalises<br>High mortality if delayed stop</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(167,139,250,.3)">
+        <div class="opt-title" style="color:var(--purple)">Hepatitis B — 10–15%</div>
+        <div class="opt-body">Acute Hep B or reactivation<br>HBsAg + Anti-HBc IgM<br>Start Tenofovir immediately<br>High viral load → poor prognosis<br>Consider transplant early</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(56,189,248,.3)">
+        <div class="opt-title" style="color:var(--blue)">Wilson's Disease</div>
+        <div class="opt-body">Young patients (&lt;40 yrs)<br>Low ALP (paradox), Coombs-neg haemolysis<br>Kayser-Fleischer rings (slit lamp)<br>Serum copper + ceruloplasmin<br>High mortality without transplant</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+        <div class="opt-title" style="color:var(--green)">Autoimmune Hepatitis</div>
+        <div class="opt-body">ANA / ASMA / LKM-1 positive<br>High IgG (&gt;1.5× ULN)<br>Steroids if no active infection<br>Biopsy if coagulopathy allows<br>Can be seronegative — clinical diagnosis</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(249,115,22,.3)">
+        <div class="opt-title" style="color:var(--orange)">Budd-Chiari / Vascular</div>
+        <div class="opt-body">Hepatic vein thrombosis<br>USS Doppler: absent/reversed flow<br>Anticoagulate immediately (LMWH)<br>TIPS if refractory<br>JAK2 / thrombophilia screen</div>
+      </div>
+    </div>
+    <div class="infobox"><span>🇮🇳</span><span><strong>Indian pattern:</strong> HEV + anti-TB drug DILI account for &gt;60% of ALF in India. Always take detailed drug history. Anti-TB drugs should be stopped immediately in any patient presenting with jaundice + encephalopathy while on treatment.</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Etiology Workup — Key Differentiators</div>
+    <div class="sec-head">Wilson's Disease — Do Not Miss</div>
+    <ul class="step-list">
+      <li class="step-item blue"><span class="step-num blue">🔍</span><span><strong>Low ALP paradox:</strong> ALP normal or LOW in Wilson's ALF (ALP &lt;40 IU/L in fulminant Wilson's) — classic differentiating clue</span></li>
+      <li class="step-item blue"><span class="step-num blue">🔍</span><span><strong>Coombs-negative haemolytic anaemia</strong> — look for elevated LDH, low haptoglobin, raised bilirubin out of proportion</span></li>
+      <li class="step-item blue"><span class="step-num blue">🔍</span><span><strong>Wilson's Index &gt;11</strong> (using bilirubin, AST, PT, ALP, WBC) = high mortality without transplant</span></li>
+      <li class="step-item blue"><span class="step-num blue">🔍</span><span>Slit-lamp KF rings (absent in 50% of acute Wilson's — do not exclude diagnosis if absent)</span></li>
+    </ul>
+    <div class="sec-head" style="margin-top:1rem">Anti-TB DILI — Diagnosis & Management</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">01</span><span><strong>STOP all anti-TB drugs immediately</strong> — INH, Rifampicin, Pyrazinamide, Ethambutol. Do not wait for workup.</span></li>
+      <li class="step-item"><span class="step-num">02</span><span>Bilirubin &gt;3× ULN + LFT rise &gt;3× while on ATT = definite hepatotoxicity — stop all ATT</span></li>
+      <li class="step-item"><span class="step-num">03</span><span><strong>Continue TB management</strong> with streptomycin + ethambutol (hepatotoxicity-sparing regimen) if TB cannot be held</span></li>
+      <li class="step-item"><span class="step-num">04</span><span><strong>Rechallenge protocol:</strong> Wait until INR &lt;1.5 and bilirubin falling. Reintroduce one drug at a time: Rifampicin first (week 1) → INH (week 2) → PZA last (often omitted permanently)</span></li>
+      <li class="step-item red"><span class="step-num red">⚠</span><span><strong>PZA is the most hepatotoxic</strong> — often permanently omitted. Extend regimen duration if PZA excluded.</span></li>
+    </ul>
+    <div class="sec-head" style="margin-top:1rem">HEV in Pregnancy</div>
+    <ul class="step-list">
+      <li class="step-item red"><span class="step-num red">🔴</span><span>HEV in 3rd trimester pregnancy = extremely high mortality (20–25%). ICU admission mandatory for all.</span></li>
+      <li class="step-item"><span class="step-num">01</span><span>No specific antiviral — <strong>supportive management</strong>. Delivery does NOT consistently improve maternal outcomes.</span></li>
+      <li class="step-item"><span class="step-num">02</span><span>Multidisciplinary: Hepatology + Obstetrics + Neonatology. Fetal monitoring continuous.</span></li>
+      <li class="step-item"><span class="step-num">03</span><span>DIC common — aggressive FFP, fibrinogen replacement. Low threshold for cryoprecipitate.</span></li>
+      <li class="step-item"><span class="step-num">04</span><span>Delivery timing: obstetric indication only — no evidence forced delivery improves liver outcomes</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══ SEVERITY ══ -->
+<div id="tab-severity" class="panel">
+  <div class="card">
+    <div class="card-title">West Haven Encephalopathy Grading</div>
+    <div class="option-grid">
+      <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+        <div class="opt-title" style="color:var(--green)">Grade I — Minimal</div>
+        <div class="opt-body">Altered sleep, mild confusion<br>Shortened attention span<br>Asterixis subtle<br>GCS 14–15<br>ICP risk: Low</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(52,211,153,.3)">
+        <div class="opt-title" style="color:var(--green)">Grade II — Moderate</div>
+        <div class="opt-body">Lethargy, disorientation<br>Asterixis prominent<br>Inappropriate behaviour<br>GCS 11–14<br>ICP risk: Low-Moderate</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(245,158,11,.3)">
+        <div class="opt-title" style="color:var(--amber)">Grade III — Severe</div>
+        <div class="opt-body">Somnolent but rousable<br>Marked confusion<br>GCS 8–11<br>ICP risk: HIGH<br>Consider intubation</div>
+      </div>
+      <div class="option-card" style="border-color:rgba(244,63,94,.3)">
+        <div class="opt-title" style="color:var(--red)">Grade IV — Coma</div>
+        <div class="opt-body">Unrousable, ± response to pain<br>GCS ≤7<br>ICP risk: VERY HIGH<br>Intubate immediately<br>ICP monitoring consider</div>
+      </div>
+    </div>
+    <div class="warnbox"><span>⚠️</span><span>Grade III–IV encephalopathy = intubate for airway protection. Do NOT wait for respiratory failure. Aspiration risk is very high in hepatic encephalopathy.</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Severity Calculators</div>
+    <div class="field-grid">
+      <div class="field"><label>Bilirubin (µmol/L)</label><input type="number" id="bili" placeholder="e.g. 350"></div>
+      <div class="field"><label>Creatinine (µmol/L)</label><input type="number" id="creat" placeholder="e.g. 180"></div>
+      <div class="field"><label>INR</label><input type="number" id="inr" placeholder="e.g. 3.5" step="0.1"></div>
+      <div class="field"><label>Sodium (mmol/L)</label><input type="number" id="sodium" placeholder="e.g. 138"></div>
+      <div class="field"><label>Serum Albumin (g/L)</label><input type="number" id="albumin" placeholder="e.g. 28"></div>
+      <div class="field"><label>Encephalopathy Grade</label>
+        <select id="encegrade">
+          <option value="0">None</option>
+          <option value="1">Grade I</option>
+          <option value="2">Grade II</option>
+          <option value="3">Grade III</option>
+          <option value="4">Grade IV</option>
+        </select>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcSeverity()">Calculate MELD + ALFED</button>
+    <div class="result-box" id="severity-result"></div>
+  </div>
+</div>
+
+<!-- ══ ICP ══ -->
+<div id="tab-icp" class="panel">
+  <div class="card">
+    <div class="card-title">ICP Risk Assessment</div>
+    <div class="sec-head">Clinical Risk Stratification</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Ammonia &gt;150 µmol/L</span><span class="m-val bad">High ICP risk even if GCS normal</span></div>
+      <div class="m-item"><span class="m-param">Ammonia &gt;200 µmol/L</span><span class="m-val bad">Cerebral herniation imminent</span></div>
+      <div class="m-item"><span class="m-param">Grade III–IV encephalopathy</span><span class="m-val bad">High ICP risk — treat proactively</span></div>
+      <div class="m-item"><span class="m-param">Hyperacute ALF (jaundice &lt;7d)</span><span class="m-val bad">Higher cerebral oedema risk</span></div>
+      <div class="m-item"><span class="m-param">AKI / Hyponatraemia</span><span class="m-val warn">Worsens cerebral oedema</span></div>
+      <div class="m-item"><span class="m-param">Fever / Sepsis</span><span class="m-val warn">Increases cerebral blood flow + ICP</span></div>
+      <div class="m-item"><span class="m-param">Seizures</span><span class="m-val bad">Dramatically worsen cerebral oedema</span></div>
+      <div class="m-item"><span class="m-param">Hypertension episodes</span><span class="m-val warn">Cushing's response — late sign</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">USG Optic Nerve Sheath Diameter (ONSD)</div>
+    <div class="card-sub">Non-invasive ICP monitoring — your preferred modality. Measure 3mm behind globe, both eyes average.</div>
+    <div class="field-grid">
+      <div class="field"><label>Right ONSD (mm)</label><input type="number" id="onsd-r" placeholder="e.g. 5.8" step="0.1"></div>
+      <div class="field"><label>Left ONSD (mm)</label><input type="number" id="onsd-l" placeholder="e.g. 5.9" step="0.1"></div>
+    </div>
+    <button class="calc-btn" onclick="calcONSD()">Interpret ONSD</button>
+    <div class="result-box" id="onsd-result"></div>
+    <div class="sec-head" style="margin-top:1rem">ONSD Reference</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">ONSD &lt;5.0 mm</span><span class="m-val ok">Normal — ICP likely normal</span></div>
+      <div class="m-item"><span class="m-param">ONSD 5.0–5.7 mm</span><span class="m-val warn">Borderline — monitor closely, repeat in 2–4h</span></div>
+      <div class="m-item"><span class="m-param">ONSD ≥5.8 mm</span><span class="m-val bad">Elevated ICP likely (&gt;20 mmHg) — treat</span></div>
+      <div class="m-item"><span class="m-param">Sensitivity / Specificity</span><span class="m-val info">~90% / 85% for ICP &gt;20 mmHg</span></div>
+      <div class="m-item"><span class="m-param">Measure at</span><span class="m-val info">3mm behind globe in longitudinal axis</span></div>
+      <div class="m-item"><span class="m-param">Repeat</span><span class="m-val info">Every 4–6h in Grade III–IV HE</span></div>
+    </div>
+    <div class="infobox"><span>🔬</span><span>ONSD is your preferred non-invasive ICP tool. It correlates well with invasive ICP in ALF. Rising ONSD trend (even within normal range) is as important as absolute value. Document serial measurements.</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ICP Prevention — All Grade III–IV</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">01</span><span><strong>Head elevation 30°</strong> — maintain at all times. Avoid head-down positioning, tight ETT ties, PEEP &gt;10 if avoidable.</span></li>
+      <li class="step-item"><span class="step-num">02</span><span><strong>Target Arterial Ammonia &lt;150 µmol/L</strong> — CRRT is most effective at reducing ammonia rapidly. Lactulose via NG if not intubated. Rifaximin 550mg BD.</span></li>
+      <li class="step-item"><span class="step-num">03</span><span><strong>Hypertonic Saline (HTS)</strong> — target serum sodium 145–150 mmol/L. Give 20–30 mL boluses of 30% NaCl or continuous 3% NaCl infusion. Prophylactic hypernatraemia reduces cerebral oedema.</span></li>
+      <li class="step-item"><span class="step-num">04</span><span><strong>Strict normoglycaemia</strong> — glucose 6–10 mmol/L. Hypoglycaemia dramatically worsens cerebral oedema. Check hourly.</span></li>
+      <li class="step-item"><span class="step-num">05</span><span><strong>Hypothermia</strong> — consider mild hypothermia (35–36°C) as bridge to transplant in Grade IV with refractory ICP. Reduces cerebral metabolism and ammonia uptake.</span></li>
+      <li class="step-item"><span class="step-num">06</span><span><strong>Avoid hyponatraemia</strong> — maintain Na 145–150 mmol/L. Hyponatraemia &lt;130 dramatically worsens cerebral oedema.</span></li>
+      <li class="step-item"><span class="step-num">07</span><span><strong>Seizure control</strong> — EEG monitoring in intubated patients (subclinical seizures common). Phenytoin or levetiracetam — avoid benzodiazepines if possible (increase encephalopathy).</span></li>
+      <li class="step-item"><span class="step-num">08</span><span><strong>Avoid nephrotoxins, hypotension</strong> — maintain MAP ≥75 mmHg (CPP = MAP − ICP, target CPP &gt;50 mmHg). Noradrenaline if needed.</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ICP Treatment — Acute Rises</div>
+    <ul class="step-list">
+      <li class="step-item red"><span class="step-num red">🔴</span><span><strong>Mannitol 20% — 0.5–1 g/kg IV bolus</strong> over 15 min. Repeat every 4–6h if serum osmolality &lt;320 mOsm/kg. Hold if oliguria/anuria (accumulates).</span></li>
+      <li class="step-item red"><span class="step-num red">🔴</span><span><strong>HTS 30% — 30 mL bolus</strong> IV if mannitol contraindicated (AKI/oliguria) or in addition. Target Na 145–150 mmol/L.</span></li>
+      <li class="step-item red"><span class="step-num red">🔴</span><span><strong>Hyperventilation</strong> — temporary measure only. PaCO₂ 32–35 mmHg reduces ICP within minutes but effect wanes &lt;30 min. Use only as bridge.</span></li>
+      <li class="step-item red"><span class="step-num red">🔴</span><span><strong>CRRT</strong> — most effective sustained ammonia reduction. High-volume CRRT (35–45 mL/kg/hr) with bicarbonate buffer.</span></li>
+      <li class="step-item red"><span class="step-num red">🔴</span><span><strong>Invasive ICP monitoring</strong> — consider epidural/intraparenchymal monitor if Grade IV + transplant candidate. Only where expertise available. High bleeding risk — correct coagulopathy first (FFP/PCC).</span></li>
+    </ul>
+    <div class="warnbox"><span>⚠️</span><span>Do NOT use dexamethasone for cerebral oedema in ALF — no evidence of benefit, increases infection risk and may worsen outcomes.</span></div>
+  </div>
+</div>
+
+<!-- ══ NAC ══ -->
+<div id="tab-nac" class="panel">
+  <div class="card">
+    <div class="card-title">N-Acetylcysteine (NAC) — All ALF</div>
+    <div class="card-sub">INASL / AASLD recommend IV NAC for ALL ALF regardless of etiology until INR shows improvement or liver transplantation. NAC improves transplant-free survival in non-paracetamol ALF (Lee 2009 NEJM).</div>
+    <div class="field-grid">
+      <div class="field"><label>Patient Weight (kg)</label><input type="number" id="nac-wt" placeholder="e.g. 60"></div>
+      <div class="field"><label>Etiology</label>
+        <select id="nac-etiol">
+          <option value="paracetamol">Paracetamol — standard 21h protocol</option>
+          <option value="nonparacetamol">Non-paracetamol ALF — prolonged protocol</option>
+        </select>
+      </div>
+      <div class="field"><label>INR Trend</label>
+        <select id="nac-inr">
+          <option value="rising">Rising — continue NAC</option>
+          <option value="stable">Stable — continue NAC</option>
+          <option value="improving">Improving (falling) — can consider stopping</option>
+        </select>
+      </div>
+      <div class="field"><label>Day of NAC</label>
+        <input type="number" id="nac-day" placeholder="e.g. 3" min="1">
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcNAC()">Calculate NAC Doses</button>
+    <div class="result-box" id="nac-result"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">NAC Protocol Reference</div>
+    <div class="sec-head">Paracetamol ALF — Standard 21h IV Protocol (Prescott)</div>
+    <ul class="step-list">
+      <li class="step-item green"><span class="step-num green">Bag 1</span><span><strong>150 mg/kg</strong> in 200 mL 5% dextrose over <strong>1 hour</strong></span></li>
+      <li class="step-item green"><span class="step-num green">Bag 2</span><span><strong>50 mg/kg</strong> in 500 mL 5% dextrose over <strong>4 hours</strong></span></li>
+      <li class="step-item green"><span class="step-num green">Bag 3</span><span><strong>100 mg/kg</strong> in 1000 mL 5% dextrose over <strong>16 hours</strong></span></li>
+    </ul>
+    <div class="greenbox"><span>✅</span><span>For paracetamol ALF: If INR remains elevated after 21h, continue Bag 3 rate (6.25 mg/kg/hr) until INR &lt;1.5 or transplant. Do not stop based on time alone.</span></div>
+
+    <div class="sec-head" style="margin-top:1rem">Non-Paracetamol ALF — Prolonged Protocol (INASL 2024)</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">Day 1</span><span><strong>Loading:</strong> 150 mg/kg IV in 200mL 5% dextrose over 1h, then 50 mg/kg over 4h, then 100 mg/kg over 16h</span></li>
+      <li class="step-item"><span class="step-num">Day 2+</span><span><strong>Maintenance:</strong> 100 mg/kg IV over 16–24h daily. Continue until INR improves (&lt;2.0 on 2 consecutive days) or transplant</span></li>
+      <li class="step-item"><span class="step-num">Duration</span><span>Continue for minimum <strong>5–7 days</strong> regardless of etiology. Do NOT stop because of clinical improvement alone — INR must confirm.</span></li>
+    </ul>
+    <div class="warnbox"><span>⚠️</span><span>NAC anaphylactoid reactions: flushing, urticaria, bronchospasm (especially with loading dose). Slow infusion rate, give antihistamine if reaction. Do NOT stop permanently — restart at lower rate after reaction settles.</span></div>
+  </div>
+</div>
+
+<!-- ══ PLASMA EXCHANGE ══ -->
+<div id="tab-pex" class="panel">
+  <div class="card">
+    <div class="card-title">High-Volume Plasma Exchange (HVPE)</div>
+    <div class="card-sub">HVPE removes circulating toxins, inflammatory mediators, and replaces clotting factors. INASL 2024 + EASL 2017 recommend HVPE as bridge to transplant or recovery in ALF.</div>
+
+    <div class="sec-head">Indications for HVPE in ALF</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">✅</span><span><strong>INR &gt;2.0 despite NAC</strong> for ≥24h — progressive coagulopathy</span></li>
+      <li class="step-item"><span class="step-num">✅</span><span><strong>Grade III–IV encephalopathy</strong> not improving with standard management</span></li>
+      <li class="step-item"><span class="step-num">✅</span><span><strong>Progressive multiorgan dysfunction</strong> — as bridge to transplant</span></li>
+      <li class="step-item"><span class="step-num">✅</span><span><strong>Contraindication or unavailability of transplant</strong> — HVPE as definitive bridge</span></li>
+      <li class="step-item"><span class="step-num">✅</span><span><strong>Wilson's ALF</strong> — removes copper + inflammatory mediators. HVPE + chelation pending transplant.</span></li>
+      <li class="step-item red"><span class="step-num red">🚫</span><span><strong>Active uncontrolled sepsis</strong> — relative contraindication. Treat infection first, reassess.</span></li>
+      <li class="step-item red"><span class="step-num red">🚫</span><span><strong>Heparin allergy</strong> — use citrate anticoagulation instead</span></li>
+    </ul>
+
+    <div class="sec-head" style="margin-top:1rem">HVPE Volume Calculator</div>
+    <div class="field-grid">
+      <div class="field"><label>Weight (kg)</label><input type="number" id="pex-wt" placeholder="e.g. 60"></div>
+      <div class="field"><label>Haematocrit (%)</label><input type="number" id="pex-hct" placeholder="e.g. 35"></div>
+      <div class="field"><label>Number of Sessions planned</label><input type="number" id="pex-sess" placeholder="e.g. 3" value="3"></div>
+      <div class="field"><label>Replacement fluid</label>
+        <select id="pex-fluid">
+          <option value="ffp">Fresh Frozen Plasma (FFP)</option>
+          <option value="cryo">Cryoprecipitate-poor plasma</option>
+          <option value="albffp">Albumin + FFP combination</option>
+        </select>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcPEX()">Calculate HVPE Volume</button>
+    <div class="result-box" id="pex-result"></div>
+
+    <div class="sec-head" style="margin-top:1rem">HVPE Protocol</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">01</span><span>Volume: <strong>8–12 mL/kg/hr × 6–8 hours</strong> per session (total 1–1.5× plasma volume = ~40–60 mL/kg)</span></li>
+      <li class="step-item"><span class="step-num">02</span><span>Replacement: <strong>FFP</strong> as primary. Can use albumin 5% for first 50% then FFP. Cryoprecipitate if fibrinogen &lt;1g/L.</span></li>
+      <li class="step-item"><span class="step-num">03</span><span>Sessions: <strong>3 consecutive days</strong> (FULMAR trial). Reassess after each session — INR, encephalopathy, haemodynamics.</span></li>
+      <li class="step-item"><span class="step-num">04</span><span>Anticoagulation: <strong>Citrate anticoagulation preferred</strong> in ALF (systemic heparin increases bleeding risk)</span></li>
+      <li class="step-item"><span class="step-num">05</span><span>Monitor: Ionised calcium (citrate binds calcium — replace if Ca²⁺ &lt;1.0 mmol/L), temperature, haemodynamics, INR post-session</span></li>
+    </ul>
+    <div class="infobox"><span>📊</span><span><strong>Evidence:</strong> FULMAR trial (NEJM 2022) — HVPE 3×/day for 3 days in ALF improved 90-day transplant-free survival (58% vs 48%). INASL 2024 now recommends HVPE as standard of care in ALF with progressive organ dysfunction.</span></div>
+  </div>
+</div>
+
+<!-- ══ CRRT ══ -->
+<div id="tab-crrt" class="panel">
+  <div class="card">
+    <div class="card-title">CRRT in ALF — Indications & Protocol</div>
+    <div class="card-sub">CRRT is preferred over intermittent haemodialysis in ALF — haemodynamic stability + sustained ammonia reduction + ICP control</div>
+
+    <div class="sec-head">Indications for CRRT in ALF</div>
+    <ul class="step-list">
+      <li class="step-item red"><span class="step-num red">✅</span><span><strong>Arterial ammonia &gt;150 µmol/L</strong> — CRRT reduces ammonia rapidly (most effective intervention)</span></li>
+      <li class="step-item red"><span class="step-num red">✅</span><span><strong>AKI stage 2–3</strong> — creatinine ×2 baseline or oliguria &gt;12h despite resuscitation</span></li>
+      <li class="step-item red"><span class="step-num red">✅</span><span><strong>Refractory fluid overload</strong> — impacting oxygenation or abdominal compartment pressure</span></li>
+      <li class="step-item red"><span class="step-num red">✅</span><span><strong>Metabolic acidosis pH &lt;7.2</strong> refractory to medical management</span></li>
+      <li class="step-item red"><span class="step-num red">✅</span><span><strong>Electrolyte emergencies</strong> — K⁺ &gt;6.5, hyponatraemia &lt;125 mmol/L</span></li>
+      <li class="step-item red"><span class="step-num red">✅</span><span><strong>Grade III–IV HE + rising ammonia</strong> — even without AKI, CRRT for ammonia control is justified</span></li>
+    </ul>
+
+    <div class="sec-head" style="margin-top:1rem">CRRT Prescription in ALF</div>
+    <div class="field-grid">
+      <div class="field"><label>Weight (kg)</label><input type="number" id="crrt-wt" placeholder="e.g. 60"></div>
+      <div class="field"><label>Ammonia level (µmol/L)</label><input type="number" id="crrt-nh3" placeholder="e.g. 180"></div>
+      <div class="field"><label>AKI Stage</label>
+        <select id="crrt-aki">
+          <option value="none">No AKI — ammonia indication only</option>
+          <option value="1">AKI Stage 1</option>
+          <option value="2">AKI Stage 2</option>
+          <option value="3">AKI Stage 3 / Oliguria</option>
+        </select>
+      </div>
+      <div class="field"><label>Primary goal</label>
+        <select id="crrt-goal">
+          <option value="ammonia">Ammonia control (ICP)</option>
+          <option value="renal">Renal replacement</option>
+          <option value="both">Both</option>
+        </select>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcCRRT()">Generate CRRT Prescription</button>
+    <div class="result-box" id="crrt-result"></div>
+
+    <div class="sec-head" style="margin-top:1rem">CRRT Key Points in ALF</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Anticoagulation</span><span class="m-val warn">Regional citrate preferred (high bleeding risk)</span></div>
+      <div class="m-item"><span class="m-param">Buffer</span><span class="m-val info">Bicarbonate-based only (not lactate — impaired metabolism)</span></div>
+      <div class="m-item"><span class="m-param">Glucose</span><span class="m-val bad">CRRT removes glucose — check hourly, supplement</span></div>
+      <div class="m-item"><span class="m-param">Phosphate</span><span class="m-val warn">CRRT removes phosphate — monitor, replace</span></div>
+      <div class="m-item"><span class="m-param">NAC</span><span class="m-val warn">CRRT clears NAC — increase infusion rate by 20%</span></div>
+      <div class="m-item"><span class="m-param">Temperature</span><span class="m-val info">CRRT causes hypothermia — use warmer circuit</span></div>
+      <div class="m-item"><span class="m-param">Access</span><span class="m-val info">Right internal jugular preferred (avoid femoral)</span></div>
+      <div class="m-item"><span class="m-param">Target ammonia</span><span class="m-val ok">&lt;100 µmol/L with CRRT</span></div>
+    </div>
+    <div class="warnbox"><span>⚠️</span><span>Lactate-based replacement fluids are CONTRAINDICATED in ALF — impaired hepatic lactate metabolism causes lactic acidosis. Use bicarbonate-based solutions exclusively.</span></div>
+  </div>
+</div>
+
+<!-- ══ SPECIFIC RX ══ -->
+<div id="tab-specific" class="panel">
+  <div class="card">
+    <div class="card-title">Etiology-Specific Management</div>
+
+    <div class="sec-head">Acute Hepatitis B ALF</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">01</span><span><strong>Start Tenofovir disoproxil 300mg OD immediately</strong> — reduces viral load, may improve outcome. Continue indefinitely post-transplant.</span></li>
+      <li class="step-item"><span class="step-num">02</span><span>Entecavir 0.5mg OD (1mg if decompensated) — alternative if Tenofovir not available</span></li>
+      <li class="step-item red"><span class="step-num red">⚠</span><span>Do NOT use interferon in HBV-ALF — risk of flare and death</span></li>
+      <li class="step-item"><span class="step-num">03</span><span>Screen family members — HBsAg, anti-HBs. Vaccinate unprotected contacts.</span></li>
+    </ul>
+
+    <div class="sec-head" style="margin-top:1rem">Autoimmune Hepatitis (AIH) ALF</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">01</span><span><strong>Exclude active infection before steroids</strong> — blood cultures, CXR, urine culture, CMV/EBV PCR</span></li>
+      <li class="step-item"><span class="step-num">02</span><span>If no infection: <strong>Methylprednisolone 40–60mg IV OD × 5–7 days</strong></span></li>
+      <li class="step-item"><span class="step-num">03</span><span>Response criteria: MELD/INR improving at 5–7 days → continue steroids. No response → stop, list for transplant.</span></li>
+      <li class="step-item red"><span class="step-num red">⚠</span><span>Grade IV encephalopathy + AIH — steroids unlikely to help. Prioritise transplant listing over steroid trial.</span></li>
+    </ul>
+
+    <div class="sec-head" style="margin-top:1rem">Wilson's ALF</div>
+    <ul class="step-list">
+      <li class="step-item red"><span class="step-num red">🔴</span><span><strong>High mortality without transplant</strong> — list immediately on diagnosis. Wilson's Index &gt;11 = transplant essential.</span></li>
+      <li class="step-item"><span class="step-num">01</span><span><strong>D-Penicillamine NOT recommended</strong> in acute Wilson's — worsens haemolysis, poorly tolerated. Use only for maintenance.</span></li>
+      <li class="step-item"><span class="step-num">02</span><span><strong>Plasma exchange</strong> (HVPE) — removes circulating copper + inflammatory mediators. 3–5 sessions as bridge to transplant.</span></li>
+      <li class="step-item"><span class="step-num">03</span><span>Trientine (oral chelation) — can be used alongside HVPE if patient can swallow</span></li>
+      <li class="step-item"><span class="step-num">04</span><span>Haemolysis management: Transfuse packed cells to maintain Hb &gt;8 g/dL. Avoid haemodynamic instability.</span></li>
+    </ul>
+
+    <div class="sec-head" style="margin-top:1rem">Budd-Chiari Syndrome (Acute)</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">01</span><span><strong>Anticoagulate immediately</strong> — LMWH (enoxaparin 1 mg/kg BD) even with coagulopathy. Thrombosis extension worsens outcomes more than bleeding risk.</span></li>
+      <li class="step-item"><span class="step-num">02</span><span>Thrombolysis (catheter-directed) — if within 2 weeks of onset and accessible clot</span></li>
+      <li class="step-item"><span class="step-num">03</span><span>TIPS — refractory to anticoagulation or liver failure progression. Reduces portal pressure immediately.</span></li>
+      <li class="step-item"><span class="step-num">04</span><span>Thrombophilia screen: JAK2 V617F, Factor V Leiden, antiphospholipid antibodies, PNH screen, protein C/S/antithrombin</span></li>
+    </ul>
+
+    <div class="sec-head" style="margin-top:1rem">Paracetamol ALF</div>
+    <ul class="step-list">
+      <li class="step-item green"><span class="step-num green">01</span><span><strong>NAC is specific antidote</strong> — start immediately regardless of time since ingestion. Better prognosis than non-paracetamol ALF.</span></li>
+      <li class="step-item green"><span class="step-num green">02</span><span>Plot paracetamol level on Rumack-Matthew nomogram (see NAC tab for dosing)</span></li>
+      <li class="step-item green"><span class="step-num green">03</span><span>Good prognosis with NAC + supportive care. Transplant-free survival 60–70% with NAC.</span></li>
+      <li class="step-item"><span class="step-num">04</span><span>Psychiatric assessment mandatory post-recovery (intentional overdose assessment)</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Supportive Management — All ALF</div>
+    <div class="sec-head">Nutrition in ALF</div>
+    <ul class="step-list">
+      <li class="step-item"><span class="step-num">01</span><span><strong>Do NOT restrict protein</strong> — protein restriction worsens encephalopathy (muscle catabolism → more ammonia). Target 1.2–1.5 g/kg/day protein.</span></li>
+      <li class="step-item"><span class="step-num">02</span><span>Energy: 25–35 kcal/kg/day. Avoid overfeeding.</span></li>
+      <li class="step-item"><span class="step-num">03</span><span>Route: Oral or NG (Grade I–II HE). NG in Grade III (NGT placement usually safe). TPN only if EN absolutely contraindicated.</span></li>
+      <li class="step-item"><span class="step-num">04</span><span>Branched-chain amino acids (BCAA) — consider if protein intolerant. Not routinely needed.</span></li>
+    </ul>
+    <div class="sec-head" style="margin-top:1rem">Drugs to AVOID in ALF</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Paracetamol</span><span class="m-val bad">Absolutely contraindicated</span></div>
+      <div class="m-item"><span class="m-param">NSAIDs</span><span class="m-val bad">Renal failure + GI bleeding risk</span></div>
+      <div class="m-item"><span class="m-param">Opioids</span><span class="m-val bad">Worsen encephalopathy</span></div>
+      <div class="m-item"><span class="m-param">Benzodiazepines</span><span class="m-val bad">Precipitate / worsen HE — avoid if possible</span></div>
+      <div class="m-item"><span class="m-param">Aminoglycosides</span><span class="m-val bad">Nephrotoxic — avoid</span></div>
+      <div class="m-item"><span class="m-param">Metformin</span><span class="m-val bad">Lactic acidosis risk</span></div>
+      <div class="m-item"><span class="m-param">Rifampicin (if DILI)</span><span class="m-val bad">Stop if ATT-induced</span></div>
+      <div class="m-item"><span class="m-param">Do NOT correct INR</span><span class="m-val warn">Unless bleeding or invasive procedure — INR is prognostic marker</span></div>
+      <div class="m-item"><span class="m-param">Statins</span><span class="m-val bad">Hold in acute phase</span></div>
+      <div class="m-item"><span class="m-param">ACE inhibitors / ARBs</span><span class="m-val bad">Worsen renal function</span></div>
+    </div>
+    <div class="warnbox"><span>⚠️</span><span><strong>Do NOT routinely correct INR with FFP</strong> — INR is the most important prognostic marker in ALF. Correcting it removes the ability to monitor disease progression and falsely reassures. Only give FFP for active bleeding or invasive procedure.</span></div>
+  </div>
+</div>
+
+<!-- ══ TRANSPLANT ══ -->
+<div id="tab-transplant" class="panel">
+  <div class="card">
+    <div class="card-title">King's College Criteria (KCC)</div>
+    <div class="card-sub">Standard international listing criteria — sensitivity ~70–80%, specificity ~95%</div>
+
+    <div class="sec-head">Paracetamol ALF — KCC</div>
+    <div class="card-sub" style="margin-bottom:.75rem">List for transplant if ANY of the following:</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Arterial pH &lt;7.30</span><span class="m-val bad">After resuscitation — single criterion sufficient</span></div>
+      <div class="m-item"><span class="m-param">ALL THREE:</span><span class="m-val bad">INR &gt;6.5 + Creatinine &gt;300 µmol/L + Grade III–IV HE</span></div>
+      <div class="m-item"><span class="m-param">Lactate &gt;3.5 mmol/L at 4h</span><span class="m-val bad">Early predictor — consider listing</span></div>
+      <div class="m-item"><span class="m-param">Lactate &gt;3.0 mmol/L at 12h</span><span class="m-val bad">After resuscitation</span></div>
+    </div>
+
+    <div class="sec-head" style="margin-top:1rem">Non-Paracetamol ALF — KCC</div>
+    <div class="card-sub" style="margin-bottom:.75rem">List if INR &gt;6.5 OR any THREE of the following:</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Age &lt;10 or &gt;40 years</span><span class="m-val warn">+1 criterion</span></div>
+      <div class="m-item"><span class="m-param">Etiology: Non-A, Non-B, Drug, Wilson's</span><span class="m-val warn">+1 criterion</span></div>
+      <div class="m-item"><span class="m-param">Duration jaundice to HE &gt;7 days</span><span class="m-val warn">+1 criterion</span></div>
+      <div class="m-item"><span class="m-param">Bilirubin &gt;300 µmol/L</span><span class="m-val warn">+1 criterion</span></div>
+      <div class="m-item"><span class="m-param">INR &gt;3.5</span><span class="m-val warn">+1 criterion</span></div>
+    </div>
+
+    <button class="calc-btn" style="margin-top:.75rem" onclick="calcKCC()">Check KCC Criteria</button>
+    <div id="kcc-form" style="margin-top:.75rem">
+      <div class="field-grid">
+        <div class="field"><label>Etiology</label>
+          <select id="kcc-etiol">
+            <option value="paracetamol">Paracetamol</option>
+            <option value="nonpara">Non-Paracetamol</option>
+          </select>
+        </div>
+        <div class="field"><label>INR</label><input type="number" id="kcc-inr" placeholder="e.g. 4.2" step="0.1"></div>
+        <div class="field"><label>Creatinine (µmol/L)</label><input type="number" id="kcc-creat" placeholder="e.g. 320"></div>
+        <div class="field"><label>Arterial pH</label><input type="number" id="kcc-ph" placeholder="e.g. 7.28" step="0.01"></div>
+        <div class="field"><label>Bilirubin (µmol/L)</label><input type="number" id="kcc-bili" placeholder="e.g. 320"></div>
+        <div class="field"><label>HE Grade</label>
+          <select id="kcc-he">
+            <option value="1">Grade I–II</option>
+            <option value="3">Grade III–IV</option>
+          </select>
+        </div>
+        <div class="field"><label>Age (years)</label><input type="number" id="kcc-age" placeholder="e.g. 45"></div>
+        <div class="field"><label>Jaundice to HE (days)</label><input type="number" id="kcc-days" placeholder="e.g. 10"></div>
+        <div class="field"><label>Arterial Lactate (mmol/L)</label><input type="number" id="kcc-lact" placeholder="e.g. 3.8" step="0.1"></div>
+      </div>
+      <div class="result-box" id="kcc-result" style="display:block"></div>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:rgba(245,158,11,.25)">
+    <div class="card-title">ALFED Score — Indian-Specific</div>
+    <div class="card-sub">ALF Early Dynamic score — developed and validated in Indian cohorts (SGPGI/AIIMS). More sensitive than KCC in Indian patients (HEV dominant). INASL 2024 recommends ALFED alongside KCC.</div>
+
+    <div class="field-grid">
+      <div class="field"><label>INR</label><input type="number" id="alfed-inr" placeholder="e.g. 3.5" step="0.1"></div>
+      <div class="field"><label>Bilirubin (mg/dL)</label><input type="number" id="alfed-bili" placeholder="e.g. 22" step="0.1"></div>
+      <div class="field"><label>Serum Sodium (mmol/L)</label><input type="number" id="alfed-na" placeholder="e.g. 132"></div>
+      <div class="field"><label>HE Grade</label>
+        <select id="alfed-he">
+          <option value="1">Grade I (1 point)</option>
+          <option value="2">Grade II (2 points)</option>
+          <option value="3">Grade III (3 points)</option>
+          <option value="4">Grade IV (4 points)</option>
+        </select>
+      </div>
+      <div class="field"><label>Age (years)</label><input type="number" id="alfed-age" placeholder="e.g. 35"></div>
+      <div class="field"><label>Etiology</label>
+        <select id="alfed-etiol">
+          <option value="hev">HEV / HAV (favourable — 0)</option>
+          <option value="other">Other etiology (unfavourable — 1)</option>
+        </select>
+      </div>
+    </div>
+    <button class="calc-btn" onclick="calcALFED()">Calculate ALFED Score</button>
+    <div class="result-box" id="alfed-result"></div>
+    <div class="infobox" style="margin-top:.75rem"><span>🇮🇳</span><span><strong>ALFED advantage in India:</strong> KCC was developed in UK (paracetamol-dominant). In India where HEV/ATT DILI dominate, ALFED has higher sensitivity (85% vs 65% for KCC) for predicting poor outcome. Use BOTH KCC + ALFED when listing for transplant.</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Contraindications to Transplant in ALF</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Uncontrolled sepsis</span><span class="m-val bad">Active bacteraemia — treat first</span></div>
+      <div class="m-item"><span class="m-param">Irreversible brain damage</span><span class="m-val bad">Sustained ICP &gt;50 / CPP &lt;40 &gt;2h</span></div>
+      <div class="m-item"><span class="m-param">ARDS severe</span><span class="m-val bad">P/F ratio &lt;100 refractory</span></div>
+      <div class="m-item"><span class="m-param">Malignancy</span><span class="m-val bad">Extrahepatic unresectable</span></div>
+      <div class="m-item"><span class="m-param">Psychosocial / compliance</span><span class="m-val warn">Formal psychiatric assessment required</span></div>
+      <div class="m-item"><span class="m-param">Haemodynamic collapse</span><span class="m-val bad">Refractory vasopressor dependence</span></div>
+    </div>
+    <div class="warnbox"><span>⚠️</span><span>EARLY listing is critical — do not wait for all criteria to be met simultaneously. List when trajectory suggests deterioration, not at the last moment. Organ availability takes time.</span></div>
+  </div>
+</div>
+
+<!-- ══ MONITORING ══ -->
+<div id="tab-monitoring" class="panel">
+  <div class="card">
+    <div class="card-title">ICU Monitoring — ALF</div>
+    <div class="sec-head">Hourly</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Blood glucose</span><span class="m-val bad">Hypoglycaemia = emergency in ALF</span></div>
+      <div class="m-item"><span class="m-param">GCS / HE grade</span><span class="m-val warn">Deterioration = intubate</span></div>
+      <div class="m-item"><span class="m-param">Urine output</span><span class="m-val info">Target ≥0.5 mL/kg/hr</span></div>
+      <div class="m-item"><span class="m-param">MAP / Vasopressor dose</span><span class="m-val info">Target MAP ≥75 in Grade III–IV HE</span></div>
+      <div class="m-item"><span class="m-param">ONSD (USG)</span><span class="m-val warn">Every 4–6h in Grade III–IV</span></div>
+      <div class="m-item"><span class="m-param">Temperature</span><span class="m-val info">Avoid fever — worsens ICP</span></div>
+    </div>
+    <div class="sec-head" style="margin-top:1rem">Every 4–6 Hours</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">Arterial ammonia</span><span class="m-val bad">&gt;150 = act immediately</span></div>
+      <div class="m-item"><span class="m-param">ABG + Lactate</span><span class="m-val warn">Acidosis = poor prognosis</span></div>
+      <div class="m-item"><span class="m-param">INR trend</span><span class="m-val warn">Rising = deteriorating. Do NOT correct.</span></div>
+      <div class="m-item"><span class="m-param">Serum Na</span><span class="m-val warn">Target 145–150 in Grade III–IV HE</span></div>
+      <div class="m-item"><span class="m-param">Ionised calcium</span><span class="m-val info">If on CRRT/HVPE with citrate</span></div>
+      <div class="m-item"><span class="m-param">Fluid balance</span><span class="m-val info">Avoid fluid overload</span></div>
+    </div>
+    <div class="sec-head" style="margin-top:1rem">Daily</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">LFTs + Bilirubin + ALP</span><span class="m-val info">Trend more important than single value</span></div>
+      <div class="m-item"><span class="m-param">FBC + CRP + PCT</span><span class="m-val warn">Infection surveillance</span></div>
+      <div class="m-item"><span class="m-param">Serum phosphate</span><span class="m-val ok">Rising = liver regeneration signal</span></div>
+      <div class="m-item"><span class="m-param">Serum creatinine + U&E</span><span class="m-val warn">AKI progression</span></div>
+      <div class="m-item"><span class="m-param">Cultures if new fever</span><span class="m-val bad">Blood × 2 + urine + other sites</span></div>
+      <div class="m-item"><span class="m-param">Weight</span><span class="m-val info">Fluid balance monitoring</span></div>
+    </div>
+    <div class="sec-head" style="margin-top:1rem">Prognostic Signs of Recovery</div>
+    <div class="m-grid">
+      <div class="m-item"><span class="m-param">INR falling</span><span class="m-val ok">Best recovery signal</span></div>
+      <div class="m-item"><span class="m-param">Phosphate rising</span><span class="m-val ok">Hepatocyte regeneration</span></div>
+      <div class="m-item"><span class="m-param">Ammonia falling</span><span class="m-val ok">Improving synthetic function</span></div>
+      <div class="m-item"><span class="m-param">HE grade improving</span><span class="m-val ok">Good prognostic sign</span></div>
+      <div class="m-item"><span class="m-param">Bilirubin trend</span><span class="m-val warn">Lags — not immediate indicator</span></div>
+      <div class="m-item"><span class="m-param">Glucose stabilising</span><span class="m-val ok">Less exogenous glucose needed</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Daily Checklist</div>
+    <div id="alf-chk-list"></div>
+    <div style="margin-top:.75rem;font-family:var(--mono);font-size:.7rem;color:var(--muted)">Completed: <span id="alf-chk-done">0</span> / <span id="alf-chk-total">0</span></div>
+  </div>
+</div>
+
+<div class="caveat">⚠ Educational support tool — INASL 2024 · EASL 2017 · AASLD 2023 guidelines.<br>All decisions require senior hepatology / transplant centre review. Early referral saves lives.</div>
+</div>
+
+<script>
+function showTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ONSD
+function calcONSD(){
+  const r=parseFloat(document.getElementById('onsd-r').value);
+  const l=parseFloat(document.getElementById('onsd-l').value);
+  if(isNaN(r)&&isNaN(l)){alert('Enter at least one ONSD value.');return;}
+  const avg=(!isNaN(r)&&!isNaN(l))?(r+l)/2:(!isNaN(r)?r:l);
+  const res=document.getElementById('onsd-result');
+  res.style.display='block';
+  let col,msg,action;
+  if(avg<5.0){col='var(--green)';msg='Normal — ICP likely normal';action='Continue monitoring every 6h in Grade III–IV HE. Reassure but remain vigilant.';}
+  else if(avg<5.8){col='var(--amber)';msg='Borderline — monitor closely';action='Repeat ONSD in 2–4h. Initiate ICP prevention measures (HTS, head elevation, ammonia reduction). Re-evaluate encephalopathy grade.';}
+  else{col='var(--red)';msg='ELEVATED ICP LIKELY (>20 mmHg)';action='Initiate ICP treatment now: Mannitol 0.5g/kg IV or HTS 30% 30mL bolus. Ensure head 30°. Urgent CRRT for ammonia. Neurology/transplant team alert.';}
+  res.innerHTML=`<div style="font-family:var(--display);font-size:2.4rem;font-weight:800;color:${col}">${avg.toFixed(1)} mm</div>
+    <div style="font-family:var(--mono);font-size:.65rem;opacity:.4;margin-bottom:.5rem">Average ONSD</div>
+    <div class="interp" style="border-color:${col}55;background:${col}0e;color:${col}"><strong>${msg}</strong><br><span style="color:var(--text);opacity:.8">${action}</span></div>`;
+}
+
+// SEVERITY / MELD + ALFED
+function calcSeverity(){
+  const bili=parseFloat(document.getElementById('bili').value);
+  const creat=parseFloat(document.getElementById('creat').value);
+  const inr=parseFloat(document.getElementById('inr').value);
+  const na=parseFloat(document.getElementById('sodium').value);
+  if(!bili||!creat||!inr){alert('Enter bilirubin, creatinine, and INR.');return;}
+  const biliMgdl=bili/17.1;
+  const creatMgdl=creat/88.4;
+  const meldRaw=3.78*Math.log(biliMgdl)+11.2*Math.log(inr)+9.57*Math.log(creatMgdl)+6.43;
+  const meld=Math.round(Math.min(meldRaw,40));
+  const meldNa=na?Math.round(meld+1.32*(137-Math.min(na,137))-[0.24*(meld-0.6)*Math.max(137-Math.min(na,137),0)]):null;
+  const res=document.getElementById('severity-result');
+  res.style.display='block';
+  let meldCol=meld<20?'var(--green)':meld<30?'var(--amber)':'var(--red)';
+  let meldInterp=meld<20?'Moderate — 90-day mortality ~10%':meld<30?'Severe — 90-day mortality ~30%':meld<40?'Very Severe — mortality 50–70%':'Critical — mortality >70%, consider transplant urgently';
+  res.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+      <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:1rem;border:1px solid ${meldCol}40">
+        <div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">MELD Score</div>
+        <div style="font-family:var(--display);font-size:2.5rem;font-weight:800;color:${meldCol}">${meld}</div>
+        <div style="font-size:.75rem;opacity:.7;margin-top:.25rem">${meldInterp}</div>
+      </div>
+      ${meldNa?`<div style="background:rgba(0,0,0,.3);border-radius:10px;padding:1rem;border:1px solid ${meldCol}40">
+        <div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem">MELD-Na Score</div>
+        <div style="font-family:var(--display);font-size:2.5rem;font-weight:800;color:${meldCol}">${meldNa}</div>
+        <div style="font-size:.75rem;opacity:.7;margin-top:.25rem">Na-adjusted — better predictor of waitlist mortality</div>
+      </div>`:''}
+    </div>
+    <div class="infobox"><span>📊</span><span>MELD ≥30 in ALF = urgent transplant listing. Use alongside KCC and ALFED for listing decisions. MELD alone may underestimate ALF severity — clinical trajectory matters most.</span></div>`;
+}
+
+// NAC
+function calcNAC(){
+  const wt=parseFloat(document.getElementById('nac-wt').value);
+  const etiol=document.getElementById('nac-etiol').value;
+  const inrTrend=document.getElementById('nac-inr').value;
+  const day=parseInt(document.getElementById('nac-day').value)||1;
+  if(!wt){alert('Enter patient weight.');return;}
+  const b1=Math.round(wt*150);
+  const b2=Math.round(wt*50);
+  const b3=Math.round(wt*100);
+  const maint=Math.round(wt*6.25);
+  const res=document.getElementById('nac-result');
+  res.style.display='block';
+  let stopMsg=inrTrend==='improving'?
+    '<div class="greenbox"><span>✅</span><span>INR improving — NAC may be weaned if INR &lt;2.0 on 2 consecutive measurements, 12h apart. Do not stop abruptly — taper maintenance over 12–24h.</span></div>':
+    '<div class="warnbox"><span>⚠️</span><span>INR not improving — CONTINUE NAC. Do not stop based on time. NAC should continue until INR clearly falling or transplant.</span></div>';
+  res.innerHTML=`
+    <div class="dose-box">
+      <div class="dose-title">NAC Doses — ${wt}kg Patient</div>
+      <div class="step-list">
+        <div class="step-item green"><span class="step-num green">Bag 1</span><span><strong>${b1} mg</strong> (150mg/kg) in 200mL 5% dextrose over <strong>1 hour</strong></span></div>
+        <div class="step-item green"><span class="step-num green">Bag 2</span><span><strong>${b2} mg</strong> (50mg/kg) in 500mL 5% dextrose over <strong>4 hours</strong></span></div>
+        <div class="step-item green"><span class="step-num green">Bag 3</span><span><strong>${b3} mg</strong> (100mg/kg) in 1000mL 5% dextrose over <strong>16 hours</strong></span></div>
+        ${etiol==='nonparacetamol'?`<div class="step-item"><span class="step-num">Day 2+</span><span>Maintenance: <strong>${b3} mg/day</strong> (100mg/kg/day) in 1000mL 5% dextrose over 16–24h. Continue until INR improving. Current Day: <strong>${day}</strong>.</span></div>`:''}
+      </div>
+    </div>
+    ${stopMsg}
+    <div class="infobox"><span>💉</span><span>If on CRRT: increase NAC infusion rate by 20% (CRRT clears NAC). Maximum dose 300mg/kg/day. If anaphylactoid reaction — slow rate, give chlorphenamine 10mg IV, restart at 50% rate after 30 min.</span></div>`;
+}
+
+// PLASMA EXCHANGE
+function calcPEX(){
+  const wt=parseFloat(document.getElementById('pex-wt').value);
+  const hct=(parseFloat(document.getElementById('pex-hct').value)||35)/100;
+  const sess=parseInt(document.getElementById('pex-sess').value)||3;
+  if(!wt){alert('Enter weight.');return;}
+  const tpv=Math.round((0.065*wt)*(1-hct)*1000);
+  const vol1=Math.round(tpv*1.2);
+  const totalVol=Math.round(vol1*sess);
+  const rateHr=Math.round(wt*10);
+  const res=document.getElementById('pex-result');
+  res.style.display='block';
+  res.innerHTML=`
+    <div class="dose-box">
+      <div class="dose-title">HVPE Volume Plan — ${wt}kg</div>
+      <div class="m-grid" style="margin-top:.5rem">
+        <div class="m-item"><span class="m-param">Total Plasma Volume (TPV)</span><span class="m-val info">${tpv} mL</span></div>
+        <div class="m-item"><span class="m-param">Volume per session (1.2× TPV)</span><span class="m-val ok">${vol1} mL</span></div>
+        <div class="m-item"><span class="m-param">Sessions planned</span><span class="m-val info">${sess} sessions</span></div>
+        <div class="m-item"><span class="m-param">Total FFP required</span><span class="m-val warn">${totalVol} mL (${Math.ceil(totalVol/200)} units)</span></div>
+        <div class="m-item"><span class="m-param">Infusion rate</span><span class="m-val info">~${rateHr} mL/hr (10mL/kg/hr)</span></div>
+        <div class="m-item"><span class="m-param">Duration per session</span><span class="m-val info">~${Math.round(vol1/rateHr)} hours</span></div>
+      </div>
+    </div>
+    <div class="infobox"><span>📋</span><span>Monitor ionised calcium every 30–60 min (citrate protocol). Replace if iCa &lt;1.0 mmol/L with 10mL 10% calcium gluconate IV. Check INR, ammonia, and encephalopathy grade after each session.</span></div>`;
+}
+
+// CRRT
+function calcCRRT(){
+  const wt=parseFloat(document.getElementById('crrt-wt').value);
+  const nh3=parseFloat(document.getElementById('crrt-nh3').value);
+  const aki=document.getElementById('crrt-aki').value;
+  const goal=document.getElementById('crrt-goal').value;
+  if(!wt){alert('Enter weight.');return;}
+  let dose = goal==='ammonia'?35:aki==='3'?25:30;
+  if(nh3>200) dose=Math.max(dose,45);
+  const rate=Math.round(wt*dose);
+  const res=document.getElementById('crrt-result');
+  res.style.display='block';
+  res.innerHTML=`
+    <div class="dose-box">
+      <div class="dose-title">CRRT Prescription — ${wt}kg</div>
+      <div class="m-grid" style="margin-top:.5rem">
+        <div class="m-item"><span class="m-param">Effluent dose</span><span class="m-val ok">${dose} mL/kg/hr</span></div>
+        <div class="m-item"><span class="m-param">Effluent rate</span><span class="m-val ok">${rate} mL/hr</span></div>
+        <div class="m-item"><span class="m-param">Mode</span><span class="m-val info">CVVHDF preferred (convection + diffusion for ammonia)</span></div>
+        <div class="m-item"><span class="m-param">Buffer</span><span class="m-val bad">Bicarbonate ONLY — not lactate</span></div>
+        <div class="m-item"><span class="m-param">Anticoagulation</span><span class="m-val warn">Regional citrate (systemic heparin avoided)</span></div>
+        <div class="m-item"><span class="m-param">Target ammonia</span><span class="m-val ok">&lt;100 µmol/L</span></div>
+      </div>
+    </div>
+    ${nh3>200?'<div class="warnbox"><span>🔴</span><span>Ammonia >200 µmol/L — cerebral herniation risk. Start CRRT urgently. Simultaneous mannitol 0.5g/kg IV bolus. Alert transplant team.</span></div>':''}
+    <div class="infobox"><span>⚡</span><span>CVVHDF at high dose is the most effective intervention for rapid ammonia reduction in ALF. CRRT also removes NAC — increase NAC infusion rate by 20% while on CRRT. Check glucose hourly (CRRT removes glucose).</span></div>`;
+}
+
+// KCC
+function calcKCC(){
+  const etiol=document.getElementById('kcc-etiol').value;
+  const inr=parseFloat(document.getElementById('kcc-inr').value)||0;
+  const creat=parseFloat(document.getElementById('kcc-creat').value)||0;
+  const ph=parseFloat(document.getElementById('kcc-ph').value)||0;
+  const bili=parseFloat(document.getElementById('kcc-bili').value)||0;
+  const he=parseInt(document.getElementById('kcc-he').value)||1;
+  const age=parseInt(document.getElementById('kcc-age').value)||0;
+  const days=parseInt(document.getElementById('kcc-days').value)||0;
+  const lact=parseFloat(document.getElementById('kcc-lact').value)||0;
+  const res=document.getElementById('kcc-result');
+  res.style.display='block';
+  let met=false,criteria=[];
+
+  if(etiol==='paracetamol'){
+    if(ph<7.30){met=true;criteria.push('✅ Arterial pH <7.30 — SINGLE criterion sufficient for listing');}
+    if(inr>6.5&&creat>300&&he>=3){met=true;criteria.push('✅ Triple criterion met: INR >6.5 + Creatinine >300 + Grade III–IV HE');}
+    if(lact>3.5){met=true;criteria.push('✅ Lactate >3.5 mmol/L — consider listing');}
+    if(!met){
+      if(inr>6.5) criteria.push('⚠ INR >6.5 — needs creatinine >300 AND Grade III–IV HE to meet triple criterion');
+      if(creat>300) criteria.push('⚠ Creatinine >300 — needs INR >6.5 AND Grade III–IV HE');
+      criteria.push('❌ KCC not met at this time — monitor closely and reassess');
+    }
+  } else {
+    if(inr>6.5){met=true;criteria.push('✅ INR >6.5 alone — sufficient for listing');}
+    let pts=0,ptsCriteria=[];
+    if(age<10||age>40){pts++;ptsCriteria.push('Age <10 or >40');}
+    if(days>7){pts++;ptsCriteria.push('Jaundice to HE >7 days');}
+    if(bili>300){pts++;ptsCriteria.push('Bilirubin >300 µmol/L');}
+    if(inr>3.5){pts++;ptsCriteria.push('INR >3.5');}
+    ptsCriteria.push('Non-favourable etiology');pts++;
+    if(pts>=3&&!met){met=true;criteria.push(`✅ ${pts} of 5 non-paracetamol criteria met: ${ptsCriteria.join(', ')}`);}
+    else if(!met) criteria.push(`${pts}/5 criteria met (${ptsCriteria.join(', ')}) — need 3+ or INR >6.5`);
+  }
+
+  const col=met?'var(--red)':'var(--green)';
+  res.innerHTML=`<div class="interp" style="border-color:${col}55;background:${col}0e;color:${col}">
+    <strong>${met?'🔴 KCC MET — LIST FOR TRANSPLANT NOW':'🟢 KCC not met at this time'}</strong><br>
+    <span style="color:var(--text);opacity:.8">${criteria.join('<br>')}</span>
+    ${met?'<br><br><strong>Action:</strong> Contact transplant centre immediately. Do NOT wait for further deterioration.':'<br><br>Reassess every 6–12h. Criteria can be met rapidly in deteriorating ALF.'}
+  </div>`;
+}
+
+// ALFED
+function calcALFED(){
+  const inr=parseFloat(document.getElementById('alfed-inr').value)||0;
+  const bili=parseFloat(document.getElementById('alfed-bili').value)||0;
+  const na=parseFloat(document.getElementById('alfed-na').value)||0;
+  const he=parseInt(document.getElementById('alfed-he').value)||1;
+  const age=parseInt(document.getElementById('alfed-age').value)||0;
+  const etiol=document.getElementById('alfed-etiol').value;
+  if(!inr||!bili){alert('Enter INR and Bilirubin.');return;}
+
+  // ALFED: INR, bilirubin, HE grade, Na, age, etiology
+  let score=0;
+  if(inr>=1.5&&inr<2) score+=1;
+  else if(inr>=2&&inr<3) score+=2;
+  else if(inr>=3) score+=3;
+  if(bili>=10&&bili<20) score+=1;
+  else if(bili>=20&&bili<30) score+=2;
+  else if(bili>=30) score+=3;
+  score+=he;
+  if(na<135) score+=1;
+  if(na<130) score+=1;
+  if(age>40) score+=1;
+  if(etiol==='other') score+=1;
+
+  const res=document.getElementById('alfed-result');
+  res.style.display='block';
+  let col,msg,rec;
+  if(score<=6){col='var(--green)';msg='Low risk — likely to survive without transplant';rec='Continue supportive care, NAC, monitor closely. Reassess daily.';}
+  else if(score<=9){col='var(--amber)';msg='Intermediate risk — monitor for deterioration';rec='Consider listing. Discuss with transplant centre. Initiate HVPE if available.';}
+  else{col='var(--red)';msg='HIGH RISK — poor transplant-free survival';rec='LIST FOR TRANSPLANT URGENTLY. ALFED ≥10 = very high mortality without transplant. Initiate HVPE as bridge.';}
+  res.innerHTML=`<div style="font-family:var(--display);font-size:2.8rem;font-weight:800;color:${col}">${score}</div>
+    <div style="font-family:var(--mono);font-size:.65rem;opacity:.4;margin-bottom:.5rem">ALFED Score</div>
+    <div class="interp" style="border-color:${col}55;background:${col}0e;color:${col}">
+      <strong>${msg}</strong><br><span style="color:var(--text);opacity:.8">${rec}</span>
+    </div>`;
+}
+
+// CHECKLIST
+const alfChecklist=[
+  {t:'INR checked — not corrected with FFP (unless bleeding/procedure)',s:'Labs'},
+  {t:'Arterial ammonia measured — arterial preferred over venous',s:'Labs'},
+  {t:'Blood glucose checked — target 6–10 mmol/L',s:'Labs'},
+  {t:'ONSD measured by USG both eyes',s:'ICP'},
+  {t:'Head elevated 30° — verified',s:'ICP'},
+  {t:'Serum sodium checked — target 145–150 in Grade III–IV HE',s:'ICP'},
+  {t:'NAC infusion running and documented (dose, bag number, day)',s:'Treatment'},
+  {t:'Encephalopathy grade assessed and documented',s:'Neuro'},
+  {t:'GCS documented — if ≤8, intubation plan in place',s:'Neuro'},
+  {t:'Viral serology sent (HEV IgM, HBsAg, Anti-HBc IgM, HAV IgM)',s:'Etiology'},
+  {t:'Drug history — anti-TB drugs, herbal medicines, paracetamol',s:'Etiology'},
+  {t:'USS abdomen + Doppler done — Budd-Chiari excluded',s:'Imaging'},
+  {t:'MELD score calculated',s:'Severity'},
+  {t:'KCC and ALFED criteria assessed — transplant decision documented',s:'Transplant'},
+  {t:'Transplant centre contacted if KCC/ALFED met',s:'Transplant'},
+  {t:'HVPE plan documented — criteria met / not met',s:'HVPE'},
+  {t:'CRRT running or plan documented if ammonia >150',s:'CRRT'},
+  {t:'Blood cultures sent if fever or PCT >1',s:'Infection'},
+  {t:'No inappropriate INR correction with FFP ordered',s:'Safety'},
+  {t:'No nephrotoxic drugs prescribed (NSAIDs, aminoglycosides)',s:'Safety'},
+  {t:'No benzodiazepines ordered without clear indication',s:'Safety'},
+  {t:'Stress ulcer prophylaxis (PPI) prescribed',s:'Supportive'},
+  {t:'DVT prophylaxis plan documented (LMWH vs mechanical)',s:'Supportive'},
+  {t:'Nutrition plan documented — EN via NG unless contraindicated',s:'Nutrition'},
+  {t:'Family counselling completed — goals of care discussed',s:'Communication'},
+];
+
+let chkDone=new Array(alfChecklist.length).fill(false);
+function buildChecklist(){
+  const c=document.getElementById('alf-chk-list');
+  document.getElementById('alf-chk-total').textContent=alfChecklist.length;
+  alfChecklist.forEach((item,i)=>{
+    const d=document.createElement('div');d.className='chk-item';
+    d.innerHTML=`<div class="chk-box" id="cb${i}"></div><div class="chk-text">${item.t}<div class="chk-sub">${item.s}</div></div>`;
+    d.onclick=()=>{
+      chkDone[i]=!chkDone[i];d.classList.toggle('done',chkDone[i]);
+      d.querySelector('.chk-box').textContent=chkDone[i]?'✓':'';
+      document.getElementById('alf-chk-done').textContent=chkDone.filter(Boolean).length;
+    };
+    c.appendChild(d);
+  });
+}
+buildChecklist();
+</script>
+</body>
+</html>
