@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Evidence Based ICU ABG Engine 2025</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+background:#0f172a;
+color:white;
+padding:20px;
+margin:0;
+}
+
+.container{
+max-width:2400px;
+margin:auto;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+gap:20px;
+}
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:18px;
+}
+
+h1,h2{
+color:#67e8f9;
+}
+
+label{
+display:block;
+margin-top:12px;
+margin-bottom:5px;
+}
+
+input,select{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid #334155;
+background:#1e293b;
+color:white;
+font-size:16px;
+box-sizing:border-box;
+}
+
+button{
+width:100%;
+padding:22px;
+margin-top:25px;
+background:#06b6d4;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.result{
+background:#022c22;
+padding:25px;
+border-radius:18px;
+margin-top:25px;
+line-height:1.8;
+white-space:pre-line;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Evidence Based ICU ABG Engine — 2025</h1>
+
+<div class="grid">
+
+<div class="card">
+
+<h2>1. ABG</h2>
+
+<label>pH</label>
+<input type="number" step="0.01" id="ph">
+
+<label>PaCO2</label>
+<input type="number" id="paco2">
+
+<label>HCO3</label>
+<input type="number" id="hco3">
+
+<label>PaO2</label>
+<input type="number" id="pao2">
+
+<label>FiO2 (%)</label>
+<input type="number" id="fio2">
+
+<label>Lactate</label>
+<input type="number" step="0.1" id="lactate">
+
+</div>
+
+<div class="card">
+
+<h2>2. Electrolytes</h2>
+
+<label>Sodium</label>
+<input type="number" id="na">
+
+<label>Potassium</label>
+<input type="number" step="0.1" id="k">
+
+<label>Chloride</label>
+<input type="number" id="cl">
+
+<label>Albumin</label>
+<input type="number" step="0.1" id="albumin">
+
+<label>Glucose</label>
+<input type="number" id="glucose">
+
+</div>
+
+<div class="card">
+
+<h2>3. Renal / Metabolic</h2>
+
+<label>Creatinine</label>
+<input type="number" step="0.1" id="creatinine">
+
+<label>Urea</label>
+<input type="number" id="urea">
+
+<label>Ketones Present?</label>
+
+<select id="ketones">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>4. Oxygenation / Ventilation</h2>
+
+<label>ARDS?</label>
+
+<select id="ards">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Mechanical Ventilation?</label>
+
+<select id="vent">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>COPD?</label>
+
+<select id="copd">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Respiratory Distress?</label>
+
+<select id="distress">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+<div class="card">
+
+<h2>5. Clinical Context</h2>
+
+<label>Shock?</label>
+
+<select id="shock">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Sepsis?</label>
+
+<select id="sepsis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>DKA Suspected?</label>
+
+<select id="dka">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Salicylate Toxicity?</label>
+
+<select id="salicylate">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+<label>Cirrhosis?</label>
+
+<select id="cirrhosis">
+<option value="yes">Yes</option>
+<option value="no">No</option>
+</select>
+
+</div>
+
+</div>
+
+<button onclick="analyzeABG()">
+Generate Complete ABG ICU Interpretation
+</button>
+
+<div class="result">
+
+<h2>Complete ICU ABG Analysis</h2>
+
+<div id="output">
+Results will appear here
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+function analyzeABG(){
+
+try{
+
+let ph=parseFloat(document.getElementById('ph').value)||7.4;
+
+let paco2=parseFloat(document.getElementById('paco2').value)||40;
+
+let hco3=parseFloat(document.getElementById('hco3').value)||24;
+
+let pao2=parseFloat(document.getElementById('pao2').value)||80;
+
+let fio2=parseFloat(document.getElementById('fio2').value)||21;
+
+let lactate=parseFloat(document.getElementById('lactate').value)||0;
+
+let na=parseFloat(document.getElementById('na').value)||140;
+
+let k=parseFloat(document.getElementById('k').value)||4;
+
+let cl=parseFloat(document.getElementById('cl').value)||100;
+
+let albumin=parseFloat(document.getElementById('albumin').value)||4;
+
+let glucose=parseFloat(document.getElementById('glucose').value)||100;
+
+let creatinine=parseFloat(document.getElementById('creatinine').value)||1;
+
+let urea=parseFloat(document.getElementById('urea').value)||20;
+
+let ketones=document.getElementById('ketones').value;
+
+let ards=document.getElementById('ards').value;
+
+let vent=document.getElementById('vent').value;
+
+let copd=document.getElementById('copd').value;
+
+let distress=document.getElementById('distress').value;
+
+let shock=document.getElementById('shock').value;
+
+let sepsis=document.getElementById('sepsis').value;
+
+let dka=document.getElementById('dka').value;
+
+let salicylate=document.getElementById('salicylate').value;
+
+let cirrhosis=document.getElementById('cirrhosis').value;
+
+let output='';
+
+output+='==============================\n';
+output+='PRIMARY ABG INTERPRETATION\n';
+output+='==============================\n\n';
+
+let acidbase='';
+
+if(ph<7.35){
+
+output+='Acidemia present\n';
+
+if(paco2>45 && hco3>=22){
+acidbase='Primary Respiratory Acidosis';
+}
+
+if(hco3<22){
+acidbase='Primary Metabolic Acidosis';
+}
+
+}
+
+else if(ph>7.45){
+
+output+='Alkalemia present\n';
+
+if(paco2<35){
+acidbase='Primary Respiratory Alkalosis';
+}
+
+if(hco3>26){
+acidbase='Primary Metabolic Alkalosis';
+}
+
+}
+
+else{
+
+acidbase='Near normal pH / compensated disorder possible';
+
+}
+
+output+='Primary process: '+acidbase+'\n\n';
+
+output+='==============================\n';
+output+='COMPENSATION ENGINE\n';
+output+='==============================\n\n';
+
+if(acidbase==='Primary Metabolic Acidosis'){
+
+let expected=(1.5*hco3)+8;
+
+output+='Winter expected PaCO2: ';
+output+=expected.toFixed(1);
+output+=' ±2\n';
+
+if(paco2>expected+2){
+output+='Additional respiratory acidosis likely\n';
+}
+
+else if(paco2<expected-2){
+output+='Additional respiratory alkalosis likely\n';
+}
+
+else{
+output+='Appropriate respiratory compensation\n';
+}
+
+}
+
+if(acidbase==='Primary Metabolic Alkalosis'){
+
+let expected=(0.7*(hco3-24))+40;
+
+output+='Expected PaCO2: ';
+output+=expected.toFixed(1);
+output+=' ±2\n';
+
+}
+
+if(acidbase==='Primary Respiratory Acidosis'){
+
+let delta=(paco2-40)/10;
+
+let acute=24+(delta*1);
+
+let chronic=24+(delta*4);
+
+output+='Expected HCO3 acute: ';
+output+=acute.toFixed(1);
+output+='\n';
+
+output+='Expected HCO3 chronic: ';
+output+=chronic.toFixed(1);
+output+='\n';
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='ANION GAP ENGINE\n';
+output+='==============================\n\n';
+
+let ag=na-(cl+hco3);
+
+let correctedag=ag+(2.5*(4-albumin));
+
+output+='Anion Gap: ';
+output+=ag.toFixed(1);
+output+='\n';
+
+output+='Corrected AG: ';
+output+=correctedag.toFixed(1);
+output+='\n';
+
+if(correctedag>12){
+output+='High anion gap metabolic acidosis present\n';
+}
+
+let deltaRatio=(correctedag-12)/(24-hco3);
+
+if(hco3<24){
+
+output+='Delta ratio: ';
+output+=deltaRatio.toFixed(2);
+output+='\n';
+
+if(deltaRatio<0.4){
+output+='Pure NAGMA phenotype\n';
+}
+
+else if(deltaRatio<0.8){
+output+='Mixed HAGMA + NAGMA\n';
+}
+
+else if(deltaRatio<=2){
+output+='Pure HAGMA likely\n';
+}
+
+else{
+output+='Concurrent metabolic alkalosis likely\n';
+}
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='OXYGENATION ENGINE\n';
+output+='==============================\n\n';
+
+let fiodec=fio2/100;
+
+let pfratio=pao2/fiodec;
+
+output+='P/F ratio: ';
+output+=pfratio.toFixed(0);
+output+='\n';
+
+if(pfratio<300 && pfratio>=200){
+output+='Mild ARDS range\n';
+}
+
+if(pfratio<200 && pfratio>=100){
+output+='Moderate ARDS range\n';
+}
+
+if(pfratio<100){
+output+='Severe ARDS range\n';
+}
+
+if(pfratio<150){
+output+='Prone positioning consideration\n';
+}
+
+if(distress==='yes' && pfratio<200){
+output+='Escalated respiratory support likely required\n';
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='LACTATE / SHOCK ENGINE\n';
+output+='==============================\n\n';
+
+output+='Lactate: ';
+output+=lactate;
+output+='\n';
+
+if(lactate>2){
+output+='Hyperlactatemia present\n';
+}
+
+if(lactate>=4){
+output+='Severe shock physiology concern\n';
+}
+
+if(sepsis==='yes'){
+output+='Consider septic shock phenotype\n';
+}
+
+if(cirrhosis==='yes' && lactate>2){
+output+='Reduced hepatic lactate clearance may contribute\n';
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='RENAL / UREMIA ENGINE\n';
+output+='==============================\n\n';
+
+output+='Creatinine: ';
+output+=creatinine;
+output+='\n';
+
+output+='Urea: ';
+output+=urea;
+output+='\n';
+
+if(urea>100){
+output+='Severe azotemia present\n';
+}
+
+if(creatinine>2){
+output+='Significant renal dysfunction present\n';
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='DKA / TOXICOLOGY ENGINE\n';
+output+='==============================\n\n';
+
+if(dka==='yes'){
+
+output+='DKA phenotype possible\n';
+
+if(glucose>250 && ketones==='yes'){
+output+='Biochemical DKA pattern supported\n';
+}
+
+output+='- IV insulin protocol\n';
+output+='- Liberal potassium correction\n';
+output+='- Dextrose transition when glucose falls\n';
+
+if(ph<6.9){
+output+='- Consider bicarbonate in severe acidemia\n';
+}
+
+}
+
+if(salicylate==='yes'){
+
+output+='Salicylate toxicity phenotype possible\n';
+output+='- Avoid hypoventilation\n';
+output+='- Sodium bicarbonate infusion consideration\n';
+output+='- Dialysis evaluation if severe\n';
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='VENTILATOR ENGINE\n';
+output+='==============================\n\n';
+
+if(vent==='yes'){
+
+if(paco2>50 && ph<7.25){
+output+='Ventilatory failure phenotype\n';
+output+='- Increase minute ventilation consideration\n';
+}
+
+if(paco2<30 && ph>7.5){
+output+='Possible overventilation\n';
+output+='- Reduce respiratory rate consideration\n';
+}
+
+if(ards==='yes'){
+output+='- Low tidal volume ventilation favored\n';
+output+='- Permissive hypercapnia may be acceptable\n';
+}
+
+}
+
+if(copd==='yes'){
+
+output+='COPD phenotype\n';
+output+='- Avoid excessive oxygen administration\n';
+output+='- Oxygen target 88-92%\n';
+
+if(ph<7.35 && paco2>45){
+output+='- NIV consideration\n';
+}
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='CRITICAL ICU ALERTS\n';
+output+='==============================\n\n';
+
+if(ph<7.1){
+output+='- CRITICAL ACIDEMIA\n';
+}
+
+if(k>=6){
+output+='- LIFE THREATENING HYPERKALEMIA\n';
+}
+
+if(pfratio<100){
+output+='- SEVERE HYPOXEMIA\n';
+}
+
+if(lactate>=4){
+output+='- HIGH MORTALITY SHOCK PHENOTYPE\n';
+}
+
+if(correctedag>30){
+output+='- EXTREME ANION GAP ELEVATION\n';
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='EVIDENCE BASED MANAGEMENT\n';
+output+='==============================\n\n';
+
+if(acidbase==='Primary Metabolic Acidosis'){
+
+output+='- Identify/treat underlying cause\n';
+output+='- Serial lactate monitoring\n';
+
+if(shock==='yes'){
+output+='- Balanced crystalloids\n';
+output+='- Norepinephrine if MAP inadequate\n';
+}
+
+if(ph<7.1){
+output+='- Severe acidemia may justify bicarbonate consideration\n';
+}
+
+}
+
+if(acidbase==='Primary Respiratory Acidosis'){
+
+output+='- Assess airway protection\n';
+output+='- Evaluate fatigue/ventilatory failure\n';
+
+if(copd==='yes'){
+output+='- NIV strongly consider\n';
+}
+
+}
+
+if(acidbase==='Primary Metabolic Alkalosis'){
+
+output+='- Evaluate chloride depletion\n';
+output+='- Review diuretics/NG losses\n';
+output+='- Potassium repletion aggressively\n';
+
+}
+
+output+='\n';
+
+output+='==============================\n';
+output+='REASSESSMENT ENGINE\n';
+output+='==============================\n\n';
+
+output+='- Repeat ABG after major intervention\n';
+output+='- Serial lactate trend\n';
+output+='- Electrolyte monitoring\n';
+output+='- Continuous hemodynamic reassessment\n';
+output+='- Monitor trajectory, not isolated values\n';
+
+document.getElementById('output').innerText=output;
+
+}
+catch(err){
+
+document.getElementById('output').innerText='ERROR: '+err;
+
+}
+
+}
+
+</script>
+
+</body>
+
+</html>
