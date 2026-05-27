@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sepsis Antibiotic Decision Support Engine</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#0f172a;color:white;padding:16px}
+.container{max-width:1400px;margin:auto}
+h1{color:#67e8f9;font-size:1.4rem;margin-bottom:4px}
+.subtitle{color:#94a3b8;font-size:.78rem;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:#111827;padding:18px;border-radius:16px;border:1px solid #1e293b}
+h2{color:#67e8f9;font-size:1rem;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid #1e293b}
+label{display:block;margin-top:12px;margin-bottom:4px;font-size:.82rem;color:#94a3b8}
+input,select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:white;font-size:.82rem}
+input:focus,select:focus{outline:none;border-color:#67e8f9}
+
+/* MULTI SELECT CHECKBOXES */
+.multi-check{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:8px;max-height:200px;overflow-y:auto}
+.multi-check label{display:flex;align-items:center;gap:8px;padding:5px 6px;margin:0;cursor:pointer;border-radius:6px;font-size:.8rem;color:#cbd5e1;transition:background .15s}
+.multi-check label:hover{background:#334155}
+.multi-check input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:#67e8f9;flex-shrink:0}
+.multi-check label.selected{background:rgba(103,232,249,.1);color:#67e8f9}
+
+.section-label{font-size:.72rem;color:#64748b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;margin-top:14px}
+
+button.generate{width:100%;padding:16px;margin-top:20px;background:linear-gradient(135deg,#06b6d4,#0284c7);border:none;border-radius:14px;font-size:1rem;font-weight:bold;cursor:pointer;color:white;transition:opacity .2s}
+button.generate:hover{opacity:.9}
+
+.result{background:#0b1623;padding:20px;border-radius:16px;margin-top:20px;border:1px solid #1e293b;display:none}
+.result h2{color:#67e8f9;margin-bottom:16px}
+
+.r-block{background:#111827;border-radius:10px;padding:14px;margin-bottom:12px;border-left:3px solid #334155}
+.r-block.green{border-left-color:#34d399}
+.r-block.amber{border-left-color:#f59e0b}
+.r-block.red{border-left-color:#f43f5e}
+.r-block.blue{border-left-color:#38bdf8}
+.r-block.purple{border-left-color:#a78bfa}
+
+.r-title{font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;opacity:.55;margin-bottom:6px}
+.r-body{font-size:.82rem;line-height:1.65}
+.r-body strong{color:#e2e8f0}
+.tag{display:inline-block;background:rgba(103,232,249,.12);color:#67e8f9;border-radius:4px;padding:.15rem .5rem;font-size:.7rem;margin:2px}
+.tag.red{background:rgba(244,63,94,.12);color:#f43f5e}
+.tag.amber{background:rgba(245,158,11,.12);color:#f59e0b}
+.tag.green{background:rgba(52,211,153,.12);color:#34d399}
+.tag.purple{background:rgba(167,139,250,.12);color:#a78bfa}
+
+.alert-bar{background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.3);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:.8rem;color:#fca5a5}
+.good-bar{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:.8rem;color:#86efac}
+.info-bar{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:.8rem;color:#7dd3fc}
+
+.sources-selected{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;min-height:24px}
+
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🧬 Sepsis Antibiotic Decision Support Engine</h1>
+<p class="subtitle">ISCCM Antimicrobial Recommendations · ICMR 2025 Guidelines · Multi-source & Multi-site support</p>
+
+<div class="grid">
+
+<!-- CARD 1: INFECTION PROFILE -->
+<div class="card">
+<h2>1. Infection Profile</h2>
+
+<div class="section-label">Suspected Source(s) — Tick all that apply</div>
+<div class="multi-check" id="source-check">
+  <label><input type="checkbox" value="unknown"> Unknown / Undifferentiated</label>
+  <label><input type="checkbox" value="lung"> Pneumonia / VAP / HAP</label>
+  <label><input type="checkbox" value="abdomen"> Intra-abdominal Sepsis</label>
+  <label><input type="checkbox" value="uti"> UTI / Urosepsis</label>
+  <label><input type="checkbox" value="line"> Line Sepsis / CLABSI</label>
+  <label><input type="checkbox" value="ssti"> Skin / Soft Tissue / Necrotising</label>
+  <label><input type="checkbox" value="cns"> CNS Infection / Meningitis</label>
+  <label><input type="checkbox" value="bone"> Bone / Joint / Osteomyelitis</label>
+  <label><input type="checkbox" value="endocarditis"> Endocarditis / Bacteraemia</label>
+  <label><input type="checkbox" value="fungal"> Possible Fungal / Candidaemia</label>
+  <label><input type="checkbox" value="biliary"> Biliary / Cholangitis</label>
+  <label><input type="checkbox" value="tb"> TB / Atypical Mycobacterial</label>
+</div>
+
+<label>Community or Hospital Acquired?</label>
+<select id="acquired">
+  <option value="community">Community Acquired</option>
+  <option value="hospital">Hospital Acquired (&gt;48h admission)</option>
+  <option value="hcassoc">Healthcare-Associated</option>
+</select>
+
+<div class="section-label" style="margin-top:14px">Healthcare Exposure Risks — Tick all that apply</div>
+<div class="multi-check" id="hce-check">
+  <label><input type="checkbox" value="recenthospital"> Recent Hospitalization (&lt;90 days)</label>
+  <label><input type="checkbox" value="priorabx"> Prior Antibiotics &lt;90 days</label>
+  <label><input type="checkbox" value="dialysis"> Dialysis / CRRT</label>
+  <label><input type="checkbox" value="recenticu"> Recent ICU Admission</label>
+  <label><input type="checkbox" value="recentop"> Recent Surgery</label>
+  <label><input type="checkbox" value="ventilation"> Prolonged Ventilation &gt;48h</label>
+  <label><input type="checkbox" value="centrallineexp"> Central Line Exposure</label>
+  <label><input type="checkbox" value="tpnexp"> TPN Exposure</label>
+  <label><input type="checkbox" value="nursing"> Nursing Home / Long-term Care</label>
+</div>
+
+<label>Septic Shock Present?</label>
+<select id="shock">
+  <option value="0">No</option>
+  <option value="1">Yes</option>
+</select>
+
+<label>Norepinephrine / Vasopressor Requirement</label>
+<select id="vasopressor">
+  <option value="none">None</option>
+  <option value="low">Low Dose (&lt;0.1 mcg/kg/min)</option>
+  <option value="moderate">Moderate Dose (0.1–0.2 mcg/kg/min)</option>
+  <option value="high">High Dose (&gt;0.2 mcg/kg/min)</option>
+</select>
+</div>
+
+<!-- CARD 2: PATIENT PHENOTYPES -->
+<div class="card">
+<h2>2. Patient Phenotypes</h2>
+<div class="section-label">Tick all applicable</div>
+<div class="multi-check" id="pheno-check">
+  <label><input type="checkbox" value="transplant"> Transplant Recipient</label>
+  <label><input type="checkbox" value="onco"> Active Malignancy / Oncology</label>
+  <label><input type="checkbox" value="neutropenia"> Neutropenia (ANC &lt;500)</label>
+  <label><input type="checkbox" value="cirrhosis"> Cirrhosis / Liver Disease</label>
+  <label><input type="checkbox" value="ckd"> CKD / ESRD</label>
+  <label><input type="checkbox" value="crrt"> On CRRT</label>
+  <label><input type="checkbox" value="vap"> Ventilator-associated Pneumonia risk</label>
+  <label><input type="checkbox" value="prolongedicu"> Prolonged ICU Stay (&gt;7 days)</label>
+  <label><input type="checkbox" value="mdrcolonization"> Prior MDR Colonisation / Carriage</label>
+  <label><input type="checkbox" value="pancreatitis"> Pancreatitis / Pancreatic Necrosis</label>
+  <label><input type="checkbox" value="postabdominalsurgery"> Post Abdominal Surgery</label>
+  <label><input type="checkbox" value="anastomoticleak"> Anastomotic Leak Suspicion</label>
+  <label><input type="checkbox" value="biliarysepsis"> Biliary Sepsis</label>
+  <label><input type="checkbox" value="openabdomen"> Open Abdomen</label>
+  <label><input type="checkbox" value="relooklap"> Repeat / Relook Laparotomy</label>
+  <label><input type="checkbox" value="tpn"> On TPN</label>
+  <label><input type="checkbox" value="steroids"> Steroids / Immunosuppression</label>
+  <label><input type="checkbox" value="fungalrisk"> High Fungal Risk</label>
+  <label><input type="checkbox" value="foley"> Indwelling Urinary Catheter</label>
+  <label><input type="checkbox" value="centralline"> Central Venous Catheter in situ</label>
+  <label><input type="checkbox" value="burns"> Burns / Trauma</label>
+  <label><input type="checkbox" value="hiv"> HIV / AIDS</label>
+  <label><input type="checkbox" value="dm"> Diabetes Mellitus</label>
+</div>
+</div>
+
+<!-- CARD 3: RESISTANCE RISK -->
+<div class="card">
+<h2>3. Resistance Risk</h2>
+
+<label>Overall MDR Risk</label>
+<select id="mdr">
+  <option value="0">Low — community, no prior ABx</option>
+  <option value="1">High — healthcare-associated, prior ABx, ICU</option>
+</select>
+
+<label>Prior Carbapenem Exposure (&lt;90 days)?</label>
+<select id="carbapenem">
+  <option value="0">No</option>
+  <option value="1">Yes</option>
+</select>
+
+<label>Immunocompromised?</label>
+<select id="immuno">
+  <option value="0">No</option>
+  <option value="1">Yes</option>
+</select>
+
+<label>Neutropenia (ANC &lt;500)?</label>
+<select id="neutro">
+  <option value="0">No</option>
+  <option value="1">Yes</option>
+</select>
+
+<label>ESBL Risk?</label>
+<select id="esbl">
+  <option value="0">Low / Unknown</option>
+  <option value="1">High — prior ESBL, healthcare-associated UTI</option>
+</select>
+
+<label>MRSA Risk?</label>
+<select id="mrsa">
+  <option value="0">Low</option>
+  <option value="1">High — prior MRSA, skin/soft tissue, ICU, nasal screen +ve</option>
+</select>
+
+<label>Carbapenem-Resistant Organism (CRO) Risk?</label>
+<select id="cro">
+  <option value="0">Low</option>
+  <option value="1">High — prior carbapenem, ICU &gt;7d, prior CRO</option>
+</select>
+
+<label>Fungal Risk Level</label>
+<select id="fungalrisk">
+  <option value="0">Low</option>
+  <option value="1">Moderate — TPN, broad ABx, prolonged ICU</option>
+  <option value="2">High — neutropenia, transplant, prior antifungal, candidaemia</option>
+</select>
+</div>
+
+<!-- CARD 4: CULTURE STATUS -->
+<div class="card">
+<h2>4. Culture Status</h2>
+
+<label>Blood Cultures Sent (×2 sets before ABx)?</label>
+<select id="bloodculture">
+  <option value="0">No</option>
+  <option value="1">Yes</option>
+</select>
+
+<div class="section-label" style="margin-top:12px">Culture Site(s) Sampled — Tick all sent</div>
+<div class="multi-check" id="csite-check">
+  <label><input type="checkbox" value="blood"> Blood (peripheral)</label>
+  <label><input type="checkbox" value="line_tip"> Line tip / line blood</label>
+  <label><input type="checkbox" value="lung"> Sputum / ET aspirate / BAL</label>
+  <label><input type="checkbox" value="urine"> Urine (MSU / SPA / catheter)</label>
+  <label><input type="checkbox" value="abdomen"> Pus / Drain fluid / Ascites</label>
+  <label><input type="checkbox" value="csf"> CSF</label>
+  <label><input type="checkbox" value="wound"> Wound swab / Tissue</label>
+  <label><input type="checkbox" value="bone"> Bone / Joint aspirate</label>
+  <label><input type="checkbox" value="fungal"> Fungal cultures / Galactomannan / BDG</label>
+  <label><input type="checkbox" value="tb"> AFB smear / TB culture / GeneXpert</label>
+</div>
+
+<label>Culture Result Available?</label>
+<select id="cultureavail">
+  <option value="0">No — awaiting / not sent</option>
+  <option value="1">Yes — result available</option>
+</select>
+
+<label>Culture Organism (if available)</label>
+<input type="text" id="organism" placeholder="e.g. Klebsiella ESBL, MRSA, Candida albicans">
+
+<label>Sensitivity / Resistance Pattern</label>
+<input type="text" id="sensitivity" placeholder="e.g. Meropenem S, PipTazo R, Colistin S">
+
+<label>Source Control Achieved?</label>
+<select id="sourcecontrol">
+  <option value="0">No — pending</option>
+  <option value="1">Yes — drain / debride / line removed</option>
+  <option value="na">Not applicable</option>
+</select>
+</div>
+
+<!-- CARD 5: ORGAN DYSFUNCTION -->
+<div class="card">
+<h2>5. Organ Dysfunction & Labs</h2>
+
+<label>AKI Present?</label>
+<select id="aki">
+  <option value="0">No</option>
+  <option value="1">Yes — Stage 1 (Cr ×1.5)</option>
+  <option value="2">Yes — Stage 2–3 (Cr ×2+)</option>
+</select>
+
+<label>Liver Dysfunction?</label>
+<select id="liver">
+  <option value="0">No</option>
+  <option value="1">Yes — Child A / mild</option>
+  <option value="2">Yes — Child B–C / severe</option>
+</select>
+
+<label>CRRT / Dialysis On?</label>
+<select id="crrt">
+  <option value="0">No</option>
+  <option value="1">Yes</option>
+</select>
+
+<label>Procalcitonin (ng/mL)</label>
+<input type="number" step="0.01" id="pct" placeholder="e.g. 4.5">
+
+<label>CRP (mg/L)</label>
+<input type="number" id="crp" placeholder="e.g. 180">
+
+<label>Lactate (mmol/L)</label>
+<input type="number" step="0.1" id="lactate" placeholder="e.g. 3.2">
+
+<label>WBC (×10⁹/L)</label>
+<input type="number" step="0.1" id="wbc" placeholder="e.g. 18">
+
+<label>Duration of Current Antibiotics (days)</label>
+<input type="number" id="abxdays" placeholder="e.g. 3">
+</div>
+
+</div>
+
+<button class="generate" onclick="generateAdvice()">⚡ Generate Antibiotic Strategy</button>
+
+<div class="result" id="result-panel">
+  <h2>Sepsis Antibiotic Analytics — ISCCM / ICMR 2025</h2>
+  <div id="output"></div>
+</div>
+</div>
+
+<script>
+// Highlight checked checkboxes
+document.querySelectorAll('.multi-check').forEach(mc => {
+  mc.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      cb.parentElement.classList.toggle('selected', cb.checked);
+    });
+  });
+});
+
+function getChecked(containerId) {
+  return Array.from(document.querySelectorAll('#'+containerId+' input[type=checkbox]:checked')).map(c=>c.value);
+}
+
+function block(cls, title, body) {
+  return `<div class="r-block ${cls}"><div class="r-title">${title}</div><div class="r-body">${body}</div></div>`;
+}
+function alertBar(txt){ return `<div class="alert-bar">⚠ ${txt}</div>`; }
+function goodBar(txt){ return `<div class="good-bar">✅ ${txt}</div>`; }
+function infoBar(txt){ return `<div class="info-bar">ℹ ${txt}</div>`; }
+function tag(t,c=''){ return `<span class="tag ${c}">${t}</span>`; }
+
+function generateAdvice(){
+  const sources = getChecked('source-check');
+  const phenotypes = getChecked('pheno-check');
+  const hce = getChecked('hce-check');
+  const csites = getChecked('csite-check');
+
+  const acquired = document.getElementById('acquired').value;
+  const shock = Number(document.getElementById('shock').value);
+  const vasopressor = document.getElementById('vasopressor').value;
+  const mdr = Number(document.getElementById('mdr').value);
+  const carbapenem = Number(document.getElementById('carbapenem').value);
+  const immuno = Number(document.getElementById('immuno').value);
+  const neutro = Number(document.getElementById('neutro').value);
+  const esbl = Number(document.getElementById('esbl').value);
+  const mrsa = Number(document.getElementById('mrsa').value);
+  const cro = Number(document.getElementById('cro').value);
+  const fungalRisk = Number(document.getElementById('fungalrisk').value);
+
+  const bloodculture = Number(document.getElementById('bloodculture').value);
+  const cultureavail = Number(document.getElementById('cultureavail').value);
+  const organism = document.getElementById('organism').value;
+  const sensitivity = document.getElementById('sensitivity').value.toLowerCase();
+  const sourcecontrol = document.getElementById('sourcecontrol').value;
+
+  const aki = Number(document.getElementById('aki').value);
+  const liver = Number(document.getElementById('liver').value);
+  const crrt = Number(document.getElementById('crrt').value);
+  const pct = parseFloat(document.getElementById('pct').value) || 0;
+  const crp = parseFloat(document.getElementById('crp').value) || 0;
+  const lactate = parseFloat(document.getElementById('lactate').value) || 0;
+  const wbc = parseFloat(document.getElementById('wbc').value) || 0;
+  const abxdays = parseInt(document.getElementById('abxdays').value) || 0;
+
+  if(sources.length === 0){ alert('Please select at least one suspected source of infection.'); return; }
+
+  let out = '';
+
+  // ── SEPSIS SEVERITY ASSESSMENT ──
+  let severityTags = '';
+  if(shock) severityTags += tag('Septic Shock','red');
+  if(vasopressor==='high') severityTags += tag('High-dose vasopressor','red');
+  if(vasopressor==='moderate') severityTags += tag('Moderate vasopressor','amber');
+  if(lactate>4) severityTags += tag('Lactate >4 — tissue hypoperfusion','red');
+  else if(lactate>2) severityTags += tag('Lactate 2–4 — elevated','amber');
+  if(neutro || phenotypes.includes('neutropenia')) severityTags += tag('Neutropenic sepsis','red');
+  if(acquired==='hospital') severityTags += tag('Hospital-acquired','amber');
+  if(mdr) severityTags += tag('MDR risk','amber');
+  if(cro) severityTags += tag('CRO risk','red');
+  if(carbapenem) severityTags += tag('Prior carbapenem','red');
+  out += block('red','Sepsis Severity & Risk Profile', severityTags || tag('Low-risk / Community','green'));
+
+  // ── BIOMARKER INTERPRETATION ──
+  let bio = '';
+  if(pct > 0){
+    if(pct < 0.25) bio += `<strong>PCT ${pct} ng/mL:</strong> &lt;0.25 — bacterial infection unlikely. Consider antibiotics only if strong clinical indication.<br>`;
+    else if(pct < 0.5) bio += `<strong>PCT ${pct} ng/mL:</strong> 0.25–0.5 — low probability. Reassess; antibiotics may not be required.<br>`;
+    else if(pct < 2) bio += `<strong>PCT ${pct} ng/mL:</strong> 0.5–2 — possible bacterial infection. Treat empirically pending cultures.<br>`;
+    else if(pct < 10) bio += `<strong>PCT ${pct} ng/mL:</strong> ${pct} — significant bacterial sepsis. Initiate broad-spectrum therapy.<br>`;
+    else bio += `<strong>PCT ${pct} ng/mL:</strong> &gt;10 — SEVERE bacterial sepsis / shock. Urgent broad-spectrum therapy + source control.<br>`;
+  }
+  if(crp>0) bio += `<strong>CRP ${crp} mg/L:</strong> ${crp>150?'Markedly elevated — significant inflammation':crp>50?'Elevated — infection likely':'Mildly elevated'}.<br>`;
+  if(lactate>0) bio += `<strong>Lactate ${lactate} mmol/L:</strong> ${lactate>4?'Critical — tissue hypoperfusion, septic shock':lactate>2?'Elevated — impaired perfusion, resuscitate':'Normal — reassuring'}.<br>`;
+  if(wbc>0) bio += `<strong>WBC ${wbc}×10⁹/L:</strong> ${wbc>20?'Markedly elevated — severe infection/SIRS':wbc>11?'Elevated — infection':wbc<4?'Leukopenia — severe sepsis or immunosuppression':'Normal'}.<br>`;
+  if(bio) out += block('blue','Biomarker Interpretation', bio);
+
+  // ── PER-SOURCE ANTIBIOTIC RECOMMENDATIONS ──
+  let regimenHtml = '';
+
+  sources.forEach(src => {
+    let name='', regimen='', rationale='', dosing='', cultures='', notes='';
+
+    if(src==='unknown'){
+      name='Unknown / Undifferentiated Source';
+      if(shock || vasopressor!=='none'){
+        regimen = mdr||carbapenem||cro ? 'Meropenem 1g IV TDS (extended 3h infusion)' : 'Piperacillin-Tazobactam 4.5g IV TDS (extended infusion)';
+        if(mrsa) regimen += ' + Vancomycin 25–30 mg/kg/day AUC-guided or Linezolid 600mg BD';
+        if(fungalRisk>=1) regimen += ' + Micafungin 100mg OD (echinocandin)';
+      } else {
+        regimen = mdr ? 'Piperacillin-Tazobactam or Cefoperazone-Sulbactam' : 'Ceftriaxone 2g IV OD';
+      }
+      rationale = 'Undifferentiated sepsis — empiric broad spectrum guided by shock severity and MDR risk. ISCCM/ICMR 2025: initiate within 1h of recognition of septic shock.';
+      dosing = 'Extended/prolonged infusion beta-lactam preferred in ICU — better PK/PD target attainment.';
+    }
+
+    else if(src==='lung'){
+      name='Pneumonia / HAP / VAP';
+      if(acquired==='community' && !shock && !mdr){
+        regimen = 'Ceftriaxone 2g IV OD + Azithromycin 500mg IV/OD';
+        rationale = 'Community-acquired pneumonia — covers typical + atypical organisms.';
+        if(mrsa) { regimen += ' + Linezolid 600mg BD (MRSA-CAP)'; rationale += ' MRSA-CAP risk detected.'; }
+      } else {
+        regimen = mdr||cro ? 'Meropenem 1g IV TDS (extended 3h infusion)' : 'Piperacillin-Tazobactam 4.5g IV TDS';
+        regimen += mrsa ? ' + Linezolid 600mg BD (preferred over vancomycin in pneumonia — better lung penetration)' : '';
+        rationale = 'HAP/VAP phenotype — antipseudomonal beta-lactam + MRSA cover if risk. ISCCM: avoid daptomycin in pneumonia (pulmonary surfactant inactivation).';
+      }
+      if(phenotypes.includes('vap')) notes = '⚠ VAP: Send ET aspirate. De-escalate at 48–72h per culture. Duration 7–8 days (non-immunocompromised, responding).';
+      cultures = 'ET aspirate / BAL + blood cultures ×2. Consider Legionella/Pneumococcal urinary antigen in severe CAP.';
+      dosing = 'Linezolid preferred over vancomycin for MRSA pneumonia (ISCCM 2023). Prolonged beta-lactam infusion for GNB.';
+    }
+
+    else if(src==='abdomen'){
+      name='Intra-abdominal Sepsis';
+      if(shock||mdr||cro||phenotypes.includes('postabdominalsurgery')||phenotypes.includes('openabdomen')){
+        regimen = 'Meropenem 1g IV TDS (extended 3h infusion)';
+        if(cro||carbapenem) regimen = 'Meropenem-Vaborbactam or Ceftazidime-Avibactam (CRO phenotype) — consult ID';
+        if(phenotypes.includes('openabdomen')||phenotypes.includes('relooklap')||fungalRisk>=1) regimen += ' + Micafungin 100mg OD';
+        if(phenotypes.includes('anastomoticleak')) notes += '🔴 Anastomotic leak suspected — URGENT source control (CT/surgery). Antibiotics alone will fail.';
+      } else {
+        regimen = 'Piperacillin-Tazobactam 4.5g IV TDS (extended infusion)';
+        if(esbl) regimen = 'Meropenem 1g IV TDS — ESBL risk detected';
+        rationale += ' Biliary phenotype — cover Enterococcus. Consider amoxicillin-ampicillin addition if biliary source.';
+      }
+      rationale += ' Intra-abdominal sepsis requires both antibiotic therapy AND source control. Covers Enterobacteriaceae, anaerobes, Enterococcus.';
+      if(phenotypes.includes('biliarysepsis')) regimen += ' (+ consider ampicillin 2g IV QDS for Enterococcal cover in biliary sepsis)';
+      cultures = 'Blood cultures ×2 + intra-abdominal drain fluid / pus / ascites for MC&S + fungal cultures if risk.';
+      dosing = 'ICMR 2025: extended infusion beta-lactam for severe abdominal sepsis. Reassess at 48–72h.';
+    }
+
+    else if(src==='uti'){
+      name='UTI / Urosepsis';
+      if(!mdr&&!esbl&&!shock&&acquired==='community'){
+        regimen = 'Ceftriaxone 2g IV OD';
+        rationale = 'Community urosepsis — low MDR probability. Cover gram-negative enteric organisms.';
+      } else if(esbl||mdr){
+        regimen = shock ? 'Meropenem 1g IV TDS' : 'Temocillin or Ertapenem 1g OD (if available) / Meropenem 1g IV TDS';
+        rationale = 'ESBL/MDR urosepsis — carbapenem required per ICMR 2025. Avoid piperacillin-tazobactam for definitive ESBL treatment (Eagle effect).';
+      } else {
+        regimen = 'Piperacillin-Tazobactam 4.5g IV TDS or Ceftriaxone 2g IV OD';
+        rationale = 'Healthcare-associated urosepsis.';
+      }
+      if(phenotypes.includes('foley')) notes += ' ⚠ Catheter in situ — evaluate for CAUTI. Change catheter. Do not treat asymptomatic bacteriuria.';
+      cultures = 'Urine MC&S (catheter/MSU) + blood cultures ×2 before antibiotics.';
+      dosing = 'AKI/CRRT present — dose-adjust. Avoid aminoglycosides if AKI. Duration: 7 days (uncomplicated) / 10–14 days (complicated urosepsis).';
+    }
+
+    else if(src==='line'){
+      name='CLABSI / Line Sepsis';
+      regimen = 'Vancomycin 25–30 mg/kg/day (AUC/MIC guided) OR Teicoplanin (if monitoring not available)';
+      if(mdr||shock) regimen += ' + Meropenem 1g IV TDS (gram-negative co-coverage)';
+      if(fungalRisk>=1) regimen += ' + Micafungin 100mg OD (candidaemia risk)';
+      rationale = 'CLABSI — MRSA/CoNS dominant. Gram-negative cover if septic shock. Echinocandin if TPN, prolonged ABx, prior candida. ISCCM: line removal mandatory in CLABSI (within 24h).';
+      notes = '🔴 REMOVE central line within 24h (ISCCM/ICMR 2025). Peripheral blood culture + line blood culture simultaneously for differential time-to-positivity.';
+      cultures = 'Peripheral blood cultures ×2 + line blood cultures ×2 simultaneously. Line tip culture on removal.';
+      dosing = 'Vancomycin: AUC-guided dosing preferred (target AUC/MIC 400–600). Avoid vancomycin if MIC >2. Switch to daptomycin 6–10 mg/kg if needed (NOT for pneumonia).';
+    }
+
+    else if(src==='ssti'){
+      name='Skin / Soft Tissue / Necrotising';
+      if(shock||phenotypes.includes('burns')){
+        regimen = 'Meropenem 1g IV TDS + Clindamycin 900mg IV TDS (anti-toxin effect) + Vancomycin/Linezolid';
+        rationale = 'Necrotising fasciitis phenotype — polymicrobial. Clindamycin added for anti-toxin effect (GAS/clostridial). URGENT surgical debridement.';
+        notes = '🔴 Necrotising soft tissue infection — EMERGENCY surgical debridement. Antibiotics alone insufficient. Call surgery IMMEDIATELY.';
+      } else if(mrsa){
+        regimen = 'Vancomycin 25–30 mg/kg/day or Linezolid 600mg BD';
+        rationale = 'MRSA-risk SSTI.';
+      } else {
+        regimen = 'Flucloxacillin 2g IV QDS or Cefazolin 2g IV TDS (MSSA)';
+        if(mdr) regimen = 'Vancomycin + Piperacillin-Tazobactam';
+        rationale = 'Non-necrotising SSTI — cover Staph/Strep primarily.';
+      }
+      cultures = 'Wound / tissue cultures + blood cultures. Swabs from open wounds less reliable — send tissue/pus.';
+    }
+
+    else if(src==='cns'){
+      name='CNS Infection / Meningitis';
+      regimen = 'Ceftriaxone 2g IV BD (meningitic dose) + Vancomycin 60 mg/kg/day in 4 divided doses';
+      if(immuno||phenotypes.includes('transplant')) regimen += ' + Amphotericin B liposomal (fungal meningitis cover)';
+      if(shock) regimen += ' + Dexamethasone 0.15 mg/kg IV QDS × 4 days (before or with first antibiotic dose)';
+      rationale = 'Bacterial meningitis — meningitic dosing essential. Dexamethasone reduces morbidity in pneumococcal meningitis. ISCCM: antibiotics within 30 min of suspicion.';
+      notes = '🔴 Do NOT delay antibiotics for LP if patient is haemodynamically unstable or raised ICP suspected. Give antibiotics first, then CT then LP.';
+      cultures = 'Blood cultures ×2 BEFORE antibiotics if feasible. CSF: MC&S, protein, glucose, India ink, cryptococcal antigen, viral PCR.';
+      dosing = 'Meningitic dosing: Ceftriaxone 2g BD (not OD). Vancomycin 60 mg/kg/day in 4 divided doses — ensure CNS penetration.';
+    }
+
+    else if(src==='endocarditis'){
+      name='Endocarditis / Bacteraemia';
+      regimen = 'Vancomycin 25–30 mg/kg/day AUC-guided + Gentamicin 3 mg/kg OD (IVDU/prosthetic)';
+      if(!mrsa) regimen = 'Benzylpenicillin 2.4g IV 4-hourly + Gentamicin 3 mg/kg OD (if viridans Strep)';
+      rationale = 'Empiric endocarditis — culture-directed therapy essential. Echo (TTE then TOE) mandatory. Duration 4–6 weeks.';
+      notes = 'Cardiology + cardiothoracic surgery input essential. Avoid aminoglycosides in AKI. Stop Gentamicin after 2 weeks in native valve endocarditis unless synergy needed.';
+      cultures = 'Blood cultures ×3 sets (from 3 different sites) before antibiotics — essential for diagnosis and sensitivity.';
+    }
+
+    else if(src==='fungal'){
+      name='Fungal Sepsis / Candidaemia';
+      regimen = 'Micafungin 100mg IV OD OR Caspofungin 70mg loading then 50mg OD';
+      if(fungalRisk===2||phenotypes.includes('transplant')) regimen = 'Liposomal Amphotericin B 3–5 mg/kg OD (if Aspergillus/resistant Candida concern)';
+      rationale = 'ISCCM 2023: Echinocandin is first-line for candidaemia. Fluconazole acceptable only in non-critically ill, no prior azole exposure, C.albicans likely. Ophthalmology review mandatory.';
+      notes = '🔴 Remove all CVCs. Ophthalmology review within 72h. Repeat blood cultures every 48–72h until cleared. Duration: 14 days after last positive culture + symptom resolution.';
+      cultures = 'Blood cultures ×2 (specifically request fungal). BDG (beta-D-glucan), galactomannan if Aspergillus risk. Fundoscopy for endophthalmitis.';
+    }
+
+    else if(src==='biliary'){
+      name='Biliary Sepsis / Cholangitis';
+      regimen = shock||mdr ? 'Meropenem 1g IV TDS + Ampicillin 2g IV QDS (Enterococcal cover)' : 'Piperacillin-Tazobactam 4.5g IV TDS';
+      rationale = 'Biliary sepsis — Tokyo Guidelines 2018. ERCP/biliary decompression within 24h for acute cholangitis with organ failure.';
+      notes = '🔴 Source control (ERCP / PTC / surgical drainage) is mandatory — antibiotics alone insufficient in grade III cholangitis.';
+      cultures = 'Blood cultures ×2 + bile cultures at ERCP/drainage.';
+    }
+
+    else if(src==='bone'){
+      name='Osteomyelitis / Septic Arthritis';
+      regimen = mrsa ? 'Vancomycin 25–30 mg/kg/day + Rifampicin 600–900 mg/day (biofilm penetration)' : 'Flucloxacillin 2g IV QDS or Cefazolin 2g IV TDS (MSSA)';
+      if(mdr) regimen = 'Meropenem ± Vancomycin depending on gram-stain';
+      rationale = 'Bone/joint infection — prolonged antibiotic duration required (4–6 weeks IV then oral step-down). Rifampicin added for biofilm.';
+      notes = 'Orthopaedic surgery involvement essential. Joint aspiration for gram-stain + culture before antibiotics if possible. Prosthetic joint infection — early consult for DAIR/explantation.';
+      cultures = 'Joint aspirate / bone biopsy + blood cultures ×2.';
+    }
+
+    else if(src==='tb'){
+      name='TB / Atypical Mycobacterial';
+      regimen = 'RHEZ: Rifampicin + Isoniazid + Ethambutol + Pyrazinamide (standard DOTS)';
+      if(immuno||phenotypes.includes('hiv')) regimen += ' — Check for DR-TB. HIV co-infection: ART timing with ID team.';
+      rationale = 'Drug-sensitive TB — standard 4-drug RHEZ × 2 months then RH × 4 months. Confirm with GeneXpert / culture. Notify to RNTCP/NTEP.';
+      notes = 'GeneXpert MTB/RIF for rifampicin resistance. Isolate if pulmonary TB suspected. LFT monitoring during therapy.';
+      cultures = 'AFB smear (×3 consecutive days), TB culture, GeneXpert MTB/RIF. BAL if pulmonary and sputum negative.';
+    }
+
+    regimenHtml += block('green', `🎯 SOURCE: ${name}`,
+      `<strong>Recommended Regimen:</strong> ${regimen}<br>` +
+      `<strong>Rationale:</strong> ${rationale || 'See notes.'}<br>` +
+      (dosing ? `<strong>Dosing / PK-PD:</strong> ${dosing}<br>` : '') +
+      (cultures ? `<strong>Cultures:</strong> ${cultures}<br>` : '') +
+      (notes ? `<br><em>${notes}</em>` : '')
+    );
+  });
+
+  out += regimenHtml;
+
+  // ── MULTI-SOURCE SYNERGY ──
+  if(sources.length > 1){
+    out += block('purple','Multi-Source Infection — Combined Strategy',
+      `<strong>Multiple sources identified:</strong> ${sources.join(', ')}.<br>` +
+      `When multiple sources are present, use the <strong>broadest covering regimen</strong> that addresses all sources. ` +
+      `${shock||mdr ? '<strong>Meropenem-based backbone</strong> likely most appropriate.' : 'Review each source regimen above and select the broadest.'} ` +
+      `Ensure source control for ALL applicable sources. Culture each site separately.`
+    );
+  }
+
+  // ── CULTURE SITE SUMMARY ──
+  if(csites.length > 0){
+    out += block('blue','Culture Sites Documented',
+      csites.map(s=>tag(s)).join(' ') +
+      '<br><br>Send all cultures <strong>before starting antibiotics</strong> if feasible. Each site should be labelled clearly for the lab.'
+    );
+  }
+
+  // ── ORGAN DYSFUNCTION DOSING ──
+  let organHtml = '';
+  if(aki>0) organHtml += `<strong>AKI Stage ${aki}:</strong> Reduce renally-cleared drugs (vancomycin, aminoglycosides, colistin, meropenem if stage 2–3). Avoid nephrotoxins. TDM essential.<br>`;
+  if(crrt) organHtml += `<strong>CRRT:</strong> Meropenem 500mg–1g TDS (CVVH/CVVHDF dependent). Vancomycin dose by AUC target. Piperacillin-tazobactam 2.25–4.5g TDS. Check extracorporeal clearance for all drugs.<br>`;
+  if(liver===2) organHtml += `<strong>Severe Liver Disease:</strong> Avoid hepatotoxic drugs. Metronidazole — use with caution (accumulates). Rifampicin — avoid in Child C. Monitor LFTs.<br>`;
+  if(neutro||phenotypes.includes('neutropenia')) organHtml += `<strong>Neutropenic Sepsis:</strong> Broad-spectrum antipseudomonal + anti-MRSA. Antifungal if fever &gt;96h on antibiotics. GCSF per haematology. Duration until ANC &gt;500.<br>`;
+  if(organHtml) out += block('amber','Organ Dysfunction — Drug Adjustment', organHtml);
+
+  // ── TARGETED THERAPY ──
+  if(cultureavail && organism){
+    let targeted = '';
+    const org = organism.toLowerCase();
+    const sens = sensitivity.toLowerCase();
+
+    if(org.includes('klebsiella')||org.includes('e. coli')||org.includes('escherichia')){
+      if(org.includes('esbl')||sens.includes('esbl')) targeted += 'ESBL organism — carbapenem required. Avoid piperacillin-tazobactam (inoculum/Eagle effect). Meropenem 1g extended infusion. Duration 7–14 days depending on source.<br>';
+      else if(sens.includes('meropenem r')||org.includes('crkp')||org.includes('crk')) targeted += '🔴 Carbapenem-resistant Klebsiella (CRK/KPC) — Ceftazidime-avibactam (if KPC) or Meropenem-vaborbactam. Colistin/polymyxin only as last resort (high toxicity). Involve ID specialist urgently.<br>';
+      else targeted += 'Klebsiella/E.coli — target based on sensitivity. Narrow from carbapenem if susceptible to ceftriaxone/piperacillin-tazobactam.<br>';
+    }
+    if(org.includes('pseudomonas')){
+      if(sens.includes('meropenem r')) targeted += '🔴 MDR Pseudomonas — Ceftazidime-avibactam or Ceftolozane-tazobactam. Colistin combination if no option. ID consult.<br>';
+      else targeted += 'Pseudomonas — use antipseudomonal therapy with reliable penetration. Dual coverage in severe infection pending sensitivities. Meropenem or piperacillin-tazobactam.<br>';
+    }
+    if(org.includes('acinetobacter')){
+      targeted += org.includes('xdr')||sens.includes('colistin s') ? '🔴 XDR Acinetobacter — Sulbactam-based regimen (Cefoperazone-sulbactam 3g TDS) + Colistin. Rifampicin addition considered. Very high mortality.' : 'Acinetobacter — Cefoperazone-sulbactam. Carbapenems if susceptible.';
+      targeted += '<br>';
+    }
+    if(org.includes('mrsa')||org.includes('staph')){
+      if(org.includes('mrsa')) targeted += 'MRSA — Vancomycin (AUC-guided) or Linezolid 600mg BD (if pneumonia/poor vancomycin access) or Daptomycin 6–10 mg/kg (NOT in pneumonia). Teicoplanin alternative.<br>';
+      else targeted += 'MSSA — Flucloxacillin 2g IV QDS or Cefazolin 2g IV TDS (beta-lactam preferred — superior to vancomycin for MSSA).<br>';
+    }
+    if(org.includes('enterococcus')){
+      if(org.includes('vre')) targeted += '🔴 VRE — Linezolid 600mg BD or Daptomycin 8–12 mg/kg OD. Tigecycline as add-on. ID consult mandatory.<br>';
+      else targeted += 'Enterococcus — Amoxicillin/Ampicillin preferred (if susceptible). Vancomycin if resistant to penicillin.<br>';
+    }
+    if(org.includes('candida')){
+      if(org.includes('krusei')||org.includes('glabrata')) targeted += 'Non-albicans Candida — Echinocandin (micafungin/caspofungin) preferred. Avoid fluconazole for C.krusei (intrinsic resistance) and C.glabrata (reduced susceptibility).<br>';
+      else targeted += 'Candida — Echinocandin first-line in ICU. Step-down to fluconazole after 5–7 days if sensitive, stable, and cultures clearing.<br>';
+    }
+    if(org.includes('aspergillus')) targeted += 'Aspergillus — Voriconazole 6 mg/kg BD loading then 4 mg/kg BD (first-line). Isavuconazole alternative. Monitor galactomannan.<br>';
+
+    if(!targeted) targeted = `Organism detected: <strong>${organism}</strong>. Review sensitivity report carefully. Narrow therapy if possible. <br>Sensitivity pattern: ${sensitivity||'Not provided — obtain urgently'}.`;
+
+    out += block('green','🎯 Targeted Therapy — Culture-Directed', targeted);
+  }
+
+  // ── CRITICAL ALERTS ──
+  let alerts = '';
+  if(!bloodculture) alerts += alertBar('Blood cultures NOT documented — send ×2 sets immediately before antibiotics if not already done.');
+  if(csites.length===0) alerts += alertBar('No culture sites documented — ensure all relevant sites are sampled before or at antibiotic initiation.');
+  if(sourcecontrol==='0' && (sources.includes('abdomen')||sources.includes('line')||sources.includes('biliary')||sources.includes('ssti'))){
+    alerts += alertBar('Source control NOT achieved — antibiotics alone are insufficient. Drainage / debridement / device removal required urgently.');
+  }
+  if(abxdays>=5 && pct<0.5 && !shock) alerts += goodBar(`Day ${abxdays} — PCT ${pct} ng/mL <0.5 with no shock. Consider de-escalation or stopping antibiotics (PCT-guided stewardship).`);
+  if(abxdays>=3) alerts += infoBar(`Day ${abxdays} of antibiotics — reassess: culture results, clinical response, de-escalation opportunity, biomarker trend.`);
+  if(carbapenem && cro) alerts += alertBar('Prior carbapenem exposure + CRO risk — consider novel beta-lactam/BLI combos (Ceftazidime-avibactam, Meropenem-vaborbactam) with ID input before empiric carbapenem.');
+  out += alerts;
+
+  // ── STEWARDSHIP ──
+  out += block('purple','ISCCM / ICMR 2025 Stewardship Principles',
+    `<strong>Hour 1 Bundle:</strong> Cultures → Antibiotics → Lactate → Fluids → Vasopressors (if shock).<br>` +
+    `<strong>De-escalation:</strong> Review at 48–72h — culture results, PCT trend, clinical response.<br>` +
+    `<strong>Duration:</strong> Shortest effective course. Most uncomplicated sepsis: 7 days. PCT-guided shorter courses validated.<br>` +
+    `<strong>PK/PD:</strong> Extended/prolonged infusion beta-lactams in all ICU patients. TDM for vancomycin, aminoglycosides.<br>` +
+    `<strong>Carbapenem stewardship:</strong> Avoid empiric carbapenems unless true MDR/ESBL/shock — reserve for resistance prevention.<br>` +
+    `<strong>No prophylactic antibiotics</strong> without clear indication (e.g. pre-surgical, sterile necrosis, pancreatitis).<br>` +
+    `<strong>ICMR 2025:</strong> Avoid colistin monotherapy. Novel BLI combinations preferred for CRO. Antifungal stewardship — target prophylaxis in high-risk only.`
+  );
+
+  document.getElementById('result-panel').style.display = 'block';
+  document.getElementById('output').innerHTML = out;
+  document.getElementById('result-panel').scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>
