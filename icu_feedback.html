@@ -42,33 +42,6 @@
   .thankyou h2{color:var(--navy);margin-bottom:8px;}
   .thankyou p{color:var(--muted);font-size:14px;line-height:1.6;}
   .gemstamp{margin-top:30px;font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;font-weight:600;}
-
-  /* Dashboard */
-  .dash{padding:20px 22px 40px;}
-  .dashHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
-  .dashHead h2{font-size:18px;color:var(--navy);margin:0;}
-  .statGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
-  .statCard{background:var(--teal-light);border-radius:10px;padding:14px;text-align:center;}
-  .statCard .num{font-size:24px;font-weight:700;color:var(--navy);}
-  .statCard .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
-  .alertBox{background:#fdecea;border:1px solid #f5c6c1;border-radius:10px;padding:12px 14px;margin-bottom:18px;}
-  .alertBox h3{margin:0 0 8px;font-size:13px;color:var(--danger);}
-  .alertItem{font-size:12.5px;padding:6px 0;border-top:1px solid #f6d8d5;color:#7a2c22;}
-  .alertItem:first-of-type{border-top:none;}
-  .domainRow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f0f1f3;font-size:13px;}
-  .barOuter{flex:1;height:8px;background:#eef0f2;border-radius:4px;margin:0 10px;overflow:hidden;}
-  .barInner{height:100%;background:var(--teal);}
-  .respList{margin-top:24px;}
-  .respCard{border:1px solid #eef0f2;border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:12.5px;}
-  .respCard .meta{color:var(--muted);font-size:11px;margin-bottom:6px;}
-  .respCard .comment{margin-top:6px;font-style:italic;color:#333;}
-  .pinGate{padding:60px 28px;text-align:center;}
-  .pinGate input{width:140px;text-align:center;font-size:20px;letter-spacing:6px;margin:14px 0;}
-  .pinGate button{padding:10px 24px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:14px;cursor:pointer;}
-  .err{color:var(--danger);font-size:12px;}
-  .qrSection{text-align:center;padding:24px;border-top:1px solid #eef0f2;margin-top:10px;}
-  .qrSection canvas{margin:10px auto;}
-  .linkBox{font-size:11px;word-break:break-all;background:#f3f4f6;padding:8px;border-radius:6px;color:var(--muted);}
   .hidden{display:none !important;}
 </style>
 </head>
@@ -81,13 +54,16 @@
 // Paste your deployed Apps Script Web App URL here (ends in /exec).
 // See icu_feedback_appsscript.gs.txt for setup instructions.
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzkS7J1_RN5mjkJL7U9TpAL74OI53vmgh9rkqj3pnp9goS0xqlbXnpE3cYASi-QaVO/exec";
+// Paste your GEM Hospital Google "Write a review" link here.
+// Get it from: Google Maps → search "GEM Hospital Coimbatore" →
+// click "Write a review" → copy the URL from the address bar.
+const GOOGLE_REVIEW_URL = "https://www.google.com/maps?cid=17425011880172536908";
 // =====================
 
 const T = {
   en: {
     title: "GEM ICU — Your Feedback Matters",
     subtitle: "A few quick questions about your loved one's ICU stay. Takes ~2 minutes.",
-    staffLink: "Staff dashboard",
     nameLabel: "Patient's name (optional — helps us follow up personally)",
     namePlaceholder: "e.g. Mr. Ramasamy (bed 4)",
     questions: [
@@ -107,12 +83,14 @@ const T = {
     thankYouBody: "Your feedback helps us care better for every family that comes through our ICU. We are grateful you took the time to share this with us.",
     gemNote: "— Team GEM ICU",
     scaleLow: "Poor", scaleHigh: "Excellent",
-    ynYes: "Yes", ynNo: "No"
+    ynYes: "Yes", ynNo: "No",
+    reviewPrompt: "We're glad your family's experience was a good one. If you have a moment, sharing it on Google could help another family find their way to the right care, just like you found yours.",
+    reviewBtn: "Share on Google",
+    reviewSkip: "Maybe later"
   },
   ta: {
     title: "GEM ICU — உங்கள் கருத்து முக்கியம்",
     subtitle: "உங்கள் நோயாளியின் ICU தங்குவாசம் குறித்த சில கேள்விகள். சுமார் 2 நிமிடங்கள் ஆகும்.",
-    staffLink: "Staff dashboard",
     nameLabel: "நோயாளியின் பெயர் (விருப்பத் தேர்வு — தனிப்பட்ட பின்தொடர்வுக்கு உதவும்)",
     namePlaceholder: "எ.கா. திரு. ராமசாமி (படுக்கை 4)",
     questions: [
@@ -132,55 +110,21 @@ const T = {
     thankYouBody: "உங்கள் கருத்து, ICU வழியாக வரும் ஒவ்வொரு குடும்பத்தையும் சிறப்பாக கவனிக்க உதவுகிறது. நேரம் ஒதுக்கி பகிர்ந்ததற்கு நன்றி.",
     gemNote: "— GEM ICU குழு",
     scaleLow: "மோசம்", scaleHigh: "சிறப்பு",
-    ynYes: "ஆம்", ynNo: "இல்லை"
+    ynYes: "ஆம்", ynNo: "இல்லை",
+    reviewPrompt: "உங்கள் குடும்பத்தின் அனுபவம் நல்லதாக இருந்ததில் நாங்கள் மகிழ்ச்சியடைகிறோம். நேரம் இருந்தால், இதை Google-இல் பகிர்வது மற்றொரு குடும்பம் சரியான கவனிப்பை கண்டறிய உதவலாம்.",
+    reviewBtn: "Google-இல் பகிரவும்",
+    reviewSkip: "பின்னர்"
   }
 };
 
 let lang = "en";
 let answers = {};
-let view = "form"; // form | thankyou | pingate | dashboard
-let seenAlertIds = new Set();
-let dashPollTimer = null;
-let dashInitialized = false;
-
-function playAlertSound(){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
-    o.frequency.value = 880;
-    g.gain.setValueAtTime(0.18, ctx.currentTime);
-    o.start();
-    o.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-    o.stop(ctx.currentTime + 0.5);
-  }catch(e){}
-}
-
-function fireBrowserNotification(text){
-  if("Notification" in window && Notification.permission === "granted"){
-    try{ new Notification("GEM ICU — Low Score Alert", { body: text, icon: "" }); }catch(e){}
-  }
-}
+let view = "form"; // form | thankyou
 
 function render(){
   const app = document.getElementById("app");
   if(view === "form") app.innerHTML = renderForm();
   else if(view === "thankyou") app.innerHTML = renderThankYou();
-  else if(view === "pingate") app.innerHTML = renderPinGate();
-  else if(view === "dashboard") {
-    app.innerHTML = renderDashboardShell();
-    if("Notification" in window && Notification.permission === "default"){
-      Notification.requestPermission();
-    }
-    loadDashboard();
-    if(!dashPollTimer){
-      dashPollTimer = setInterval(loadDashboard, 30000);
-    }
-  } else {
-    if(dashPollTimer){ clearInterval(dashPollTimer); dashPollTimer = null; }
-  }
   attachHandlers();
 }
 
@@ -232,7 +176,6 @@ function renderForm(){
         <button data-lang="ta" class="${lang==='ta'?'active':''}">தமிழ்</button>
       </div>
     </header>
-    <div class="topnav"><a id="staffLinkBtn">${t.staffLink} →</a></div>
     <div class="progress"><div style="width:${pct}%"></div></div>
     <main>
       <div class="q">
@@ -247,6 +190,8 @@ function renderForm(){
 
 function renderThankYou(){
   const t = T[lang];
+  const overallScore = Number(answers.overall);
+  const showReview = overallScore >= 4 && GOOGLE_REVIEW_URL.indexOf("PASTE_YOUR") !== 0;
   return `
     <header>
       <h1>${T[lang].title.split('—')[0]}</h1>
@@ -256,160 +201,19 @@ function renderThankYou(){
       <h2>${t.thankYouTitle}</h2>
       <p>${t.thankYouBody}</p>
       <div class="gemstamp">${t.gemNote}</div>
+      ${showReview ? `
+        <div style="margin-top:36px;padding-top:28px;border-top:1px solid #eef0f2;text-align:left;">
+          <p style="font-size:13px;color:var(--muted);line-height:1.6;text-align:center;">${t.reviewPrompt}</p>
+          <div style="display:flex;gap:10px;margin-top:16px;">
+            <a href="${GOOGLE_REVIEW_URL}" target="_blank" rel="noopener" style="flex:2;text-decoration:none;">
+              <button style="width:100%;padding:13px;border:none;border-radius:10px;background:var(--teal);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">${t.reviewBtn}</button>
+            </a>
+            <button id="skipReview" style="flex:1;padding:13px;border:1.5px solid #e2e6ea;border-radius:10px;background:#fff;color:var(--muted);font-size:13px;cursor:pointer;">${t.reviewSkip}</button>
+          </div>
+        </div>
+      ` : ""}
     </div>
   `;
-}
-
-function renderPinGate(){
-  return `
-    <header><h1>Staff Dashboard</h1><p>Enter PIN to view feedback analytics</p></header>
-    <div class="pinGate">
-      <input type="text" id="pinInput" inputmode="numeric" placeholder="••••">
-      <div id="pinErr" class="err"></div><br>
-      <button id="pinSubmit">Enter</button>
-      <div style="margin-top:30px;"><a id="backToForm" style="color:var(--muted);font-size:12px;cursor:pointer;">← Back to feedback form</a></div>
-    </div>
-  `;
-}
-
-function renderDashboardShell(){
-  return `
-    <header><h1>GEM ICU — Feedback Dashboard</h1><p>Live trends from patient/surrogate feedback</p></header>
-    <div class="dash" id="dashContent"><p style="text-align:center;color:var(--muted);">Loading…</p></div>
-  `;
-}
-
-async function loadDashboard(){
-  const dash = document.getElementById("dashContent");
-
-  if(SCRIPT_URL.indexOf("PASTE_YOUR") === 0){
-    dash.innerHTML = `<div style="background:#fdecea;border:1px solid #f5c6c1;color:#7a2c22;padding:14px;border-radius:10px;font-size:12.5px;">
-      <strong>Setup incomplete.</strong><br>SCRIPT_URL is not configured in this file. See icu_feedback_appsscript.gs.txt for setup steps, then paste the deployed Web App URL into the SCRIPT_URL constant near the top of this file's script.
-    </div>`;
-    return;
-  }
-
-  let entries = [];
-  let fetchErr = null;
-  try {
-    const resp = await fetch(SCRIPT_URL, { method: "GET" });
-    const json = await resp.json();
-    if(json && json.success){
-      entries = json.entries || [];
-    } else {
-      fetchErr = (json && json.error) ? json.error : "Unknown server error";
-    }
-  } catch(e){
-    fetchErr = e && e.message ? e.message : String(e);
-  }
-
-  if(fetchErr){
-    dash.innerHTML = `<div style="background:#fdecea;border:1px solid #f5c6c1;color:#7a2c22;padding:14px;border-radius:10px;font-size:12.5px;">
-      <strong>Couldn't load feedback list.</strong><br>Error: ${escapeHtml(fetchErr)}
-    </div>
-    <div style="text-align:center;margin-top:20px;"><a id="backToForm2" style="color:var(--teal);cursor:pointer;font-size:13px;">← Back to feedback form</a></div>`;
-    bindBackToForm2();
-    return;
-  }
-
-  // normalize numeric fields (Sheets may return strings or numbers)
-  entries = entries.map(e=>{
-    const out = {...e};
-    ["environment","comm_doctor","comm_nurse","staff_courtesy","pain_comfort","info_updates","overall","ts"].forEach(k=>{
-      if(out[k] !== "" && out[k] !== undefined && out[k] !== null){
-        const n = Number(out[k]);
-        if(!isNaN(n)) out[k] = n;
-      }
-    });
-    out._name = out.name || "";
-    return out;
-  });
-
-  if(!entries || entries.length===0){
-    dash.innerHTML = `<p style="text-align:center;color:var(--muted);padding:40px 0;">No feedback submitted yet.</p>
-      <div style="text-align:center;"><a id="backToForm2" style="color:var(--teal);cursor:pointer;font-size:13px;">← Back to form</a></div>`;
-    bindBackToForm2();
-    return;
-  }
-  entries.sort((a,b)=> (b.ts||0)-(a.ts||0));
-
-  const domainKeys = ["environment","comm_doctor","comm_nurse","staff_courtesy","pain_comfort","info_updates","overall"];
-  const domainLabels = {
-    environment:"Environment", comm_doctor:"Doctor Communication", comm_nurse:"Nurse Communication",
-    staff_courtesy:"Staff Courtesy", pain_comfort:"Pain/Comfort", info_updates:"Timely Updates", overall:"Overall Experience"
-  };
-  let avgs = {};
-  domainKeys.forEach(k=>{
-    const vals = entries.map(e=>e[k]).filter(v=>typeof v==="number");
-    avgs[k] = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : null;
-  });
-  const overallVals = entries.map(e=>e.overall).filter(v=>typeof v==="number");
-  const overallAvg = overallVals.length ? (overallVals.reduce((a,b)=>a+b,0)/overallVals.length).toFixed(1) : "—";
-  const involvedYes = entries.filter(e=>e.family_involve==="yes").length;
-  const involvedPct = entries.length ? Math.round((involvedYes/entries.length)*100) : 0;
-
-  // Low score alerts: any domain score <=2
-  let alerts = [];
-  let newLowScoreFound = false;
-  entries.forEach(e=>{
-    domainKeys.forEach(k=>{
-      if(typeof e[k]==="number" && e[k]<=2){
-        const alertId = (e.ts||0) + "_" + k;
-        alerts.push(`${e._name? e._name : "Anonymous"} — low score (${e[k]}/5) on ${domainLabels[k]}${e.improve?`: "${e.improve}"`:""}`);
-        if(!seenAlertIds.has(alertId)){
-          seenAlertIds.add(alertId);
-          if(dashInitialized) newLowScoreFound = true;
-        }
-      }
-    });
-  });
-  dashInitialized = true;
-  if(newLowScoreFound){
-    playAlertSound();
-    fireBrowserNotification("A new feedback response scored 2/5 or lower on a care domain. Check the dashboard.");
-  }
-
-  const domainRows = domainKeys.map(k=>{
-    const v = avgs[k];
-    const pct = v ? (v/5*100) : 0;
-    return `<div class="domainRow">
-      <span style="min-width:140px;">${domainLabels[k]}</span>
-      <div class="barOuter"><div class="barInner" style="width:${pct}%"></div></div>
-      <span style="font-weight:600;color:var(--navy);">${v? v.toFixed(1):'—'}</span>
-    </div>`;
-  }).join("");
-
-  const respCards = entries.slice(0,15).map(e=>{
-    const date = e.ts ? new Date(e.ts).toLocaleDateString() : "";
-    return `<div class="respCard">
-      <div class="meta">${e._name||'Anonymous'} · ${date} · Overall: ${e.overall||'—'}/5</div>
-      ${e.best_part?`<div class="comment">👍 ${escapeHtml(e.best_part)}</div>`:""}
-      ${e.improve?`<div class="comment">💬 ${escapeHtml(e.improve)}</div>`:""}
-    </div>`;
-  }).join("");
-
-  dash.innerHTML = `
-    <div class="statGrid">
-      <div class="statCard"><div class="num">${entries.length}</div><div class="lbl">Total responses</div></div>
-      <div class="statCard"><div class="num">${overallAvg}</div><div class="lbl">Avg overall (out of 5)</div></div>
-      <div class="statCard"><div class="num">${involvedPct}%</div><div class="lbl">Felt involved in decisions</div></div>
-      <div class="statCard"><div class="num">${alerts.length}</div><div class="lbl">Low-score alerts</div></div>
-    </div>
-    ${alerts.length? `<div class="alertBox"><h3>⚠ Needs attention</h3>${alerts.slice(0,8).map(a=>`<div class="alertItem">${escapeHtml(a)}</div>`).join("")}</div>` : ""}
-    <h3 style="font-size:14px;color:var(--navy);margin-bottom:4px;">Domain averages</h3>
-    ${domainRows}
-    <div class="respList">
-      <h3 style="font-size:14px;color:var(--navy);">Recent comments</h3>
-      ${respCards || '<p style="color:var(--muted);font-size:13px;">No comments yet.</p>'}
-    </div>
-    <div style="text-align:center;margin-top:20px;"><a id="backToForm2" style="color:var(--teal);cursor:pointer;font-size:13px;">← Back to feedback form</a></div>
-  `;
-  bindBackToForm2();
-}
-
-function bindBackToForm2(){
-  const back2 = document.getElementById("backToForm2");
-  if(back2) back2.onclick = ()=>{ view="form"; render(); };
 }
 
 function escapeHtml(s){
@@ -423,22 +227,11 @@ function attachHandlers(){
   document.querySelectorAll("[data-lang]").forEach(b=>{
     b.onclick = ()=>{ lang = b.dataset.lang; render(); };
   });
-  // staff link
-  const sl = document.getElementById("staffLinkBtn");
-  if(sl) sl.onclick = ()=>{ view="pingate"; render(); };
-  const back = document.getElementById("backToForm");
-  if(back) back.onclick = ()=>{ view="form"; render(); };
-  const back2 = document.getElementById("backToForm2");
-  if(back2) back2.onclick = ()=>{ view="form"; render(); };
-
-  // pin gate
-  const pinSubmit = document.getElementById("pinSubmit");
-  if(pinSubmit) pinSubmit.onclick = ()=>{
-    const val = document.getElementById("pinInput").value.trim();
-    if(val === "1947"){ view="dashboard"; render(); }
-    else { document.getElementById("pinErr").innerText = "Incorrect PIN"; }
+  // skip review button (just visually acknowledges the dismissal)
+  const skipBtn = document.getElementById("skipReview");
+  if(skipBtn) skipBtn.onclick = ()=>{
+    skipBtn.closest("div").parentElement.style.display = "none";
   };
-
   // name field
   const nameInput = document.getElementById("patientName");
   if(nameInput) nameInput.oninput = (e)=>{ answers._name = e.target.value; };

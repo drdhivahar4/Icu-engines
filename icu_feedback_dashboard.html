@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEM ICU — Feedback Dashboard (Staff Only)</title>
+<style>
+  :root{
+    --navy:#0b2545; --teal:#0f7a72; --teal-light:#e6f5f3; --gold:#c9a45c;
+    --bg:#f7f8fa; --card:#ffffff; --text:#1c2733; --muted:#6b7785; --danger:#c0392b;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);}
+  .wrap{max-width:640px;margin:0 auto;min-height:100vh;background:var(--card);box-shadow:0 0 24px rgba(0,0,0,0.05);}
+  header{background:linear-gradient(135deg,var(--navy),#123a66);color:#fff;padding:28px 24px 22px;}
+  header h1{margin:0 0 4px;font-size:20px;}
+  header p{margin:0;font-size:13px;opacity:0.85;}
+  .dash{padding:20px 22px 40px;}
+  .statGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+  .statCard{background:var(--teal-light);border-radius:10px;padding:14px;text-align:center;}
+  .statCard .num{font-size:24px;font-weight:700;color:var(--navy);}
+  .statCard .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+  .alertBox{background:#fdecea;border:1px solid #f5c6c1;border-radius:10px;padding:12px 14px;margin-bottom:18px;}
+  .alertBox h3{margin:0 0 8px;font-size:13px;color:var(--danger);}
+  .alertItem{font-size:12.5px;padding:6px 0;border-top:1px solid #f6d8d5;color:#7a2c22;}
+  .alertItem:first-of-type{border-top:none;}
+  .domainRow{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f0f1f3;font-size:13px;}
+  .barOuter{flex:1;height:8px;background:#eef0f2;border-radius:4px;margin:0 10px;overflow:hidden;}
+  .barInner{height:100%;background:var(--teal);}
+  .respList{margin-top:24px;}
+  .respCard{border:1px solid #eef0f2;border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:12.5px;}
+  .respCard .meta{color:var(--muted);font-size:11px;margin-bottom:6px;}
+  .respCard .comment{margin-top:6px;font-style:italic;color:#333;}
+  .pinGate{padding:60px 28px;text-align:center;}
+  .pinGate input{width:140px;text-align:center;font-size:20px;letter-spacing:6px;margin:14px 0;}
+  .pinGate button{padding:10px 24px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:14px;cursor:pointer;}
+  .err{color:var(--danger);font-size:12px;}
+  .refreshNote{font-size:11px;color:var(--muted);text-align:center;margin-top:16px;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+// ====== CONFIG ======
+// Must match the SCRIPT_URL used in icu_feedback.html — same backend,
+// same Google Sheet, so both files stay in sync.
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzkS7J1_RN5mjkJL7U9TpAL74OI53vmgh9rkqj3pnp9goS0xqlbXnpE3cYASi-QaVO/exec";
+// Change this PIN before sharing this dashboard link with anyone.
+const PIN = "1947";
+// =====================
+
+let view = "pingate";
+let seenAlertIds = new Set();
+let dashInitialized = false;
+let dashPollTimer = null;
+
+function playAlertSound(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.18, ctx.currentTime);
+    o.start();
+    o.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    o.stop(ctx.currentTime + 0.5);
+  }catch(e){}
+}
+function fireBrowserNotification(text){
+  if("Notification" in window && Notification.permission === "granted"){
+    try{ new Notification("GEM ICU — Low Score Alert", { body: text }); }catch(e){}
+  }
+}
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.innerText = s;
+  return d.innerHTML;
+}
+
+function render(){
+  const app = document.getElementById("app");
+  if(view === "pingate"){
+    app.innerHTML = `
+      <header><h1>GEM ICU — Staff Dashboard</h1><p>Enter PIN to view feedback analytics</p></header>
+      <div class="pinGate">
+        <input type="text" id="pinInput" inputmode="numeric" placeholder="••••">
+        <div id="pinErr" class="err"></div><br>
+        <button id="pinSubmit">Enter</button>
+      </div>
+    `;
+    document.getElementById("pinSubmit").onclick = ()=>{
+      const val = document.getElementById("pinInput").value.trim();
+      if(val === PIN){ view="dashboard"; render(); }
+      else { document.getElementById("pinErr").innerText = "Incorrect PIN"; }
+    };
+    document.getElementById("pinInput").addEventListener("keypress", (e)=>{
+      if(e.key === "Enter") document.getElementById("pinSubmit").click();
+    });
+  } else if(view === "dashboard"){
+    app.innerHTML = `
+      <header><h1>GEM ICU — Feedback Dashboard</h1><p>Live trends from patient/surrogate feedback</p></header>
+      <div class="dash" id="dashContent"><p style="text-align:center;color:var(--muted);">Loading…</p></div>
+    `;
+    if("Notification" in window && Notification.permission === "default"){
+      Notification.requestPermission();
+    }
+    loadDashboard();
+    if(!dashPollTimer){
+      dashPollTimer = setInterval(loadDashboard, 30000);
+    }
+  }
+}
+
+async function loadDashboard(){
+  const dash = document.getElementById("dashContent");
+  if(!dash) return;
+
+  if(SCRIPT_URL.indexOf("PASTE_YOUR") === 0){
+    dash.innerHTML = `<div style="background:#fdecea;border:1px solid #f5c6c1;color:#7a2c22;padding:14px;border-radius:10px;font-size:12.5px;">
+      <strong>Setup incomplete.</strong><br>SCRIPT_URL is not configured in this file.
+    </div>`;
+    return;
+  }
+
+  let entries = [];
+  let fetchErr = null;
+  try {
+    const resp = await fetch(SCRIPT_URL, { method: "GET" });
+    const json = await resp.json();
+    if(json && json.success){
+      entries = json.entries || [];
+    } else {
+      fetchErr = (json && json.error) ? json.error : "Unknown server error";
+    }
+  } catch(e){
+    fetchErr = e && e.message ? e.message : String(e);
+  }
+
+  if(fetchErr){
+    dash.innerHTML = `<div style="background:#fdecea;border:1px solid #f5c6c1;color:#7a2c22;padding:14px;border-radius:10px;font-size:12.5px;">
+      <strong>Couldn't load feedback list.</strong><br>Error: ${escapeHtml(fetchErr)}
+    </div>`;
+    return;
+  }
+
+  // normalize numeric fields (Sheets may return strings or numbers)
+  entries = entries.map(e=>{
+    const out = {...e};
+    ["environment","comm_doctor","comm_nurse","staff_courtesy","pain_comfort","info_updates","overall","ts"].forEach(k=>{
+      if(out[k] !== "" && out[k] !== undefined && out[k] !== null){
+        const n = Number(out[k]);
+        if(!isNaN(n)) out[k] = n;
+      }
+    });
+    out._name = out.name || "";
+    return out;
+  });
+
+  if(!entries || entries.length===0){
+    dash.innerHTML = `<p style="text-align:center;color:var(--muted);padding:40px 0;">No feedback submitted yet.</p>`;
+    return;
+  }
+
+  entries.sort((a,b)=> (b.ts||0)-(a.ts||0));
+
+  const domainKeys = ["environment","comm_doctor","comm_nurse","staff_courtesy","pain_comfort","info_updates","overall"];
+  const domainLabels = {
+    environment:"Environment", comm_doctor:"Doctor Communication", comm_nurse:"Nurse Communication",
+    staff_courtesy:"Staff Courtesy", pain_comfort:"Pain/Comfort", info_updates:"Timely Updates", overall:"Overall Experience"
+  };
+  let avgs = {};
+  domainKeys.forEach(k=>{
+    const vals = entries.map(e=>e[k]).filter(v=>typeof v==="number");
+    avgs[k] = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length) : null;
+  });
+  const overallVals = entries.map(e=>e.overall).filter(v=>typeof v==="number");
+  const overallAvg = overallVals.length ? (overallVals.reduce((a,b)=>a+b,0)/overallVals.length).toFixed(1) : "—";
+  const involvedYes = entries.filter(e=>e.family_involve==="yes").length;
+  const involvedPct = entries.length ? Math.round((involvedYes/entries.length)*100) : 0;
+
+  let alerts = [];
+  let newLowScoreFound = false;
+  entries.forEach(e=>{
+    domainKeys.forEach(k=>{
+      if(typeof e[k]==="number" && e[k]<=2){
+        const alertId = (e.ts||0) + "_" + k;
+        alerts.push(`${e._name? e._name : "Anonymous"} — low score (${e[k]}/5) on ${domainLabels[k]}${e.improve?`: "${e.improve}"`:""}`);
+        if(!seenAlertIds.has(alertId)){
+          seenAlertIds.add(alertId);
+          if(dashInitialized) newLowScoreFound = true;
+        }
+      }
+    });
+  });
+  dashInitialized = true;
+  if(newLowScoreFound){
+    playAlertSound();
+    fireBrowserNotification("A new feedback response scored 2/5 or lower on a care domain. Check the dashboard.");
+  }
+
+  const domainRows = domainKeys.map(k=>{
+    const v = avgs[k];
+    const pct = v ? (v/5*100) : 0;
+    return `<div class="domainRow">
+      <span style="min-width:140px;">${domainLabels[k]}</span>
+      <div class="barOuter"><div class="barInner" style="width:${pct}%"></div></div>
+      <span style="font-weight:600;color:var(--navy);">${v? v.toFixed(1):'—'}</span>
+    </div>`;
+  }).join("");
+
+  const respCards = entries.slice(0,20).map(e=>{
+    const date = e.ts ? new Date(e.ts).toLocaleString() : "";
+    return `<div class="respCard">
+      <div class="meta">${e._name||'Anonymous'} · ${date} · Overall: ${e.overall||'—'}/5</div>
+      ${e.best_part?`<div class="comment">👍 ${escapeHtml(e.best_part)}</div>`:""}
+      ${e.improve?`<div class="comment">💬 ${escapeHtml(e.improve)}</div>`:""}
+    </div>`;
+  }).join("");
+
+  dash.innerHTML = `
+    <div class="statGrid">
+      <div class="statCard"><div class="num">${entries.length}</div><div class="lbl">Total responses</div></div>
+      <div class="statCard"><div class="num">${overallAvg}</div><div class="lbl">Avg overall (out of 5)</div></div>
+      <div class="statCard"><div class="num">${involvedPct}%</div><div class="lbl">Felt involved in decisions</div></div>
+      <div class="statCard"><div class="num">${alerts.length}</div><div class="lbl">Low-score alerts</div></div>
+    </div>
+    ${alerts.length? `<div class="alertBox"><h3>⚠ Needs attention</h3>${alerts.slice(0,10).map(a=>`<div class="alertItem">${escapeHtml(a)}</div>`).join("")}</div>` : ""}
+    <h3 style="font-size:14px;color:var(--navy);margin-bottom:4px;">Domain averages</h3>
+    ${domainRows}
+    <div class="respList">
+      <h3 style="font-size:14px;color:var(--navy);">Recent responses</h3>
+      ${respCards || '<p style="color:var(--muted);font-size:13px;">No comments yet.</p>'}
+    </div>
+    <div class="refreshNote">Auto-refreshes every 30s while this tab is open.</div>
+  `;
+}
+
+render();
+</script>
+</body>
+</html>
