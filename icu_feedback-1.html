@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEM ICU Care Feedback</title>
+<style>
+  :root{
+    --navy:#0b2545; --teal:#0f7a72; --teal-light:#e6f5f3; --gold:#c9a45c;
+    --bg:#f7f8fa; --card:#ffffff; --text:#1c2733; --muted:#6b7785; --danger:#c0392b; --good:#1e8a5f;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);}
+  .wrap{max-width:560px;margin:0 auto;min-height:100vh;background:var(--card);box-shadow:0 0 24px rgba(0,0,0,0.05);}
+  header{background:linear-gradient(135deg,var(--navy),#123a66);color:#fff;padding:28px 24px 22px;}
+  header h1{margin:0 0 4px;font-size:20px;letter-spacing:0.3px;}
+  header p{margin:0;font-size:13px;opacity:0.85;}
+  .langToggle{display:flex;gap:8px;margin-top:14px;}
+  .langToggle button{flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.4);background:rgba(255,255,255,0.08);color:#fff;font-size:13px;cursor:pointer;}
+  .langToggle button.active{background:#fff;color:var(--navy);font-weight:600;border-color:#fff;}
+  .topnav{display:flex;justify-content:flex-end;padding:10px 24px 0;font-size:12px;}
+  .topnav a{color:var(--muted);text-decoration:none;cursor:pointer;}
+  main{padding:20px 24px 40px;}
+  .q{margin-bottom:26px;}
+  .q label{display:block;font-size:15px;font-weight:600;margin-bottom:10px;line-height:1.4;}
+  .q .sub{font-size:12px;color:var(--muted);margin-top:-6px;margin-bottom:10px;}
+  .scale{display:flex;gap:8px;justify-content:space-between;}
+  .scale button{flex:1;aspect-ratio:1;border-radius:12px;border:2px solid #e2e6ea;background:#fafbfc;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+  .scale button.sel{border-color:var(--teal);background:var(--teal-light);transform:scale(1.05);}
+  .scaleLabels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px;}
+  textarea,input[type=text]{width:100%;padding:12px;border-radius:10px;border:1.5px solid #e2e6ea;font-size:14px;font-family:inherit;resize:vertical;}
+  textarea{min-height:70px;}
+  .yn{display:flex;gap:10px;}
+  .yn button{flex:1;padding:12px;border-radius:10px;border:2px solid #e2e6ea;background:#fafbfc;font-size:14px;cursor:pointer;}
+  .yn button.sel{border-color:var(--teal);background:var(--teal-light);font-weight:600;color:var(--teal);}
+  .submitBtn{width:100%;padding:16px;border:none;border-radius:12px;background:var(--teal);color:#fff;font-size:16px;font-weight:600;cursor:pointer;margin-top:10px;}
+  .submitBtn:disabled{background:#b9c2c9;}
+  .progress{height:4px;background:#eef0f2;border-radius:2px;overflow:hidden;margin:14px 24px 0;}
+  .progress div{height:100%;background:var(--teal);transition:width .3s;}
+  .thankyou{padding:60px 28px;text-align:center;}
+  .thankyou .icon{font-size:54px;margin-bottom:14px;}
+  .thankyou h2{color:var(--navy);margin-bottom:8px;}
+  .thankyou p{color:var(--muted);font-size:14px;line-height:1.6;}
+  .gemstamp{margin-top:30px;font-size:11px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;font-weight:600;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// ====== CONFIG ======
+// Paste your deployed Apps Script Web App URL here (ends in /exec).
+// See icu_feedback_appsscript.gs.txt for setup instructions.
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzkS7J1_RN5mjkJL7U9TpAL74OI53vmgh9rkqj3pnp9goS0xqlbXnpE3cYASi-QaVO/exec";
+// Paste your GEM Hospital Google "Write a review" link here.
+// Get it from: Google Maps → search "GEM Hospital Coimbatore" →
+// click "Write a review" → copy the URL from the address bar.
+const GOOGLE_REVIEW_URL = "https://www.google.com/maps?cid=17425011880172536908";
+// =====================
+
+const T = {
+  en: {
+    title: "GEM ICU — Your Feedback Matters",
+    subtitle: "A few quick questions about your loved one's ICU stay. Takes ~2 minutes.",
+    nameLabel: "Patient's name (optional — helps us follow up personally)",
+    namePlaceholder: "e.g. Mr. Ramasamy (bed 4)",
+    questions: [
+      {key:"environment", type:"scale", label:"How would you rate the ICU environment (noise, lighting, cleanliness)?", sub:"1 = Very poor, 5 = Excellent"},
+      {key:"comm_doctor", type:"scale", label:"How clearly did doctors explain the condition and treatment plan?", sub:"1 = Not clear at all, 5 = Very clear"},
+      {key:"comm_nurse", type:"scale", label:"How would you rate communication and updates from the nursing staff?", sub:"1 = Poor, 5 = Excellent"},
+      {key:"staff_courtesy", type:"scale", label:"How respectful and compassionate was the staff towards you and your patient?", sub:"1 = Poor, 5 = Excellent"},
+      {key:"pain_comfort", type:"scale", label:"How well was your patient's pain/comfort managed?", sub:"1 = Poorly managed, 5 = Very well managed"},
+      {key:"info_updates", type:"scale", label:"Did you receive timely updates about changes in condition?", sub:"1 = Rarely, 5 = Always"},
+      {key:"family_involve", type:"yn", label:"Did you feel involved in decisions about your patient's care?"},
+      {key:"overall", type:"scale", label:"Overall, how would you rate your experience with GEM ICU?", sub:"1 = Very poor, 5 = Excellent"},
+      {key:"best_part", type:"text", label:"What stood out as the best part of the care you received?", optional:true},
+      {key:"improve", type:"text", label:"Is there anything we could have done better?", optional:true}
+    ],
+    submit: "Submit Feedback",
+    thankYouTitle: "Thank You",
+    thankYouBody: "Your feedback helps us care better for every family that comes through our ICU. We are grateful you took the time to share this with us.",
+    gemNote: "— Team GEM ICU",
+    scaleLow: "Poor", scaleHigh: "Excellent",
+    ynYes: "Yes", ynNo: "No",
+    reviewPrompt: "We're glad your family's experience was a good one. If you have a moment, sharing it on Google could help another family find their way to the right care, just like you found yours.",
+    qrCaption: "Please scan this with your own phone's camera to leave the review from your own Google account.",
+    reviewBtn: "Open link on this phone instead",
+    reviewSkip: "Maybe later"
+  },
+  ta: {
+    title: "GEM ICU — உங்கள் கருத்து முக்கியம்",
+    subtitle: "உங்கள் நோயாளியின் ICU தங்குவாசம் குறித்த சில கேள்விகள். சுமார் 2 நிமிடங்கள் ஆகும்.",
+    nameLabel: "நோயாளியின் பெயர் (விருப்பத் தேர்வு — தனிப்பட்ட பின்தொடர்வுக்கு உதவும்)",
+    namePlaceholder: "எ.கா. திரு. ராமசாமி (படுக்கை 4)",
+    questions: [
+      {key:"environment", type:"scale", label:"ICU சூழல் (சத்தம், ஒளி, சுத்தம்) எப்படி இருந்தது?", sub:"1 = மிகவும் மோசம், 5 = மிகச் சிறப்பு"},
+      {key:"comm_doctor", type:"scale", label:"மருத்துவர்கள் நிலை மற்றும் சிகிச்சை திட்டத்தை எவ்வளவு தெளிவாக விளக்கினர்?", sub:"1 = தெளிவாக இல்லை, 5 = மிகவும் தெளிவாக"},
+      {key:"comm_nurse", type:"scale", label:"செவிலியர் தொடர்பு மற்றும் தகவல் பகிர்வு எப்படி இருந்தது?", sub:"1 = மோசம், 5 = மிகச் சிறப்பு"},
+      {key:"staff_courtesy", type:"scale", label:"உங்கள் மீதும் நோயாளி மீதும் ஊழியர்களின் மரியாதை/அக்கறை எப்படி இருந்தது?", sub:"1 = மோசம், 5 = மிகச் சிறப்பு"},
+      {key:"pain_comfort", type:"scale", label:"நோயாளியின் வலி/சௌகரியம் எவ்வளவு நன்றாக கவனிக்கப்பட்டது?", sub:"1 = சரியாக இல்லை, 5 = மிகவும் நன்றாக"},
+      {key:"info_updates", type:"scale", label:"நிலை மாற்றங்கள் குறித்து சரியான நேரத்தில் தகவல் கிடைத்ததா?", sub:"1 = அரிதாக, 5 = எப்போதும்"},
+      {key:"family_involve", type:"yn", label:"நோயாளியின் சிகிச்சை முடிவுகளில் நீங்களும் பங்கேற்றதாக உணர்ந்தீர்களா?"},
+      {key:"overall", type:"scale", label:"மொத்தத்தில், GEM ICU அனுபவத்தை எப்படி மதிப்பிடுவீர்கள்?", sub:"1 = மிகவும் மோசம், 5 = மிகச் சிறப்பு"},
+      {key:"best_part", type:"text", label:"நீங்கள் பெற்ற கவனிப்பில் சிறப்பாக இருந்தது என்ன?", optional:true},
+      {key:"improve", type:"text", label:"நாங்கள் இன்னும் சிறப்பாக செய்திருக்க வேண்டியது ஏதேனும் உள்ளதா?", optional:true}
+    ],
+    submit: "கருத்தை சமர்ப்பிக்கவும்",
+    thankYouTitle: "நன்றி",
+    thankYouBody: "உங்கள் கருத்து, ICU வழியாக வரும் ஒவ்வொரு குடும்பத்தையும் சிறப்பாக கவனிக்க உதவுகிறது. நேரம் ஒதுக்கி பகிர்ந்ததற்கு நன்றி.",
+    gemNote: "— GEM ICU குழு",
+    scaleLow: "மோசம்", scaleHigh: "சிறப்பு",
+    ynYes: "ஆம்", ynNo: "இல்லை",
+    reviewPrompt: "உங்கள் குடும்பத்தின் அனுபவம் நல்லதாக இருந்ததில் நாங்கள் மகிழ்ச்சியடைகிறோம். நேரம் இருந்தால், இதை Google-இல் பகிர்வது மற்றொரு குடும்பம் சரியான கவனிப்பை கண்டறிய உதவலாம்.",
+    qrCaption: "தயவுசெய்து உங்கள் சொந்த கைபேசியின் கேமராவைக் கொண்டு இதை ஸ்கேன் செய்து, உங்கள் சொந்த Google கணக்கிலிருந்து விமர்சனத்தை பகிரவும்.",
+    reviewBtn: "இந்த கைபேசியிலேயே இணைப்பைத் திற",
+    reviewSkip: "பின்னர்"
+  }
+};
+
+let lang = "en";
+let answers = {};
+let view = "form"; // form | thankyou
+
+function render(){
+  const app = document.getElementById("app");
+  if(view === "form") app.innerHTML = renderForm();
+  else if(view === "thankyou") app.innerHTML = renderThankYou();
+  attachHandlers();
+}
+
+function renderForm(){
+  const t = T[lang];
+  const answeredCount = Object.keys(answers).filter(k=>answers[k]!==undefined && answers[k]!=="").length;
+  const totalReq = t.questions.filter(q=>!q.optional).length;
+  const pct = Math.min(100, Math.round((answeredCount/(t.questions.length+1))*100));
+  let qHtml = t.questions.map((q,i)=>{
+    if(q.type==="scale"){
+      let btns = [1,2,3,4,5].map(v=>{
+        const sel = answers[q.key]===v ? "sel":"";
+        return `<button type="button" class="${sel}" data-key="${q.key}" data-val="${v}">${v}</button>`;
+      }).join("");
+      return `<div class="q">
+        <label>${i+1}. ${q.label}</label>
+        ${q.sub?`<div class="sub">${q.sub}</div>`:""}
+        <div class="scale">${btns}</div>
+        <div class="scaleLabels"><span>${t.scaleLow}</span><span>${t.scaleHigh}</span></div>
+      </div>`;
+    }
+    if(q.type==="yn"){
+      const yesSel = answers[q.key]==="yes"?"sel":"";
+      const noSel = answers[q.key]==="no"?"sel":"";
+      return `<div class="q">
+        <label>${i+1}. ${q.label}</label>
+        <div class="yn">
+          <button type="button" class="${yesSel}" data-key="${q.key}" data-val="yes">${t.ynYes}</button>
+          <button type="button" class="${noSel}" data-key="${q.key}" data-val="no">${t.ynNo}</button>
+        </div>
+      </div>`;
+    }
+    if(q.type==="text"){
+      return `<div class="q">
+        <label>${i+1}. ${q.label}${q.optional?` <span style="font-weight:400;color:var(--muted);font-size:12px;">(${lang==='en'?'optional':'விருப்பத் தேர்வு'})</span>`:""}</label>
+        <textarea data-key="${q.key}" placeholder="">${answers[q.key]||""}</textarea>
+      </div>`;
+    }
+  }).join("");
+
+  const requiredAnswered = t.questions.filter(q=>!q.optional).every(q=>answers[q.key]!==undefined && answers[q.key]!=="");
+
+  return `
+    <header>
+      <h1>${t.title}</h1>
+      <p>${t.subtitle}</p>
+      <div class="langToggle">
+        <button data-lang="en" class="${lang==='en'?'active':''}">English</button>
+        <button data-lang="ta" class="${lang==='ta'?'active':''}">தமிழ்</button>
+      </div>
+    </header>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <main>
+      <div class="q">
+        <label>${t.nameLabel}</label>
+        <input type="text" id="patientName" placeholder="${t.namePlaceholder}" value="${answers._name||''}">
+      </div>
+      ${qHtml}
+      <button class="submitBtn" id="submitBtn" ${requiredAnswered?"":"disabled"}>${t.submit}</button>
+    </main>
+  `;
+}
+
+function renderThankYou(){
+  const t = T[lang];
+  const overallScore = Number(answers.overall);
+  const showReview = overallScore >= 4 && GOOGLE_REVIEW_URL.indexOf("PASTE_YOUR") !== 0;
+  return `
+    <header>
+      <h1>${T[lang].title.split('—')[0]}</h1>
+    </header>
+    <div class="thankyou">
+      <div class="icon">🙏</div>
+      <h2>${t.thankYouTitle}</h2>
+      <p>${t.thankYouBody}</p>
+      <div class="gemstamp">${t.gemNote}</div>
+      ${showReview ? `
+        <div style="margin-top:36px;padding-top:28px;border-top:1px solid #eef0f2;text-align:center;">
+          <p style="font-size:13px;color:var(--muted);line-height:1.6;">${t.reviewPrompt}</p>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&amp;margin=8&amp;data=${encodeURIComponent(GOOGLE_REVIEW_URL)}"
+               alt="Scan to leave a Google review"
+               width="180" height="180"
+               style="display:block;margin:16px auto 8px;border:1px solid #eef0f2;border-radius:10px;">
+          <p style="font-size:12px;color:var(--muted);line-height:1.5;max-width:280px;margin:0 auto 16px;">${t.qrCaption}</p>
+          <div style="display:flex;gap:10px;">
+            <a href="${GOOGLE_REVIEW_URL}" target="_blank" rel="noopener" style="flex:2;text-decoration:none;">
+              <button style="width:100%;padding:11px;border:1.5px solid #e2e6ea;border-radius:10px;background:#fff;color:var(--teal);font-size:13px;font-weight:600;cursor:pointer;">${t.reviewBtn}</button>
+            </a>
+            <button id="skipReview" style="flex:1;padding:11px;border:1.5px solid #e2e6ea;border-radius:10px;background:#fff;color:var(--muted);font-size:13px;cursor:pointer;">${t.reviewSkip}</button>
+          </div>
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.innerText = s;
+  return d.innerHTML;
+}
+
+function attachHandlers(){
+  // lang toggle
+  document.querySelectorAll("[data-lang]").forEach(b=>{
+    b.onclick = ()=>{ lang = b.dataset.lang; render(); };
+  });
+  // skip review button (just visually acknowledges the dismissal)
+  const skipBtn = document.getElementById("skipReview");
+  if(skipBtn) skipBtn.onclick = ()=>{
+    skipBtn.closest("div").parentElement.style.display = "none";
+  };
+  // name field
+  const nameInput = document.getElementById("patientName");
+  if(nameInput) nameInput.oninput = (e)=>{ answers._name = e.target.value; };
+
+  // scale buttons
+  document.querySelectorAll(".scale button").forEach(b=>{
+    b.onclick = ()=>{
+      answers[b.dataset.key] = parseInt(b.dataset.val);
+      render();
+    };
+  });
+  // yn buttons
+  document.querySelectorAll(".yn button").forEach(b=>{
+    b.onclick = ()=>{
+      answers[b.dataset.key] = b.dataset.val;
+      render();
+    };
+  });
+  // text areas
+  document.querySelectorAll("textarea[data-key]").forEach(t=>{
+    t.oninput = (e)=>{ answers[e.target.dataset.key] = e.target.value; };
+  });
+
+  // submit
+  const submitBtn = document.getElementById("submitBtn");
+  if(submitBtn) submitBtn.onclick = async ()=>{
+    if(SCRIPT_URL.indexOf("PASTE_YOUR") === 0){
+      alert("Setup incomplete: SCRIPT_URL not configured. See icu_feedback_appsscript.gs.txt.");
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Submitting…";
+    const record = {...answers, ts: Date.now(), lang};
+
+    let saved = false;
+    let lastErr = null;
+    for(let attempt=0; attempt<3 && !saved; attempt++){
+      try{
+        const resp = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(record)
+        });
+        const json = await resp.json();
+        if(json && json.success){ saved = true; }
+        else { lastErr = (json && json.error) ? json.error : "Unknown server error"; }
+      }catch(e){
+        lastErr = e && e.message ? e.message : String(e);
+      }
+      if(!saved && attempt<2){
+        await new Promise(r=>setTimeout(r, 700 * (attempt+1)));
+      }
+    }
+
+    if(saved){
+      view = "thankyou";
+      render();
+    } else {
+      submitBtn.disabled = false;
+      submitBtn.innerText = (lang==='ta' ? "மீண்டும் முயற்சிக்கவும்" : "Try Again");
+      const existingErr = document.getElementById("submitErr");
+      if(existingErr) existingErr.remove();
+      const errDiv = document.createElement("div");
+      errDiv.id = "submitErr";
+      errDiv.style.cssText = "background:#fdecea;border:1px solid #f5c6c1;color:#7a2c22;padding:12px 14px;border-radius:10px;font-size:13px;margin-top:12px;text-align:center;";
+      errDiv.innerText = (lang==='ta'
+        ? "சமர்ப்பிக்க முடியவில்லை. தயவுசெய்து மீண்டும் முயற்சிக்கவும்."
+        : "Couldn't submit — connection issue. Please try again.") + " (" + lastErr + ")";
+      submitBtn.insertAdjacentElement("afterend", errDiv);
+    }
+  };
+}
+
+render();
+</script>
+</body>
+</html>
