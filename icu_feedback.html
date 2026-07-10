@@ -48,7 +48,6 @@
 <body>
 <div class="wrap" id="app"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 // ====== CONFIG ======
 // Paste your deployed Apps Script Web App URL here (ends in /exec).
@@ -75,7 +74,7 @@ const T = {
       {key:"info_updates", type:"scale", label:"Did you receive timely updates about changes in condition?", sub:"1 = Rarely, 5 = Always"},
       {key:"family_involve", type:"yn", label:"Did you feel involved in decisions about your patient's care?"},
       {key:"overall", type:"scale", label:"Overall, how would you rate your experience with GEM ICU?", sub:"1 = Very poor, 5 = Excellent"},
-      {key:"best_part", type:"text", label:"What stood out as the best part of the care you received?", optional:true},
+      {key:"best_part", type:"text", label:"What stood out about the ICU care your patient received?", optional:true},
       {key:"improve", type:"text", label:"Is there anything we could have done better?", optional:true}
     ],
     submit: "Submit Feedback",
@@ -85,7 +84,8 @@ const T = {
     scaleLow: "Poor", scaleHigh: "Excellent",
     ynYes: "Yes", ynNo: "No",
     reviewPrompt: "We're glad your family's experience was a good one. If you have a moment, sharing it on Google could help another family find their way to the right care, just like you found yours.",
-    reviewBtn: "Share on Google",
+    qrCaption: "Please scan this with your own phone's camera to leave the review from your own Google account.",
+    reviewBtn: "Open link on this phone instead",
     reviewSkip: "Maybe later"
   },
   ta: {
@@ -102,7 +102,7 @@ const T = {
       {key:"info_updates", type:"scale", label:"நிலை மாற்றங்கள் குறித்து சரியான நேரத்தில் தகவல் கிடைத்ததா?", sub:"1 = அரிதாக, 5 = எப்போதும்"},
       {key:"family_involve", type:"yn", label:"நோயாளியின் சிகிச்சை முடிவுகளில் நீங்களும் பங்கேற்றதாக உணர்ந்தீர்களா?"},
       {key:"overall", type:"scale", label:"மொத்தத்தில், GEM ICU அனுபவத்தை எப்படி மதிப்பிடுவீர்கள்?", sub:"1 = மிகவும் மோசம், 5 = மிகச் சிறப்பு"},
-      {key:"best_part", type:"text", label:"நீங்கள் பெற்ற கவனிப்பில் சிறப்பாக இருந்தது என்ன?", optional:true},
+      {key:"best_part", type:"text", label:"உங்கள் நோயாளி பெற்ற ICU கவனிப்பில் சிறப்பாக இருந்தது என்ன?", optional:true},
       {key:"improve", type:"text", label:"நாங்கள் இன்னும் சிறப்பாக செய்திருக்க வேண்டியது ஏதேனும் உள்ளதா?", optional:true}
     ],
     submit: "கருத்தை சமர்ப்பிக்கவும்",
@@ -112,7 +112,8 @@ const T = {
     scaleLow: "மோசம்", scaleHigh: "சிறப்பு",
     ynYes: "ஆம்", ynNo: "இல்லை",
     reviewPrompt: "உங்கள் குடும்பத்தின் அனுபவம் நல்லதாக இருந்ததில் நாங்கள் மகிழ்ச்சியடைகிறோம். நேரம் இருந்தால், இதை Google-இல் பகிர்வது மற்றொரு குடும்பம் சரியான கவனிப்பை கண்டறிய உதவலாம்.",
-    reviewBtn: "Google-இல் பகிரவும்",
+    qrCaption: "தயவுசெய்து உங்கள் சொந்த கைபேசியின் கேமராவைக் கொண்டு இதை ஸ்கேன் செய்து, உங்கள் சொந்த Google கணக்கிலிருந்து விமர்சனத்தை பகிரவும்.",
+    reviewBtn: "இந்த கைபேசியிலேயே இணைப்பைத் திற",
     reviewSkip: "பின்னர்"
   }
 };
@@ -202,13 +203,18 @@ function renderThankYou(){
       <p>${t.thankYouBody}</p>
       <div class="gemstamp">${t.gemNote}</div>
       ${showReview ? `
-        <div style="margin-top:36px;padding-top:28px;border-top:1px solid #eef0f2;text-align:left;">
-          <p style="font-size:13px;color:var(--muted);line-height:1.6;text-align:center;">${t.reviewPrompt}</p>
-          <div style="display:flex;gap:10px;margin-top:16px;">
+        <div style="margin-top:36px;padding-top:28px;border-top:1px solid #eef0f2;text-align:center;">
+          <p style="font-size:13px;color:var(--muted);line-height:1.6;">${t.reviewPrompt}</p>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&amp;margin=8&amp;data=${encodeURIComponent(GOOGLE_REVIEW_URL)}"
+               alt="Scan to leave a Google review"
+               width="180" height="180"
+               style="display:block;margin:16px auto 8px;border:1px solid #eef0f2;border-radius:10px;">
+          <p style="font-size:12px;color:var(--muted);line-height:1.5;max-width:280px;margin:0 auto 16px;">${t.qrCaption}</p>
+          <div style="display:flex;gap:10px;">
             <a href="${GOOGLE_REVIEW_URL}" target="_blank" rel="noopener" style="flex:2;text-decoration:none;">
-              <button style="width:100%;padding:13px;border:none;border-radius:10px;background:var(--teal);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">${t.reviewBtn}</button>
+              <button style="width:100%;padding:11px;border:1.5px solid #e2e6ea;border-radius:10px;background:#fff;color:var(--teal);font-size:13px;font-weight:600;cursor:pointer;">${t.reviewBtn}</button>
             </a>
-            <button id="skipReview" style="flex:1;padding:13px;border:1.5px solid #e2e6ea;border-radius:10px;background:#fff;color:var(--muted);font-size:13px;cursor:pointer;">${t.reviewSkip}</button>
+            <button id="skipReview" style="flex:1;padding:11px;border:1.5px solid #e2e6ea;border-radius:10px;background:#fff;color:var(--muted);font-size:13px;cursor:pointer;">${t.reviewSkip}</button>
           </div>
         </div>
       ` : ""}
