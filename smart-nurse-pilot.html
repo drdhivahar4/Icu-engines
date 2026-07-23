@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMART Nurse — Escalation Report</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --panel: #121b2e;
+    --panel2: #17233a;
+    --border: #24334f;
+    --text: #e8edf5;
+    --muted: #93a3bf;
+    --teal: #2dd4bf;
+    --teal-dim: #0f766e;
+    --navy: #1e3a5f;
+    --danger: #f87171;
+    --danger-bg: #3a1e22;
+    --ok: #4ade80;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 0 0 60px 0;
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy), var(--teal-dim));
+    padding: 28px 20px 22px;
+    text-align: center;
+    border-bottom: 3px solid var(--teal);
+  }
+  header h1 { margin: 0 0 6px; font-size: 1.6rem; letter-spacing: 0.5px; }
+  header p { margin: 0; color: #cfe9e5; font-size: 0.92rem; }
+  main { max-width: 720px; margin: 0 auto; padding: 20px 16px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+  .card h2 {
+    font-size: 1.05rem;
+    margin: 0 0 14px;
+    color: var(--teal);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .card h3 {
+    font-size: 0.92rem;
+    margin: 16px 0 8px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .field { margin-bottom: 14px; }
+  label.field-label {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    color: var(--text);
+  }
+  .req { color: var(--danger); font-weight: 700; margin-left: 3px; }
+  input[type="text"], input[type="email"], input[type="date"], select {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+  input:focus, select:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+  .checkbox-row, .radio-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 7px 4px;
+    border-radius: 6px;
+  }
+  .checkbox-row:hover, .radio-row:hover { background: var(--panel2); }
+  .checkbox-row input, .radio-row input { margin-top: 3px; width: 17px; height: 17px; flex-shrink: 0; }
+  .checkbox-row label, .radio-row label { font-size: 0.93rem; cursor: pointer; }
+  .other-text {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px 10px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  textarea.other-text {
+    resize: vertical;
+    min-height: 90px;
+    font-family: inherit;
+  }
+  .error-box {
+    display: none;
+    background: var(--danger-bg);
+    border: 1px solid var(--danger);
+    color: #fecaca;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.88rem;
+  }
+  .error-box.show { display: block; }
+  .error-box ul { margin: 6px 0 0; padding-left: 18px; }
+  .field.invalid select, .field.invalid input { border-color: var(--danger); }
+  .group.invalid { outline: 1px solid var(--danger); border-radius: 8px; padding: 6px; }
+  button#submitBtn {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #04211c;
+    background: var(--teal);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+  }
+  button#submitBtn:active { transform: scale(0.99); }
+  button#submitBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .success-box {
+    display: none;
+    background: #0f2e22;
+    border: 1px solid var(--ok);
+    color: #bbf7d0;
+    padding: 18px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .success-box.show { display: block; }
+  .appreciation-banner {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #1a2e1f, #0f3d2e);
+    border: 1px solid var(--ok);
+    border-radius: 10px;
+    color: #d9fbe4;
+    font-size: 0.92rem;
+    text-align: left;
+  }
+  .appreciation-banner strong { color: var(--ok); }
+  .pending-notice {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #3a2e10;
+    border: 1px solid #eab308;
+    border-radius: 8px;
+    color: #fde68a;
+    font-size: 0.85rem;
+    text-align: left;
+  }
+  .no-ews-notice {
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #1e293b;
+    border: 1px solid #64748b;
+    border-radius: 8px;
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    text-align: left;
+  }
+  .whatsapp-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .wa-btn {
+    flex: 1 1 auto;
+    min-width: 150px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    display: inline-block;
+  }
+  .wa-btn-copy {
+    background: var(--panel2);
+    color: var(--text);
+  }
+  .wa-btn-copy.copied {
+    background: var(--ok);
+    color: #04211c;
+    border-color: var(--ok);
+  }
+  .wa-btn-share {
+    background: #25D366;
+    color: #04210f;
+    border-color: #25D366;
+  }
+  .note { font-size: 0.8rem; color: var(--muted); margin-top: 10px; }
+  .disclaimer {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 14px 20px 0;
+  }
+  @media (max-width: 480px) {
+    header h1 { font-size: 1.3rem; }
+    .card { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SMART NURSE</h1>
+  <p>Enter data, after identifying the patient &amp; report</p>
+</header>
+
+<main>
+  <div id="errorBox" class="error-box" role="alert">
+    <strong>Please fix the following before submitting:</strong>
+    <ul id="errorList"></ul>
+  </div>
+
+  <div id="successBox" class="success-box" role="status">
+    <h2 style="margin-top:0; color: var(--ok); border:none;">Report submitted</h2>
+    <p id="successMsg">Your escalation report has been recorded.</p>
+    <div id="appreciationBanner" class="appreciation-banner" style="display:none;"></div>
+    <div id="pendingNotice" class="pending-notice" style="display:none;"></div>
+    <div id="noEwsNotice" class="no-ews-notice" style="display:none;"></div>
+    <div class="whatsapp-actions">
+      <button type="button" id="copyWhatsAppBtn" class="wa-btn wa-btn-copy">Copy report text</button>
+      <a href="#" id="shareWhatsAppBtn" class="wa-btn wa-btn-share" target="_blank" rel="noopener">Open in WhatsApp</a>
+    </div>
+    <button type="button" id="newReportBtn" style="margin-top:14px; padding:10px 18px; background:var(--teal); color:#04211c; border:none; border-radius:8px; cursor:pointer; font-weight:600;">Submit another report</button>
+  </div>
+
+  <form id="nurseForm" novalidate>
+
+    <div class="card">
+      <h2>Identification</h2>
+
+      <div class="field" data-field="email">
+        <label class="field-label" for="email">Email<span class="req">*</span></label>
+        <input type="email" id="email" name="email" placeholder="your.email@example.com">
+      </div>
+
+      <div class="field" data-field="ward">
+        <label class="field-label" for="ward">Ward<span class="req">*</span></label>
+        <select id="ward" name="ward">
+          <option value="">— Select ward —</option>
+          <option value="2A">2A</option>
+          <option value="2B">2B</option>
+          <option value="3A">3A</option>
+          <option value="3AGW">3AGW</option>
+          <option value="3B">3B</option>
+          <option value="3BGW">3BGW</option>
+          <option value="4A">4A</option>
+          <option value="4AGW">4AGW</option>
+          <option value="4B">4B</option>
+          <option value="CHEMO">CHEMO</option>
+        </select>
+      </div>
+
+      <div class="field" data-field="nurseName">
+        <label class="field-label" for="nurseName">Nurse Name<span class="req">*</span></label>
+        <input type="text" id="nurseName" name="nurseName" placeholder="Your answer">
+      </div>
+
+      <div class="field" data-field="patientName">
+        <label class="field-label" for="patientName">Patient Name<span class="req">*</span></label>
+        <input type="text" id="patientName" name="patientName" placeholder="Your answer">
+      </div>
+
+      <div class="field" data-field="hNumber">
+        <label class="field-label" for="hNumber">H.Number<span class="req">*</span></label>
+        <input type="text" id="hNumber" name="hNumber" placeholder="Your answer">
+      </div>
+
+      <div class="field" data-field="dateOfEvent">
+        <label class="field-label" for="dateOfEvent">Date of event<span class="req">*</span></label>
+        <input type="date" id="dateOfEvent" name="dateOfEvent">
+      </div>
+
+      <div class="field" data-field="unitWard">
+        <label class="field-label" for="unitWard">Unit / Ward</label>
+        <select id="unitWard" name="unitWard">
+          <option value="">— Select unit —</option>
+          <option value="ICU">ICU</option>
+          <option value="HDU">HDU</option>
+          <option value="Ward">Ward</option>
+          <option value="Emergency">Emergency</option>
+          <option value="Transplant Unit">Transplant Unit</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Section 1: Clinical Early Warning Signs</h2>
+
+      <h3>Respiratory</h3>
+      <div class="checkbox-row"><input type="checkbox" id="resp_rr" name="resp" value="Respiratory rate >24/min without fever or <10/min"><label for="resp_rr">Respiratory rate &gt;24/min without fever or &lt;10/min</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="resp_spo2" name="resp" value="SpO2 <92% on room air"><label for="resp_spo2">SpO2 &lt;92% on room air</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="resp_desat" name="resp" value="Sudden oxygen desaturation"><label for="resp_desat">Sudden oxygen desaturation</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="resp_breathing" name="resp" value="Sudden breathing difficulty"><label for="resp_breathing">Sudden breathing difficulty</label></div>
+
+      <h3>Cardiovascular</h3>
+      <div class="checkbox-row"><input type="checkbox" id="cvs_hrhigh" name="cvs" value="Heart rate >120/min (without fever)"><label for="cvs_hrhigh">Heart rate &gt;120/min (without fever)</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="cvs_hrlow" name="cvs" value="Heart rate <50/min"><label for="cvs_hrlow">Heart rate &lt;50/min</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="cvs_sbp" name="cvs" value="SBP <90 mmHg"><label for="cvs_sbp">SBP &lt;90 mmHg</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="cvs_chestpain" name="cvs" value="New onset chest pain"><label for="cvs_chestpain">New onset chest pain</label></div>
+
+      <h3>Neurological</h3>
+      <div class="checkbox-row"><input type="checkbox" id="neuro_seizure" name="neuro" value="Seizure / abnormal movements"><label for="neuro_seizure">Seizure / abnormal movements</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="neuro_restless" name="neuro" value="Sudden restlessness or agitation"><label for="neuro_restless">Sudden restlessness or agitation</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="neuro_consciousness" name="neuro" value="Sudden drop in consciousness"><label for="neuro_consciousness">Sudden drop in consciousness</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="neuro_weakness" name="neuro" value="Sudden weakness of face or limbs"><label for="neuro_weakness">Sudden weakness of face or limbs</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="neuro_fall" name="neuro" value="Sudden fall"><label for="neuro_fall">Sudden fall</label></div>
+
+      <h3>Renal</h3>
+      <div class="checkbox-row"><input type="checkbox" id="renal_urine" name="renal" value="Urine output <0.5 ml/kg/hr for 6 hours"><label for="renal_urine">Urine output &lt;0.5 ml/kg/hr for 6 hours</label></div>
+
+      <h3>Gastrointestinal</h3>
+      <div class="checkbox-row"><input type="checkbox" id="gi_bleed" name="gi" value="Acute gastrointestinal bleeding"><label for="gi_bleed">Acute gastrointestinal bleeding</label></div>
+    </div>
+
+    <div class="card">
+      <h2>Section 2: Laboratory Early Warning Values</h2>
+
+      <h3>Perfusion</h3>
+      <div class="checkbox-row"><input type="checkbox" id="perf_lactate" name="perf" value="Lactate >2 mmol/L or rising trend"><label for="perf_lactate">Lactate &gt;2 mmol/L or rising trend</label></div>
+
+      <h3>Electrolytes</h3>
+      <div class="checkbox-row"><input type="checkbox" id="elec_k" name="elec" value="Potassium >5.5 or <2.5 mmol/L"><label for="elec_k">Potassium &gt;5.5 or &lt;2.5 mmol/L</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="elec_na" name="elec" value="Sodium <120 or >145 mmol/L"><label for="elec_na">Sodium &lt;120 or &gt;145 mmol/L</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="elec_ca" name="elec" value="Calcium >10"><label for="elec_ca">Calcium &gt;10</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="elec_other_chk" name="elec"><label for="elec_other_chk">Other:</label></div>
+      <input type="text" class="other-text" id="elec_other_text" placeholder="Specify other electrolyte finding">
+
+      <h3>Metabolic</h3>
+      <div class="checkbox-row"><input type="checkbox" id="metab_acidosis" name="metab" value="Severe metabolic acidosis (pH <7.20)"><label for="metab_acidosis">Severe metabolic acidosis (pH &lt;7.20)</label></div>
+
+      <h3>Glucose Crisis</h3>
+      <div class="checkbox-row"><input type="checkbox" id="gluc_low" name="gluc" value="Blood glucose < 60 mg/dL"><label for="gluc_low">Blood glucose &lt; 60 mg/dL</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="gluc_high" name="gluc" value="Blood glucose >350 mg/dL with ketone >2 mmol/L"><label for="gluc_high">Blood glucose &gt;350 mg/dL with ketone &gt;2 mmol/L</label></div>
+
+      <h3>Hematology</h3>
+      <div class="checkbox-row"><input type="checkbox" id="heme_platelets" name="heme" value="Platelets <50,000 in non-cirrhotic patient"><label for="heme_platelets">Platelets &lt;50,000 in non-cirrhotic patient</label></div>
+
+      <h3>Cardiac</h3>
+      <div class="checkbox-row"><input type="checkbox" id="cardiac_ecg" name="cardiac" value="ECG suggesting new MI or serious arrhythmia"><label for="cardiac_ecg">ECG suggesting new MI or serious arrhythmia</label></div>
+
+      <h3>Additional Triggers</h3>
+      <div class="checkbox-row"><input type="checkbox" id="add_concerned" name="add" value="Nurse seriously concerned about patient condition"><label for="add_concerned">Nurse seriously concerned about patient condition</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="add_other" name="add" value="Other clinical concern (report via QR form)"><label for="add_other">Other clinical concern (report via QR form)</label></div>
+    </div>
+
+    <div class="card">
+      <h2>Response</h2>
+
+      <h3>Action Taken (multiple selections allowed)</h3>
+      <div class="group" id="actionGroup" data-group="action">
+        <div class="checkbox-row"><input type="checkbox" id="act_vitals" name="action" value="Rechecked vitals immediately"><label for="act_vitals">Rechecked vitals immediately</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="act_oxygen" name="action" value="Started oxygen"><label for="act_oxygen">Started oxygen</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="act_fluids" name="action" value="Fluid resuscitation initiated"><label for="act_fluids">Fluid resuscitation initiated</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="act_electrolyte" name="action" value="Electrolyte correction started"><label for="act_electrolyte">Electrolyte correction started</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="act_glucose" name="action" value="Glucose corrected"><label for="act_glucose">Glucose corrected</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="act_doctor" name="action" value="Doctor informed / escalation initiated"><label for="act_doctor">Doctor informed / escalation initiated</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="act_rrt" name="action" value="Rapid response activated"><label for="act_rrt">Rapid response activated</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="act_icu" name="action" value="ICU transfer arranged"><label for="act_icu">ICU transfer arranged</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="act_monitoring" name="action" value="Close monitoring started"><label for="act_monitoring">Close monitoring started</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="act_other_chk" name="action"><label for="act_other_chk">Other (specify)</label></div>
+      </div>
+      <input type="text" class="other-text" id="act_other_text" placeholder="Specify other action taken">
+
+      <h3>Escalation Timing</h3>
+      <div class="group" id="timingGroup" data-group="timing">
+        <div class="radio-row"><input type="radio" id="time_5" name="timing" value="Immediately (<5 min)"><label for="time_5">Immediately (&lt;5 min)</label></div>
+        <div class="radio-row"><input type="radio" id="time_15" name="timing" value="Within 15 minutes"><label for="time_15">Within 15 minutes</label></div>
+        <div class="radio-row"><input type="radio" id="time_30" name="timing" value="Within 30 minutes"><label for="time_30">Within 30 minutes</label></div>
+        <div class="radio-row"><input type="radio" id="time_over30" name="timing" value=">30 minutes"><label for="time_over30">&gt;30 minutes</label></div>
+      </div>
+
+      <h3>Outcome</h3>
+      <div class="group" id="outcomeGroup" data-group="outcome">
+        <div class="radio-row"><input type="radio" id="out_stabilized" name="outcome" value="Patient stabilized in ward"><label for="out_stabilized">Patient stabilized in ward</label></div>
+        <div class="radio-row"><input type="radio" id="out_icu" name="outcome" value="ICU transfer required"><label for="out_icu">ICU transfer required</label></div>
+        <div class="radio-row"><input type="radio" id="out_prevented" name="outcome" value="Complication prevented"><label for="out_prevented">Complication prevented</label></div>
+        <div class="radio-row"><input type="radio" id="out_early" name="outcome" value="Early treatment initiated"><label for="out_early">Early treatment initiated</label></div>
+        <div class="radio-row"><input type="radio" id="out_observation" name="outcome" value="Under observation"><label for="out_observation">Under observation</label></div>
+      </div>
+
+      <h3>Immediately Informed</h3>
+      <div class="group" id="informedGroup" data-group="informed">
+        <div class="checkbox-row"><input type="checkbox" id="inf_supervisor" name="informed" value="Supervisor"><label for="inf_supervisor">Supervisor</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="inf_matron" name="informed" value="Matron Informed"><label for="inf_matron">Matron Informed</label></div>
+      </div>
+
+      <h3>Other Staff Involved (if any)</h3>
+      <div class="checkbox-row"><input type="checkbox" id="staff_duty" name="staff" value="Duty doctor / Intern / Technician"><label for="staff_duty">Duty doctor / Intern / Technician</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="staff_none" name="staff" value="No other staff involved"><label for="staff_none">No other staff involved</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="staff_other_chk" name="staff"><label for="staff_other_chk">Other (specify)</label></div>
+      <input type="text" class="other-text" id="staff_other_text" placeholder="Specify other staff involved">
+
+      <h3>Additional Details (if any)</h3>
+      <textarea id="additionalDetails" name="additionalDetails" class="other-text" rows="4" placeholder="Any other details you'd like to add — free text"></textarea>
+    </div>
+
+    <button type="submit" id="submitBtn">Submit report</button>
+    <p class="note">A copy of your responses will be emailed to the address you provided.</p>
+  </form>
+
+  <p class="disclaimer">SMART Nurse Pilot Reporting Tool — GEM Hospital ICU. Writes only to the "Pilot Tool Responses" sheet tab; does not touch live Form Responses.</p>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---- Configuration ----
+  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwmy50zFQ4fcvQPxMZUU8tx03e08XDFoA_QPU83Oclt7kmJK53XhEy85zQRRLGx6kk1g/exec';
+
+  // ---- Default date to today ----
+  function setDefaultDate() {
+    var dateInput = document.getElementById('dateOfEvent');
+    if (dateInput && !dateInput.value) {
+      var today = new Date();
+      var yyyy = today.getFullYear();
+      var mm = String(today.getMonth() + 1).padStart(2, '0');
+      var dd = String(today.getDate()).padStart(2, '0');
+      dateInput.value = yyyy + '-' + mm + '-' + dd;
+    }
+  }
+
+  // ---- Helpers ----
+  function getCheckedValues(name) {
+    var nodes = document.querySelectorAll('input[name="' + name + '"]:checked');
+    var vals = [];
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].value) vals.push(nodes[i].value);
+    }
+    return vals;
+  }
+
+  function getRadioValue(name) {
+    var node = document.querySelector('input[name="' + name + '"]:checked');
+    return node ? node.value : '';
+  }
+
+  function isValidEmail(v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  }
+
+  function clearFieldStates() {
+    document.querySelectorAll('.field.invalid').forEach(function (el) { el.classList.remove('invalid'); });
+    document.querySelectorAll('.group.invalid').forEach(function (el) { el.classList.remove('invalid'); });
+  }
+
+  // ---- Core validation: required fields must match the live form's actual asterisks ----
+  // Required: Email, Ward, Nurse Name, Patient Name, H.Number, Date of event,
+  //           Action Taken (>=1), Escalation Timing, Outcome, Immediately Informed (>=1)
+  // NOT required: Unit / Ward
+  function validateForm() {
+    var errors = [];
+    var invalidFields = [];
+    var invalidGroups = [];
+
+    var email = document.getElementById('email').value.trim();
+    if (!email) {
+      errors.push('Email is required.');
+      invalidFields.push('email');
+    } else if (!isValidEmail(email)) {
+      errors.push('Email must be a valid email address.');
+      invalidFields.push('email');
+    }
+
+    var ward = document.getElementById('ward').value;
+    if (!ward) {
+      errors.push('Ward is required.');
+      invalidFields.push('ward');
+    }
+
+    var nurseName = document.getElementById('nurseName').value.trim();
+    if (!nurseName) {
+      errors.push('Nurse Name is required.');
+      invalidFields.push('nurseName');
+    }
+
+    var patientName = document.getElementById('patientName').value.trim();
+    if (!patientName) {
+      errors.push('Patient Name is required.');
+      invalidFields.push('patientName');
+    }
+
+    var hNumber = document.getElementById('hNumber').value.trim();
+    if (!hNumber) {
+      errors.push('H.Number is required.');
+      invalidFields.push('hNumber');
+    }
+
+    var dateOfEvent = document.getElementById('dateOfEvent').value;
+    if (!dateOfEvent) {
+      errors.push('Date of event is required.');
+      invalidFields.push('dateOfEvent');
+    }
+
+    // Unit / Ward is intentionally NOT required (matches live form: no asterisk)
+
+    // Action Taken, Escalation Timing, Outcome, and Immediately Informed are
+    // intentionally NOT required — a routine check with no Early Warning Sign
+    // and nothing to escalate must still be submittable. This is a deliberate
+    // divergence from the live Google Form (which marks these required); do
+    // not "fix" this back without checking with Dr. Dhivahar first.
+
+    return {
+      valid: errors.length === 0,
+      errors: errors,
+      invalidFields: invalidFields,
+      invalidGroups: invalidGroups
+    };
+  }
+
+  // ---- Collect full payload (includes optional fields) ----
+  function collectFormData() {
+    var electrolytes = getCheckedValues('elec');
+    var elecOtherChecked = document.getElementById('elec_other_chk').checked;
+    var elecOtherText = document.getElementById('elec_other_text').value.trim();
+    if (elecOtherChecked && elecOtherText) electrolytes.push('Other: ' + elecOtherText);
+
+    var actionTaken = getCheckedValues('action');
+    var actionOtherChecked = document.getElementById('act_other_chk').checked;
+    var actionOtherText = document.getElementById('act_other_text').value.trim();
+    if (actionOtherChecked && actionOtherText) actionTaken.push('Other: ' + actionOtherText);
+
+    var staff = getCheckedValues('staff');
+    var staffOtherChecked = document.getElementById('staff_other_chk').checked;
+    var staffOtherText = document.getElementById('staff_other_text').value.trim();
+    if (staffOtherChecked && staffOtherText) staff.push('Other: ' + staffOtherText);
+
+    return {
+      timestamp: new Date().toISOString(),
+      email: document.getElementById('email').value.trim(),
+      ward: document.getElementById('ward').value,
+      nurseName: document.getElementById('nurseName').value.trim(),
+      patientName: document.getElementById('patientName').value.trim(),
+      hNumber: document.getElementById('hNumber').value.trim(),
+      dateOfEvent: document.getElementById('dateOfEvent').value,
+      unitWard: document.getElementById('unitWard').value,
+      respiratory: getCheckedValues('resp'),
+      cardiovascular: getCheckedValues('cvs'),
+      neurological: getCheckedValues('neuro'),
+      renal: getCheckedValues('renal'),
+      gastrointestinal: getCheckedValues('gi'),
+      perfusion: getCheckedValues('perf'),
+      electrolytes: electrolytes,
+      metabolic: getCheckedValues('metab'),
+      glucose: getCheckedValues('gluc'),
+      hematology: getCheckedValues('heme'),
+      cardiac: getCheckedValues('cardiac'),
+      additionalTriggers: getCheckedValues('add'),
+      actionTaken: actionTaken,
+      escalationTiming: getRadioValue('timing'),
+      outcome: getRadioValue('outcome'),
+      immediatelyInformed: getCheckedValues('informed'),
+      otherStaff: staff,
+      additionalDetails: document.getElementById('additionalDetails').value.trim()
+    };
+  }
+
+  // ---- EWS detection: true if any Section 1 / Section 2 early-warning checkbox is present ----
+  function hasEWS(data) {
+    var ewsGroups = [
+      'respiratory', 'cardiovascular', 'neurological', 'renal', 'gastrointestinal',
+      'perfusion', 'electrolytes', 'metabolic', 'glucose', 'hematology', 'cardiac',
+      'additionalTriggers'
+    ];
+    return ewsGroups.some(function (key) {
+      return Array.isArray(data[key]) && data[key].length > 0;
+    });
+  }
+
+  // ---- Build a WhatsApp-friendly plain-text summary of the whole report ----
+  function buildWhatsAppText(data) {
+    var lines = [];
+    lines.push('*SMART NURSE — Escalation Report*');
+    lines.push('');
+    lines.push('Ward: ' + (data.ward || '—') + (data.unitWard ? ' | Unit: ' + data.unitWard : ''));
+    lines.push('Nurse: ' + (data.nurseName || '—') + (data.email ? ' (' + data.email + ')' : ''));
+    lines.push('Patient: ' + (data.patientName || '—') + (data.hNumber ? ' (H.No: ' + data.hNumber + ')' : ''));
+    lines.push('Date of Event: ' + (data.dateOfEvent || '—'));
+    lines.push('');
+
+    var ewsSections = [
+      ['Respiratory', data.respiratory],
+      ['Cardiovascular', data.cardiovascular],
+      ['Neurological', data.neurological],
+      ['Renal', data.renal],
+      ['Gastrointestinal', data.gastrointestinal],
+      ['Perfusion', data.perfusion],
+      ['Electrolytes', data.electrolytes],
+      ['Metabolic', data.metabolic],
+      ['Glucose', data.glucose],
+      ['Hematology', data.hematology],
+      ['Cardiac', data.cardiac],
+      ['Additional Triggers', data.additionalTriggers]
+    ].filter(function (pair) { return Array.isArray(pair[1]) && pair[1].length > 0; });
+
+    if (ewsSections.length > 0) {
+      lines.push('*Early Warning Signs Reported:*');
+      ewsSections.forEach(function (pair) {
+        lines.push(pair[0] + ': ' + pair[1].join('; '));
+      });
+      lines.push('');
+    } else {
+      lines.push('No Early Warning Signs checked.');
+      lines.push('');
+    }
+
+    lines.push('*Action Taken:* ' + (data.actionTaken && data.actionTaken.length ? data.actionTaken.join('; ') : '—'));
+    lines.push('*Escalation Timing:* ' + (data.escalationTiming || '—'));
+    lines.push('*Outcome:* ' + (data.outcome || '—'));
+    lines.push('*Immediately Informed:* ' + (data.immediatelyInformed && data.immediatelyInformed.length ? data.immediatelyInformed.join('; ') : '—'));
+
+    if (data.otherStaff && data.otherStaff.length) {
+      lines.push('*Other Staff Involved:* ' + data.otherStaff.join('; '));
+    }
+    if (data.additionalDetails) {
+      lines.push('');
+      lines.push('*Additional Details:* ' + data.additionalDetails);
+    }
+
+    return lines.join('\n');
+  }
+
+  function showErrors(result) {
+    clearFieldStates();
+    var box = document.getElementById('errorBox');
+    var list = document.getElementById('errorList');
+    list.innerHTML = '';
+    result.errors.forEach(function (msg) {
+      var li = document.createElement('li');
+      li.textContent = msg;
+      list.appendChild(li);
+    });
+    box.classList.add('show');
+    box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    result.invalidFields.forEach(function (id) {
+      var wrapper = document.querySelector('[data-field="' + id + '"]');
+      if (wrapper) wrapper.classList.add('invalid');
+    });
+    result.invalidGroups.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.add('invalid');
+    });
+  }
+
+  function hideErrors() {
+    document.getElementById('errorBox').classList.remove('show');
+    clearFieldStates();
+  }
+
+  // ---- Delivery: real, verifiable POST (not opaque no-cors) ----
+  // Content-Type 'text/plain' keeps this a CORS "simple request" (no preflight OPTIONS,
+  // which Apps Script web apps can't handle), while still letting us read the JSON
+  // response and actually confirm the row landed in the sheet — instead of firing
+  // blind into a no-cors black hole and hoping.
+  function sendOnce(payload) {
+    if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === 0) {
+      return Promise.reject(new Error('APPS_SCRIPT_URL is not configured yet.'));
+    }
+    return fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      if (!res.ok) throw new Error('Server responded with status ' + res.status);
+      return res.json();
+    }).then(function (data) {
+      if (!data || data.status !== 'success') {
+        throw new Error((data && data.message) || 'Server did not confirm success.');
+      }
+      return data;
+    });
+  }
+
+  function delay(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  // Retries a few times before giving up, so a flaky ward wifi connection doesn't
+  // silently drop a report — especially one carrying an Early Warning Sign.
+  function submitWithRetry(payload, attemptsLeft, waitMs) {
+    attemptsLeft = typeof attemptsLeft === 'number' ? attemptsLeft : 3;
+    waitMs = typeof waitMs === 'number' ? waitMs : 1000;
+    return sendOnce(payload).catch(function (err) {
+      if (attemptsLeft <= 1) throw err;
+      return delay(waitMs).then(function () {
+        return submitWithRetry(payload, attemptsLeft - 1, waitMs * 2);
+      });
+    });
+  }
+
+  // ---- Offline / failure safety net: queue in localStorage, flush later ----
+  var QUEUE_KEY = 'smartNursePendingSubmissions';
+
+  function getQueue() {
+    try {
+      var raw = window.localStorage.getItem(QUEUE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveQueue(queue) {
+    try {
+      window.localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+    } catch (e) { /* storage unavailable — nothing more we can do client-side */ }
+  }
+
+  function enqueuePending(payload) {
+    var queue = getQueue();
+    var entry = { id: 'pending_' + Date.now() + '_' + Math.random().toString(36).slice(2), payload: payload };
+    queue.push(entry);
+    saveQueue(queue);
+    return entry.id;
+  }
+
+  function removeFromQueue(id) {
+    var queue = getQueue().filter(function (e) { return e.id !== id; });
+    saveQueue(queue);
+  }
+
+  function flushQueue() {
+    var queue = getQueue();
+    queue.forEach(function (entry) {
+      sendOnce(entry.payload)
+        .then(function () { removeFromQueue(entry.id); })
+        .catch(function () { /* still offline/unreachable — leave queued, try again next flush */ });
+    });
+  }
+
+  var APPRECIATION_MESSAGE =
+    '🌟 <strong>Thank you for your vigilance.</strong> You identified an Early Warning Sign and ' +
+    'escalated it — that is exactly the bedside awareness the SMART Nurse Programme exists to ' +
+    'recognise, and it can be the difference between early treatment and a code blue. Well done.';
+
+  // Shared by both the "sent to sheet" and "no EWS, not sent" success screens.
+  function wireWhatsAppButtons(payload) {
+    var waText = buildWhatsAppText(payload);
+    var copyBtn = document.getElementById('copyWhatsAppBtn');
+    var shareBtn = document.getElementById('shareWhatsAppBtn');
+
+    copyBtn.textContent = 'Copy report text';
+    copyBtn.classList.remove('copied');
+    copyBtn.onclick = function () {
+      copyTextToClipboard(waText).then(function () {
+        copyBtn.textContent = 'Copied ✓';
+        copyBtn.classList.add('copied');
+        setTimeout(function () {
+          copyBtn.textContent = 'Copy report text';
+          copyBtn.classList.remove('copied');
+        }, 2500);
+      });
+    };
+
+    shareBtn.href = 'https://wa.me/?text=' + encodeURIComponent(waText);
+  }
+
+  function renderSuccessUI(payload, wasQueued) {
+    var appreciationBanner = document.getElementById('appreciationBanner');
+    var pendingNotice = document.getElementById('pendingNotice');
+    var noEwsNotice = document.getElementById('noEwsNotice');
+    var successMsg = document.getElementById('successMsg');
+
+    noEwsNotice.style.display = 'none';
+
+    if (hasEWS(payload)) {
+      appreciationBanner.innerHTML = APPRECIATION_MESSAGE;
+      appreciationBanner.style.display = 'block';
+    } else {
+      appreciationBanner.style.display = 'none';
+    }
+
+    if (wasQueued) {
+      successMsg.textContent = 'Your report has been saved on this device.';
+      pendingNotice.textContent = 'Could not confirm delivery to the server right now (connection issue). ' +
+        'It has been queued and will send automatically once connectivity is restored — this page will keep ' +
+        'retrying in the background. As a backup, you can also copy or share the report via WhatsApp below.';
+      pendingNotice.style.display = 'block';
+    } else {
+      successMsg.textContent = 'Your escalation report has reached the Google Sheet.';
+      pendingNotice.style.display = 'none';
+    }
+
+    wireWhatsAppButtons(payload);
+
+    document.getElementById('nurseForm').style.display = 'none';
+    document.getElementById('successBox').classList.add('show');
+  }
+
+  // No Early Warning Sign was reported — this entry is deliberately NOT sent
+  // to the Google Sheet (the sheet is reserved for EWS escalations, keeping
+  // the QI tracking data clean). The nurse can still record/share it via
+  // WhatsApp; nothing is lost, it just never touches the backend.
+  function renderNoEWSUI(payload) {
+    document.getElementById('appreciationBanner').style.display = 'none';
+    document.getElementById('pendingNotice').style.display = 'none';
+
+    var noEwsNotice = document.getElementById('noEwsNotice');
+    noEwsNotice.textContent = 'No Early Warning Sign was selected, so this entry was NOT sent to the ' +
+      'Google Sheet — the sheet is reserved for EWS escalations. You can still copy or share this entry ' +
+      'via WhatsApp below if you\'d like a record of it.';
+    noEwsNotice.style.display = 'block';
+
+    document.getElementById('successMsg').textContent = 'Not sent to the Google Sheet — no Early Warning Sign was selected.';
+
+    wireWhatsAppButtons(payload);
+
+    document.getElementById('nurseForm').style.display = 'none';
+    document.getElementById('successBox').classList.add('show');
+  }
+
+  // Robust clipboard copy with a manual-selection fallback for browsers/contexts
+  // (older Android WebViews, non-HTTPS) where navigator.clipboard isn't available.
+  function copyTextToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).catch(function () {
+        return legacyCopy(text);
+      });
+    }
+    return legacyCopy(text);
+  }
+
+  function legacyCopy(text) {
+    return new Promise(function (resolve) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) { /* best effort */ }
+      document.body.removeChild(ta);
+      resolve();
+    });
+  }
+
+  function resetForm() {
+    document.getElementById('nurseForm').reset();
+    setDefaultDate();
+    hideErrors();
+    document.getElementById('successBox').classList.remove('show');
+    document.getElementById('nurseForm').style.display = '';
+  }
+
+  function handleSubmit(e) {
+    if (e) e.preventDefault();
+    hideErrors();
+
+    var result = validateForm();
+    if (!result.valid) {
+      showErrors(result);
+      return;
+    }
+
+    var payload = collectFormData();
+
+    if (!hasEWS(payload)) {
+      // No EWS reported — never call the backend at all. This isn't a delivery
+      // failure to retry or queue; it's a deliberate routing decision, so the
+      // Google Sheet stays limited to real EWS escalations.
+      renderNoEWSUI(payload);
+      return;
+    }
+
+    var submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+
+    submitWithRetry(payload, 3, 1000)
+      .then(function () {
+        renderSuccessUI(payload, false);
+      })
+      .catch(function () {
+        // All retries exhausted — do not lose the report. Queue it locally and keep
+        // trying in the background, but still surface success + WhatsApp backup to the
+        // nurse so an unconfirmed EWS report is never silently swallowed.
+        enqueuePending(payload);
+        renderSuccessUI(payload, true);
+      })
+      .finally(function () {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit report';
+      });
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    setDefaultDate();
+    document.getElementById('nurseForm').addEventListener('submit', handleSubmit);
+    document.getElementById('newReportBtn').addEventListener('click', resetForm);
+    flushQueue();
+  });
+
+  window.addEventListener('online', flushQueue);
+
+  // Expose for automated testing (jsdom-based test suite)
+  if (typeof window !== 'undefined') {
+    window.__test = {
+      validateForm: validateForm,
+      collectFormData: collectFormData,
+      getCheckedValues: getCheckedValues,
+      getRadioValue: getRadioValue,
+      isValidEmail: isValidEmail,
+      setDefaultDate: setDefaultDate,
+      hasEWS: hasEWS,
+      buildWhatsAppText: buildWhatsAppText,
+      sendOnce: sendOnce,
+      submitWithRetry: submitWithRetry,
+      enqueuePending: enqueuePending,
+      getQueue: getQueue,
+      removeFromQueue: removeFromQueue,
+      flushQueue: flushQueue,
+      renderSuccessUI: renderSuccessUI,
+      renderNoEWSUI: renderNoEWSUI,
+      wireWhatsAppButtons: wireWhatsAppButtons,
+      handleSubmit: handleSubmit,
+      QUEUE_KEY: QUEUE_KEY,
+      // Test-only: lets the test suite point at a fake URL so sendOnce's placeholder
+      // guard doesn't block a mocked fetch. Never used by production code paths.
+      __setAppsScriptUrlForTests: function (url) { APPS_SCRIPT_URL = url; }
+    };
+  }
+})();
+</script>
+</body>
+</html>
