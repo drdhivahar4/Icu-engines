@@ -877,6 +877,7 @@
     }
 
     var payload = collectFormData();
+    payload.submissionId = 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2);
 
     if (!hasEWS(payload)) {
       // No EWS reported — never call the backend at all. This isn't a delivery
